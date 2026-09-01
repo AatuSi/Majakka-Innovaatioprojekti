@@ -1,6 +1,9 @@
 -- This works only on Postgresql!
 
 BEGIN;
+
+DROP TABLE IF EXISTS result CASCADE;
+DROP TABLE IF EXISTS account CASCADE;
  
 CREATE TABLE account (
     account_id     BIGINT       GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
