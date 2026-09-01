@@ -1,3 +1,5 @@
+# SQLAlchemy ORM models
+
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
 from database import Base
 

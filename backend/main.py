@@ -1,3 +1,5 @@
+# App initialization, dependency injection setup
+
 from fastapi import FastAPI
 from routers import accounts, results
 
