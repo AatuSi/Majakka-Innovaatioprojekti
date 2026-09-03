@@ -1,0 +1,79 @@
+# Quiz question option endpoints
+
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy.orm import Session
+
+from database import get_db
+import models
+import schemas
+
+router = APIRouter(tags=["quiz_question_options"])
+
+
+@router.get("/quiz-questions/{question_id}/options", response_model=list[schemas.QuizQuestionOptionResponse])
+def list_options(question_id: UUID, db: Session = Depends(get_db)):
+    question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
+    
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    
+    return db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.question_id == question_id).order_by(models.QuizQuestionOption.position).all()
+
+
+@router.get("/quiz-question-options/{option_id}", response_model=schemas.QuizQuestionOptionResponse)
+def get_option(option_id: UUID, db: Session = Depends(get_db)):
+    option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == option_id).first()
+    
+    if option is None:
+        raise HTTPException(status_code=404, detail="Option not found")
+    
+    return option
+
+
+@router.post("/quiz-questions/{question_id}/options", status_code=201, response_model=schemas.QuizQuestionOptionResponse)
+def create_option(question_id: UUID, option: schemas.QuizQuestionOptionCreate, db: Session = Depends(get_db)):
+    question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
+    
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    
+    db_option = models.QuizQuestionOption(
+        question_id=question_id,
+        option_text=option.option_text,
+        is_correct=option.is_correct,
+        position=option.position,
+    )
+    db.add(db_option)
+    db.commit()
+    db.refresh(db_option)
+    return db_option
+
+
+@router.put("/quiz-question-options/{option_id}", response_model=schemas.QuizQuestionOptionResponse)
+def update_option(option_id: UUID, option: schemas.QuizQuestionOptionCreate, db: Session = Depends(get_db)):
+    db_option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == option_id).first()
+    
+    if db_option is None:
+        raise HTTPException(status_code=404, detail="Option not found")
+    
+    db_option.option_text = option.option_text
+    db_option.is_correct = option.is_correct
+    db_option.position = option.position
+    db.commit()
+    db.refresh(db_option)
+    return db_option
+
+
+@router.delete("/quiz-question-options/{option_id}", status_code=204)
+def delete_option(option_id: UUID, db: Session = Depends(get_db)):
+    option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == option_id).first()
+    
+    if option is None:
+        raise HTTPException(status_code=404, detail="Option not found")
+    
+    db.delete(option)
+    db.commit()
+    
+    return Response(status_code=204)

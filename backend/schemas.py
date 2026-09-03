@@ -107,6 +107,7 @@ class QuizResponseItemSchema(BaseModel):
 # --- ATTEMPT SCHEMAS ---
 
 class QuizAttemptCreate(BaseModel):
+    user_id: UUID
     quiz_id: UUID
     responses: List[QuizResponseCreate] = []
 
