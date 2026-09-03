@@ -1,9 +1,9 @@
 # App initialization, dependency injection setup
 
 from fastapi import FastAPI
-from routers import accounts, results
+from routers import users
 
 app = FastAPI()
 
-app.include_router(accounts.router)
-app.include_router(results.router)
+
+app.include_router(users.router)
