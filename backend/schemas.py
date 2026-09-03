@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
@@ -33,6 +33,7 @@ class UserResponse(UserBase):
 
 class QuizQuestionOptionBase(BaseModel):
     option_text: Optional[str] = None
+    iala_light_id: Optional[UUID] = None
     is_correct: bool = False
     position: int = 0
 
@@ -45,6 +46,7 @@ class QuizQuestionOptionResponse(QuizQuestionOptionBase):
     id: UUID
     question_id: UUID
     created_at: datetime
+    iala_light_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -53,6 +55,7 @@ class QuizQuestionOptionResponse(QuizQuestionOptionBase):
 
 class QuizQuestionBase(BaseModel):
     question_text: Optional[str] = None
+    iala_light_id: Optional[UUID] = None
     position: int = 0
 
 
@@ -64,6 +67,7 @@ class QuizQuestionResponse(QuizQuestionBase):
     id: UUID
     quiz_id: UUID
     created_at: datetime
+    iala_light_id: Optional[UUID] = None
     options: List[QuizQuestionOptionResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
@@ -118,5 +122,21 @@ class QuizAttemptResponse(BaseModel):
     quiz_id: UUID
     created_at: datetime
     responses: List[QuizResponseItemSchema] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IalaLightBase(BaseModel):
+    name: str
+    category: str
+    description: Optional[str] = None
+    config: Dict[str, Any]
+
+class IalaLightCreate(IalaLightBase):
+    pass
+
+class IalaLightResponse(IalaLightBase):
+    id: UUID
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
