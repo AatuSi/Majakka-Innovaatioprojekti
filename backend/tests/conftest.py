@@ -32,6 +32,7 @@ def initialize_database():
 
     with psycopg.connect(PSYCOPG_DATABASE_URL) as conn:
         with conn.cursor() as cur:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
             cur.execute(schema_sql)
         conn.commit()
 
