@@ -31,6 +31,15 @@ CREATE TABLE quizzes (
     created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
+CREATE TABLE iala_lights (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        VARCHAR(255) NOT NULL,
+    category    VARCHAR(100) NOT NULL,
+    description TEXT,
+    config      JSONB        NOT NULL,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
 CREATE TABLE quiz_questions (
     id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     quiz_id       UUID        NOT NULL,
@@ -41,7 +50,7 @@ CREATE TABLE quiz_questions (
 
     CONSTRAINT quiz_questions_quiz_id_fkey
         FOREIGN KEY (quiz_id) REFERENCES quizzes (id)
-        ON UPDATE CASCADE ON DELETE CASCADE
+        ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT quiz_questions_iala_light_id_fkey
         FOREIGN KEY (iala_light_id) REFERENCES iala_lights (id)
         ON UPDATE CASCADE ON DELETE SET NULL
@@ -58,7 +67,7 @@ CREATE TABLE quiz_question_options (
 
     CONSTRAINT quiz_question_options_question_id_fkey
         FOREIGN KEY (question_id) REFERENCES quiz_questions (id)
-        ON UPDATE CASCADE ON DELETE CASCADE
+        ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT quiz_question_options_iala_light_id_fkey
         FOREIGN KEY (iala_light_id) REFERENCES iala_lights (id)
         ON UPDATE CASCADE ON DELETE SET NULL
@@ -94,15 +103,6 @@ CREATE TABLE quiz_responses (
     CONSTRAINT quiz_responses_selected_option_id_fkey
         FOREIGN KEY (selected_option_id) REFERENCES quiz_question_options (id)
         ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE iala_lights (
-    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        VARCHAR(255) NOT NULL,
-    category    VARCHAR(100) NOT NULL,
-    description TEXT,
-    config      JSONB        NOT NULL,
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_quiz_questions_quiz_id ON quiz_questions (quiz_id);

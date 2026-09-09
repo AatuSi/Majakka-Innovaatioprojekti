@@ -3,3 +3,6 @@ psycopg[binary]
 uvicorn[standard]
 sqlalchemy
 pwdlib[argon2]
+pytest
+pytest-env
+httpx2
