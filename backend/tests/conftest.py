@@ -6,7 +6,16 @@ from fastapi.testclient import TestClient
 from database import SessionLocal, get_db
 from main import app
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://testuser:testpass@localhost:5433/testdb")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://testuser:testpass@localhost:5433/testdb",
+)
+
+ENVIRONMENT = os.getenv("ENVIRONMENT")
+if ENVIRONMENT != "testing":
+    raise RuntimeError(
+        "Refusing to run destructive test DB setup unless ENVIRONMENT=testing",
+    )
 
 PSYCOPG_DATABASE_URL = DATABASE_URL.replace(
     "postgresql+psycopg://",
