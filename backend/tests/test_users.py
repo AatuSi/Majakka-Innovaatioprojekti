@@ -70,8 +70,8 @@ def test_get_user(client):
         json={"username": "alice", "password": "secret123"},
     )
 
+    assert create_response.status_code == 201
     user_id = create_response.json()["id"]
-
     response = client.get(f"/users/{user_id}")
 
     assert response.status_code == 200
