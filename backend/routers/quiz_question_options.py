@@ -38,10 +38,11 @@ def create_option(question_id: UUID, option: schemas.QuizQuestionOptionCreate, d
     
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
-    
+
     db_option = models.QuizQuestionOption(
         question_id=question_id,
         option_text=option.option_text,
+        iala_light_id=option.iala_light_id,
         is_correct=option.is_correct,
         position=option.position,
     )
@@ -57,8 +58,9 @@ def update_option(option_id: UUID, option: schemas.QuizQuestionOptionCreate, db:
     
     if db_option is None:
         raise HTTPException(status_code=404, detail="Option not found")
-    
+
     db_option.option_text = option.option_text
+    db_option.iala_light_id = option.iala_light_id
     db_option.is_correct = option.is_correct
     db_option.position = option.position
     db.commit()

@@ -21,6 +21,13 @@ class UserCreate(UserBase):
     role: Optional[UserRole] = UserRole.USER
 
 
+# Fields left out keep their current value.
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    password: Optional[str] = None
+    role: Optional[UserRole] = None
+
+
 class UserResponse(UserBase):
     id: UUID
     role: UserRole
@@ -63,6 +70,11 @@ class QuizQuestionCreate(QuizQuestionBase):
     options: List[QuizQuestionOptionCreate] = []
 
 
+# Options are managed through their own endpoints.
+class QuizQuestionUpdate(QuizQuestionBase):
+    pass
+
+
 class QuizQuestionResponse(QuizQuestionBase):
     id: UUID
     quiz_id: UUID
@@ -81,6 +93,11 @@ class QuizBase(BaseModel):
 
 class QuizCreate(QuizBase):
     questions: List[QuizQuestionCreate] = []
+
+
+# Questions are managed through their own endpoints.
+class QuizUpdate(QuizBase):
+    pass
 
 
 class QuizResponse(QuizBase):
