@@ -17,7 +17,12 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Majakka – opi yönavigoinnin valot",
+      },
+      {
+        name: "description",
+        content:
+          "Opi tunnistamaan veneiden kulkuvalot, majakoiden ja väylämerkkien loistot sekä alusten siluetit pimeän ajan navigointia varten.",
       },
     ],
     links: [
@@ -32,7 +37,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fi">
       <head>
         <HeadContent />
       </head>
