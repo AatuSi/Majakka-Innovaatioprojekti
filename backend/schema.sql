@@ -122,4 +122,122 @@ CREATE UNIQUE INDEX iala_lights_name_lower_key ON iala_lights (lower(name));
 CREATE INDEX idx_iala_lights_category ON iala_lights (category);
 CREATE INDEX idx_iala_lights_config ON iala_lights USING gin (config);
 
+--------------------------------------------------------------------------------
+-- IALA-loisteet
+--------------------------------------------------------------------------------
+
+INSERT INTO iala_lights (name, category, rhythm, description, config) VALUES
+(
+    'Pohjoinen kardinaalimerkki',
+    'Kardinaalimerkit',
+    'Q tai VQ',
+    'Väri: Musta yläosa, keltainen alaosa.
+Ylämerkki: Kaksi mustaa ylöspäin osoittavaa kolmiota.
+Valotunnus: Jatkuva pikavilkku tai nopea pikavilkkku (Q or VQ).
+Yleissääntönä merkki voidaan kiertää turvallisesti merkin pohjoispuolelta.',
+    '{
+      "color": "white",
+      "rhythm": "VQ",
+      "sequence_ms": [200, 200]
+    }'::jsonb
+),
+(
+    'Eteläinen kardinaalimerkki',
+    'Kardinaalimerkit',
+    'VQ(6) + LFl 10s',
+    'Väri: Keltainen yläosa, musta alaosa.
+Ylämerkki: Kaksi mustaa alaspäin osoittavaa kolmiota.
+Valotunnus: Kuusi nopeaa väläystä, jonka jälkeen 1 pitkä valo kymmenen sekunnin aikana (VQ(6) + LFl 10s).
+Yleissääntönä merkki voidaan kiertää turvallisesti merkin eteläpuolelta.',
+    '{
+      "color": "white",
+      "rhythm": "Q(6) + LFl 10s",
+      "sequence_ms": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 2000, 5600]
+    }'::jsonb
+),
+(
+    'Itäinen kardinaalimerkki',
+    'Kardinaalimerkit',
+    'VQ(3) 5s',
+    'Väri: Musta ylä- ja alaosa, keltainen keskiosa.
+Ylämerkki: Kaksi mustaa kolmiota, joista ylemmän kärki osoittaa ylös, ja alemman alas.
+Valotunnus: Kolme nopeaa väläystä 5 sekunnin aikana (VQ(3) 5s).
+Yleissääntönä merkki voidaan kiertää turvallisesti merkin itäpuolelta.',
+    '{
+      "color": "white",
+      "rhythm": "VQ(3) 5s",
+      "sequence_ms": [200, 200, 200, 200, 200, 4000]
+    }'::jsonb
+),
+(
+    'Läntinen kardinaalimerkki',
+    'Kardinaalimerkit',
+    'VQ(9) 10s',
+    'Väri: Keltainen ylä- ja alaosa, musta keskiosa.
+Ylämerkki: Kaksi mustaa kolmiota, joiden kärjet osoittavat toisiaan päin.
+Valotunnus: Yhdeksän nopeaa väläystä 10 sekunnin aikana (VQ(9) 10s).
+Yleissääntönä merkki voidaan kiertää turvallisesti merkin länsipuolelta.',
+    '{
+      "color": "white",
+      "rhythm": "VQ(9) 10s",
+      "sequence_ms": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 6600]
+    }'::jsonb
+),
+(
+    'Vasen merkki (A-alue)',
+    'Lateraalimerkit',
+    'Fl R 3s',
+    'Väri: Punainen.
+Ylämerkki: Yksi punainen lieriö.
+Valotunnus: Punainen valo, yksi väläys kolmen sekunnin aikana(Fl R 3s).
+Yleissääntönä IALA A-alueella vasen merkki jätetään aluksen vasemmalle puolelle kuljettaessa satamaa kohti.',
+    '{
+      "color": "red",
+      "rhythm": "Fl R 3s",
+      "sequence_ms": [500, 2500]
+    }'::jsonb
+),
+(
+    'Oikea merkki (A-alue)',
+    'Lateraalimerkit',
+    'Fl G 3s',
+    'Väri: Vihreä.
+Ylämerkki: Yksi vihreä kolmio, joka osoittaa ylös.
+Valotunnus: Vihreä valo, yksi väläys kolmen sekunnin aikana(Fl G 3s).
+Yleissääntönä IALA A-alueella oikea merkki jätetään aluksen oikealle puolelle kuljettaessa satamaa kohti.',
+    '{
+      "color": "green",
+      "rhythm": "Fl G 3s",
+      "sequence_ms": [500, 2500]
+    }'::jsonb
+),
+(
+    'Karimerkki',
+    'Erikoismerkit',
+    'Fl(2) 5s',
+    'Väri: Musta yhdellä tai useammalla punaisella raidalla.
+Ylämerkki: Kaksi mustaa palloa.
+Valotunnus: Kaksi väläystä 5 sekunnin aikana (Fl(2) 5s).
+Merkkiä käytetään varoittamaan karista.',
+    '{
+      "color": "white",
+      "rhythm": "Fl(2) 5s",
+      "sequence_ms": [500, 500, 500, 3500]
+    }'::jsonb
+),
+(
+    'Turvavesimerkki',
+    'Erikoismerkit',
+    'LFl 10s',
+    'Väri: Jaettu pystysuoraan punaiseen ja valkoiseen.
+Ylämerkki: Yksi punainen pallo.
+Valotunnus: Pitkä kahden sekunnin valo, joka näkyy 10 sekunnin aikana.
+Yleissääntönä osoittaa avointa ja turvallista vettä väylän keskellä tai alussa.',
+    '{
+      "color": "white",
+      "rhythm": "LFl 10s",
+      "sequence_ms": [2000, 8000]
+    }'::jsonb
+);
+
 COMMIT;
