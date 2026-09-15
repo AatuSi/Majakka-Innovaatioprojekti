@@ -15,7 +15,7 @@ router = APIRouter(tags=["iala_lights"])
 @router.get("", response_model=list[schemas.IalaLightResponse])
 def list_iala_lights(
     category: Optional[str] = Query(None, description="Filter by category (e.g. cardinal, lateral)"),
-    search: Optional[str] = Query(None, description="Search by name or description"),
+    search: Optional[str] = Query(None, description="Search by name, rhythm, or description"),
     db: Session = Depends(get_db),
 ):
     """List and browse IALA lights with optional category and keyword search."""
@@ -29,6 +29,7 @@ def list_iala_lights(
         query = query.filter(
             or_(
                 models.IalaLight.name.ilike(search_pattern),
+                models.IalaLight.rhythm.ilike(search_pattern),
                 models.IalaLight.description.ilike(search_pattern),
             )
         )
@@ -56,6 +57,7 @@ def create_iala_light(
     db_light = models.IalaLight(
         name=light_in.name,
         category=light_in.category,
+        rhythm=light_in.rhythm,
         description=light_in.description,
         config=light_in.config,
     )
@@ -88,6 +90,7 @@ def update_iala_light(
 
     db_light.name = light_in.name
     db_light.category = light_in.category
+    db_light.rhythm = light_in.rhythm
     db_light.description = light_in.description
     db_light.config = light_in.config
 

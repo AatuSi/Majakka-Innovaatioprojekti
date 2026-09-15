@@ -35,6 +35,7 @@ CREATE TABLE iala_lights (
     id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     name        VARCHAR(255) NOT NULL,
     category    VARCHAR(100) NOT NULL,
+    rhythm      VARCHAR(100) NOT NULL,
     description TEXT,
     config      JSONB        NOT NULL,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT now()

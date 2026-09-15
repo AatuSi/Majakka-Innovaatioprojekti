@@ -146,6 +146,7 @@ class QuizAttemptResponse(BaseModel):
 class IalaLightBase(BaseModel):
     name: str
     category: str
+    rhythm: str
     description: Optional[str] = None
     config: Dict[str, Any]
 
