@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+@keyframes flash-single {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.05; }
+}
+
+@keyframes flash-group2 {
+  0%, 12%, 20%, 32%, 100% { opacity: 1; }
+  6%, 16%, 50% { opacity: 0.05; }
+}
+
+@keyframes flash-group3 {
+  0%, 8%, 16%, 24%, 32%, 40%, 100% { opacity: 1; }
+  4%, 12%, 20%, 36%, 60% { opacity: 0.05; }
+}
+
+@keyframes flash-quick {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.05; }
+}
+
+@keyframes flash-iso {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.05; }
+}
+
+@keyframes flash-occulting {
+  0%, 75% { opacity: 1; }
+  76%, 100% { opacity: 0.05; }
+}
+
+@keyframes flash-fixed {
+  0%, 100% { opacity: 1; }
+}
+
+@keyframes flash-longflash {
+  0%, 40% { opacity: 1; }
+  41%, 100% { opacity: 0.05; }
+}
+
+@keyframes flash-morse-a {
+  0%, 8% { opacity: 1; }
+  9%, 20% { opacity: 0.05; }
+  21%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0.05; }
+}
+
+.light-flash-single {
+  animation: flash-single 3s ease-in-out infinite;
+}
+
+.light-flash-group2 {
+  animation: flash-group2 5s ease-in-out infinite;
+}
+
+.light-flash-group3 {
+  animation: flash-group3 7s ease-in-out infinite;
+}
+
+.light-flash-quick {
+  animation: flash-quick 0.8s ease-in-out infinite;
+}
+
+.light-flash-iso {
+  animation: flash-iso 2s steps(1) infinite;
+}
+
+.light-flash-occulting {
+  animation: flash-occulting 3s ease-in-out infinite;
+}
+
+.light-flash-fixed {
+  animation: flash-fixed 1s linear infinite;
+}
+
+.light-flash-longflash {
+  animation: flash-longflash 10s ease-in-out infinite;
+}
+
+.light-flash-morse-a {
+  animation: flash-morse-a 6s ease-in-out infinite;
+}
