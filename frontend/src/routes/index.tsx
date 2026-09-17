@@ -10,9 +10,9 @@ const topics = [
     lights: ["#ef4444", "#22c55e", "#f8fafc"],
   },
   {
-    title: "Loistot ja väylämerkit",
+    title: "IALA-valorytmit ja -poijumerkit",
     description:
-      "Tutustu IALA-järjestelmän mukaisiin loistoihin ja väylämerkkeihin sekä niiden vilkkumissekvensseihin ja väreihin.",
+      "Tutustu IALA-järjestelmän mukaisiin loistoihin ja niiden vilkkumissekvensseihin ja väreihin.",
     lights: ["#f59e0b", "#f8fafc"],
   },
   {
