@@ -8,6 +8,7 @@ from routers import (
     quiz_question_options,
     quiz_attempts,
     quiz_responses,
+    iala_lights_router,
 )
 
 app = FastAPI()
@@ -18,3 +19,4 @@ app.include_router(quiz_questions.router)
 app.include_router(quiz_question_options.router)
 app.include_router(quiz_attempts.router)
 app.include_router(quiz_responses.router)
+app.include_router(iala_lights_router.router, prefix="/iala-lights")

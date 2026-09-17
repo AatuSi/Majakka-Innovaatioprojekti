@@ -59,7 +59,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.put("/{user_id}", response_model=schemas.UserResponse)
 def update_user(
     user_id: UUID,
-    user: schemas.UserCreate,
+    user: schemas.UserUpdate,
     db: Session = Depends(get_db),
 ):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -67,9 +67,14 @@ def update_user(
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    db_user.username = user.username
-    db_user.password_hash = password_hasher.hash(user.password)
-    db_user.role = user.role or models.UserRole.USER
+    if user.username is not None:
+        db_user.username = user.username
+
+    if user.password is not None:
+        db_user.password_hash = password_hasher.hash(user.password)
+
+    if user.role is not None:
+        db_user.role = user.role
 
     try:
         db.commit()

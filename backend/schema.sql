@@ -113,6 +113,10 @@ CREATE INDEX idx_quiz_attempts_user_id ON quiz_attempts (user_id);
 CREATE INDEX idx_quiz_attempts_quiz_id ON quiz_attempts (quiz_id);
 CREATE INDEX idx_quiz_responses_attempt_id ON quiz_responses (attempt_id);
 
+-- One answer per question in an attempt.
+CREATE UNIQUE INDEX quiz_responses_attempt_id_question_id_key
+    ON quiz_responses (attempt_id, question_id);
+
 CREATE UNIQUE INDEX iala_lights_name_lower_key ON iala_lights (lower(name));
 CREATE INDEX idx_iala_lights_category ON iala_lights (category);
 CREATE INDEX idx_iala_lights_config ON iala_lights USING gin (config);
