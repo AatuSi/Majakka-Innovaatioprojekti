@@ -27,7 +27,7 @@ const topics = [
 
 export default function HomePage() {
   return (
-    <main className="bg-[#0b1830] text-white">
+    <>
       <section className="relative overflow-hidden px-6 pb-24 pt-20 sm:pt-28">
         <div
           aria-hidden="true"
@@ -151,6 +151,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-    </main>
+    </>
   );
 }
