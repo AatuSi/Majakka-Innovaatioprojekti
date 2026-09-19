@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
+    "generate-client": "openapi-ts -i ../backend/openapi.json -o src/client",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint",
@@ -25,6 +26,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
