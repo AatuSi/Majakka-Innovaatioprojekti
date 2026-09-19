@@ -11,15 +11,15 @@ export default function Header() {
           </span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-medium text-slate-200 sm:flex">
-          <a href="#aiheet" className="transition hover:text-amber-300">
+          <Link to="/" hash="aiheet" className="transition hover:text-amber-300">
             Aiheet
-          </a>
-          <a href="#miksi" className="transition hover:text-amber-300">
+          </Link>
+          <Link to="/" hash="miksi" className="transition hover:text-amber-300">
             Miksi tämä on tärkeää
-          </a>
-          <a href="#hanke" className="transition hover:text-amber-300">
+          </Link>
+          <Link to="/" hash="hanke" className="transition hover:text-amber-300">
             Hankkeesta
-          </a>
+          </Link>
         </nav>
       </div>
     </header>
