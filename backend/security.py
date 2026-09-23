@@ -16,7 +16,7 @@ JWT_ALGORITHM = "HS256"
 TOKEN_LIFETIME = timedelta(hours=1)
 
 password_hasher = PasswordHash.recommended()
-bearer = HTTPBearer()
+bearer = HTTPBearer(auto_error=False)
 
 
 def create_access_token(user_id: UUID) -> str:
@@ -28,9 +28,12 @@ def create_access_token(user_id: UUID) -> str:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     db: Session = Depends(get_db),
 ) -> models.User:
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     try:
         payload = jwt.decode(
             credentials.credentials,
@@ -47,3 +50,12 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return user
+
+
+def is_admin(user: models.User) -> bool:
+    return user.role == models.UserRole.ADMIN
+
+
+def authorize_owner(user: models.User, owner_id: UUID) -> None:
+    if not is_admin(user) and user.id != owner_id:
+        raise HTTPException(status_code=403, detail="Not allowed")

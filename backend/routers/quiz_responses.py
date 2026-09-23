@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import get_db
+from security import authorize_owner, get_current_user
 import models
 import schemas
 
@@ -14,31 +15,49 @@ router = APIRouter(tags=["quiz_responses"])
 
 
 @router.get("/quiz-attempts/{attempt_id}/responses", response_model=list[schemas.QuizResponseItemSchema])
-def list_responses(attempt_id: UUID, db: Session = Depends(get_db)):
+def list_responses(
+    attempt_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     attempt = db.query(models.QuizAttempt).filter(models.QuizAttempt.id == attempt_id).first()
 
     if attempt is None:
         raise HTTPException(status_code=404, detail="Attempt not found")
+
+    authorize_owner(current_user, attempt.user_id)
 
     return db.query(models.QuizResponse).filter(models.QuizResponse.attempt_id == attempt_id).all()
 
 
 @router.get("/quiz-responses/{response_id}", response_model=schemas.QuizResponseItemSchema)
-def get_response(response_id: UUID, db: Session = Depends(get_db)):
+def get_response(
+    response_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     response = db.query(models.QuizResponse).filter(models.QuizResponse.id == response_id).first()
 
     if response is None:
         raise HTTPException(status_code=404, detail="Response not found")
 
+    authorize_owner(current_user, response.attempt.user_id)
     return response
 
 
 @router.post("/quiz-attempts/{attempt_id}/responses", status_code=201, response_model=schemas.QuizResponseItemSchema)
-def create_response(attempt_id: UUID, response: schemas.QuizResponseCreate, db: Session = Depends(get_db)):
+def create_response(
+    attempt_id: UUID,
+    response: schemas.QuizResponseCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     attempt = db.query(models.QuizAttempt).filter(models.QuizAttempt.id == attempt_id).first()
 
     if attempt is None:
         raise HTTPException(status_code=404, detail="Attempt not found")
+
+    authorize_owner(current_user, attempt.user_id)
 
     question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == response.question_id).first()
 
@@ -71,11 +90,17 @@ def create_response(attempt_id: UUID, response: schemas.QuizResponseCreate, db: 
 
 
 @router.delete("/quiz-responses/{response_id}", status_code=204)
-def delete_response(response_id: UUID, db: Session = Depends(get_db)):
+def delete_response(
+    response_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     response = db.query(models.QuizResponse).filter(models.QuizResponse.id == response_id).first()
 
     if response is None:
         raise HTTPException(status_code=404, detail="Response not found")
+
+    authorize_owner(current_user, response.attempt.user_id)
 
     db.delete(response)
     db.commit()

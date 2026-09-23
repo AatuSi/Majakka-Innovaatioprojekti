@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from database import SessionLocal, get_db
 from main import app
+import models
 from security import get_current_user
 
 DATABASE_URL = os.getenv(
@@ -77,5 +78,5 @@ def anon_client():
 
 @pytest.fixture
 def client(anon_client):
-    app.dependency_overrides[get_current_user] = lambda: None
+    app.dependency_overrides[get_current_user] = lambda: models.User(role=models.UserRole.ADMIN)
     return anon_client
