@@ -1,6 +1,6 @@
 # Building the API client for the frontend
 
-The client is automatically generated via OpenAI, do not modify the frontend/src/client/*.
+The client is automatically generated via @hey-api/openapi-ts; do not modify the frontend/src/client/*.
 To generate the latest client of the backend, you should run:
 ```
 cd backend
