@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 
 from database import SessionLocal, get_db
 from main import app
+import models
+from security import get_current_user
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -155,7 +157,7 @@ def created_attempt(client, created_user, created_quiz):
 
 
 @pytest.fixture
-def client():
+def anon_client():
     db = SessionLocal()
 
     def override_get_db():
@@ -170,3 +172,9 @@ def client():
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(anon_client):
+    app.dependency_overrides[get_current_user] = lambda: models.User(role=models.UserRole.ADMIN)
+    return anon_client

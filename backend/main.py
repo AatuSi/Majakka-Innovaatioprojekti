@@ -1,7 +1,8 @@
 # App initialization, dependency injection setup
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from routers import (
+    auth,
     users,
     quizzes,
     quiz_questions,
@@ -10,13 +11,17 @@ from routers import (
     quiz_responses,
     iala_lights_router,
 )
+from security import get_current_user
 
-app = FastAPI()
+app = FastAPI(generate_unique_id_function=lambda route: route.name)
 
+protected = [Depends(get_current_user)]
+
+app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(quizzes.router)
-app.include_router(quiz_questions.router)
-app.include_router(quiz_question_options.router)
-app.include_router(quiz_attempts.router)
-app.include_router(quiz_responses.router)
-app.include_router(iala_lights_router.router, prefix="/iala-lights")
+app.include_router(quizzes.router, dependencies=protected)
+app.include_router(quiz_questions.router, dependencies=protected)
+app.include_router(quiz_question_options.router, dependencies=protected)
+app.include_router(quiz_attempts.router, dependencies=protected)
+app.include_router(quiz_responses.router, dependencies=protected)
+app.include_router(iala_lights_router.router, prefix="/iala-lights", dependencies=protected)

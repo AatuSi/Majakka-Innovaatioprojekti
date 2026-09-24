@@ -3,6 +3,7 @@ psycopg[binary]
 uvicorn[standard]
 sqlalchemy
 pwdlib[argon2]
+pyjwt
 pytest
 pytest-env
 httpx2
