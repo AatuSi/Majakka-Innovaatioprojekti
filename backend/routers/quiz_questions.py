@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from database import get_db
 import models
 import schemas
+import validation
 
 router = APIRouter(tags=["quiz_questions"])
 
@@ -45,6 +46,11 @@ def create_question(quiz_id: UUID, question: schemas.QuizQuestionCreate, db: Ses
     if quiz is None:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
+    validation.require_iala_light(db, question.iala_light_id)
+
+    for option in question.options:
+        validation.require_iala_light(db, option.iala_light_id)
+
     db_question = models.QuizQuestion(
         quiz_id=quiz_id,
         question_text=question.question_text,
@@ -75,9 +81,19 @@ def update_question(question_id: UUID, question: schemas.QuizQuestionUpdate, db:
     if db_question is None:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    db_question.question_text = question.question_text
-    db_question.iala_light_id = question.iala_light_id
-    db_question.position = question.position
+    fields = question.model_dump(exclude_unset=True)
+
+    if "iala_light_id" in fields:
+        validation.require_iala_light(db, fields["iala_light_id"])
+        db_question.iala_light_id = fields["iala_light_id"]
+
+    if "question_text" in fields:
+        db_question.question_text = fields["question_text"]
+
+    # position is NOT NULL, so an explicit null means "leave it alone".
+    if fields.get("position") is not None:
+        db_question.position = fields["position"]
+
     db.commit()
     db.refresh(db_question)
     return db_question
