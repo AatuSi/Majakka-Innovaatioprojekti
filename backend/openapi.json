@@ -909,7 +909,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuizQuestionOptionCreate"
+                "$ref": "#/components/schemas/QuizQuestionOptionUpdate"
               }
             }
           }
@@ -1623,14 +1623,17 @@
         "properties": {
           "name": {
             "type": "string",
+            "maxLength": 255,
             "title": "Name"
           },
           "category": {
             "type": "string",
+            "maxLength": 100,
             "title": "Category"
           },
           "rhythm": {
             "type": "string",
+            "maxLength": 100,
             "title": "Rhythm"
           },
           "description": {
@@ -1663,14 +1666,17 @@
         "properties": {
           "name": {
             "type": "string",
+            "maxLength": 255,
             "title": "Name"
           },
           "category": {
             "type": "string",
+            "maxLength": 100,
             "title": "Category"
           },
           "rhythm": {
             "type": "string",
+            "maxLength": 100,
             "title": "Rhythm"
           },
           "description": {
@@ -1802,7 +1808,8 @@
           "name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 255
               },
               {
                 "type": "null"
@@ -1849,6 +1856,8 @@
           },
           "position": {
             "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
             "title": "Position",
             "default": 0
           },
@@ -1896,6 +1905,8 @@
           },
           "position": {
             "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
             "title": "Position",
             "default": 0
           }
@@ -1935,6 +1946,8 @@
           },
           "position": {
             "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
             "title": "Position",
             "default": 0
           },
@@ -1961,6 +1974,59 @@
           "created_at"
         ],
         "title": "QuizQuestionOptionResponse"
+      },
+      "QuizQuestionOptionUpdate": {
+        "properties": {
+          "option_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Text"
+          },
+          "iala_light_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iala Light Id"
+          },
+          "is_correct": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Correct"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": -2147483648.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          }
+        },
+        "type": "object",
+        "title": "QuizQuestionOptionUpdate"
       },
       "QuizQuestionResponse": {
         "properties": {
@@ -1989,6 +2055,8 @@
           },
           "position": {
             "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": -2147483648.0,
             "title": "Position",
             "default": 0
           },
@@ -2050,9 +2118,17 @@
             "title": "Iala Light Id"
           },
           "position": {
-            "type": "integer",
-            "title": "Position",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": -2147483648.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           }
         },
         "type": "object",
@@ -2063,7 +2139,8 @@
           "name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 255
               },
               {
                 "type": "null"
@@ -2160,7 +2237,8 @@
           "name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 255
               },
               {
                 "type": "null"
@@ -2194,6 +2272,7 @@
         "properties": {
           "username": {
             "type": "string",
+            "maxLength": 255,
             "title": "Username"
           },
           "password": {
@@ -2223,6 +2302,7 @@
         "properties": {
           "username": {
             "type": "string",
+            "maxLength": 255,
             "title": "Username"
           },
           "id": {
@@ -2261,7 +2341,8 @@
           "username": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 255
               },
               {
                 "type": "null"

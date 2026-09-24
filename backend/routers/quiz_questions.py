@@ -6,11 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
+from security import require_admin
 import models
 import schemas
 import validation
 
 router = APIRouter(tags=["quiz_questions"])
+
+admin_only = [Depends(require_admin)]
 
 
 @router.get("/quizzes/{quiz_id}/questions", response_model=list[schemas.QuizQuestionResponse])
@@ -39,7 +42,7 @@ def get_question(question_id: UUID, db: Session = Depends(get_db)):
     return question
 
 
-@router.post("/quizzes/{quiz_id}/questions", status_code=201, response_model=schemas.QuizQuestionResponse)
+@router.post("/quizzes/{quiz_id}/questions", status_code=201, response_model=schemas.QuizQuestionResponse, dependencies=admin_only)
 def create_question(quiz_id: UUID, question: schemas.QuizQuestionCreate, db: Session = Depends(get_db)):
     quiz = db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
 
@@ -74,7 +77,7 @@ def create_question(quiz_id: UUID, question: schemas.QuizQuestionCreate, db: Ses
     return db_question
 
 
-@router.put("/quiz-questions/{question_id}", response_model=schemas.QuizQuestionResponse)
+@router.put("/quiz-questions/{question_id}", response_model=schemas.QuizQuestionResponse, dependencies=admin_only)
 def update_question(question_id: UUID, question: schemas.QuizQuestionUpdate, db: Session = Depends(get_db)):
     db_question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
 
@@ -99,7 +102,7 @@ def update_question(question_id: UUID, question: schemas.QuizQuestionUpdate, db:
     return db_question
 
 
-@router.delete("/quiz-questions/{question_id}", status_code=204)
+@router.delete("/quiz-questions/{question_id}", status_code=204, dependencies=admin_only)
 def delete_question(question_id: UUID, db: Session = Depends(get_db)):
     question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
 
