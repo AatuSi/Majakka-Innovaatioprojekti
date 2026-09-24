@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 import schemas
+import validation
 
 router = APIRouter(tags=["quiz_question_options"])
 
@@ -39,6 +40,8 @@ def create_option(question_id: UUID, option: schemas.QuizQuestionOptionCreate, d
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
 
+    validation.require_iala_light(db, option.iala_light_id)
+
     db_option = models.QuizQuestionOption(
         question_id=question_id,
         option_text=option.option_text,
@@ -53,16 +56,28 @@ def create_option(question_id: UUID, option: schemas.QuizQuestionOptionCreate, d
 
 
 @router.put("/quiz-question-options/{option_id}", response_model=schemas.QuizQuestionOptionResponse)
-def update_option(option_id: UUID, option: schemas.QuizQuestionOptionCreate, db: Session = Depends(get_db)):
+def update_option(option_id: UUID, option: schemas.QuizQuestionOptionUpdate, db: Session = Depends(get_db)):
     db_option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == option_id).first()
     
     if db_option is None:
         raise HTTPException(status_code=404, detail="Option not found")
 
-    db_option.option_text = option.option_text
-    db_option.iala_light_id = option.iala_light_id
-    db_option.is_correct = option.is_correct
-    db_option.position = option.position
+    fields = option.model_dump(exclude_unset=True)
+
+    if "iala_light_id" in fields:
+        validation.require_iala_light(db, fields["iala_light_id"])
+        db_option.iala_light_id = fields["iala_light_id"]
+
+    if "option_text" in fields:
+        db_option.option_text = fields["option_text"]
+
+    # is_correct and position are NOT NULL, so null means "leave them alone".
+    if fields.get("is_correct") is not None:
+        db_option.is_correct = fields["is_correct"]
+
+    if fields.get("position") is not None:
+        db_option.position = fields["position"]
+
     db.commit()
     db.refresh(db_option)
     return db_option
