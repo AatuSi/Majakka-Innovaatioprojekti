@@ -10,6 +10,7 @@ from database import get_db
 from security import authorize_owner, get_current_user
 import models
 import schemas
+import validation
 
 router = APIRouter(tags=["quiz_responses"])
 
@@ -27,7 +28,12 @@ def list_responses(
 
     authorize_owner(current_user, attempt.user_id)
 
-    return db.query(models.QuizResponse).filter(models.QuizResponse.attempt_id == attempt_id).all()
+    return (
+        db.query(models.QuizResponse)
+        .filter(models.QuizResponse.attempt_id == attempt_id)
+        .order_by(models.QuizResponse.created_at, models.QuizResponse.id)
+        .all()
+    )
 
 
 @router.get("/quiz-responses/{response_id}", response_model=schemas.QuizResponseItemSchema)
@@ -58,16 +64,12 @@ def create_response(
         raise HTTPException(status_code=404, detail="Attempt not found")
 
     authorize_owner(current_user, attempt.user_id)
-
-    question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == response.question_id).first()
-
-    if question is None:
-        raise HTTPException(status_code=404, detail="Question not found")
-
-    option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == response.selected_option_id).first()
-
-    if option is None:
-        raise HTTPException(status_code=404, detail="Option not found")
+    validation.require_answer_is_consistent(
+        db,
+        attempt.quiz_id,
+        response.question_id,
+        response.selected_option_id,
+    )
 
     db_response = models.QuizResponse(
         attempt_id=attempt_id,

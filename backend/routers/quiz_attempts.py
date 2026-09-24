@@ -3,12 +3,14 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
 from security import authorize_owner, get_current_user, is_admin
 import models
 import schemas
+import validation
 
 router = APIRouter(prefix="/quiz-attempts", tags=["quiz_attempts"])
 
@@ -23,7 +25,7 @@ def list_attempts(
     if not is_admin(current_user):
         query = query.filter(models.QuizAttempt.user_id == current_user.id)
 
-    return query.all()
+    return query.order_by(models.QuizAttempt.created_at, models.QuizAttempt.id).all()
 
 
 @router.get("/{attempt_id}", response_model=schemas.QuizAttemptResponse)
@@ -59,6 +61,24 @@ def create_attempt(
     if quiz is None:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
+    answered_question_ids = set()
+
+    for response in attempt.responses:
+        validation.require_answer_is_consistent(
+            db,
+            attempt.quiz_id,
+            response.question_id,
+            response.selected_option_id,
+        )
+
+        if response.question_id in answered_question_ids:
+            raise HTTPException(
+                status_code=409,
+                detail="This question has already been answered in this attempt",
+            )
+
+        answered_question_ids.add(response.question_id)
+
     db_attempt = models.QuizAttempt(
         user_id=attempt.user_id,
         quiz_id=attempt.quiz_id,
@@ -73,7 +93,17 @@ def create_attempt(
         )
 
     db.add(db_attempt)
-    db.commit()
+
+    # Backstop: the checks above race against concurrent writers.
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="This question has already been answered in this attempt",
+        )
+
     db.refresh(db_attempt)
     return db_attempt
 
