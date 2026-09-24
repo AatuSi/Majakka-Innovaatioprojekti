@@ -41,7 +41,13 @@ class Quiz(Base):
     name = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan")
+    # Ordered so the nested serialization matches GET /quizzes/{id}/questions.
+    questions = relationship(
+        "QuizQuestion",
+        back_populates="quiz",
+        cascade="all, delete-orphan",
+        order_by="QuizQuestion.position",
+    )
     attempts = relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")
 
 
@@ -57,7 +63,13 @@ class QuizQuestion(Base):
 
     quiz = relationship("Quiz", back_populates="questions")
     iala_light = relationship("IalaLight", back_populates="questions")
-    options = relationship("QuizQuestionOption", back_populates="question", cascade="all, delete-orphan")
+    # Ordered so the nested serialization matches GET /quiz-questions/{id}/options.
+    options = relationship(
+        "QuizQuestionOption",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        order_by="QuizQuestionOption.position",
+    )
     responses = relationship("QuizResponse", back_populates="question", cascade="all, delete-orphan")
 
 
@@ -87,7 +99,13 @@ class QuizAttempt(Base):
 
     user = relationship("User", back_populates="attempts")
     quiz = relationship("Quiz", back_populates="attempts")
-    responses = relationship("QuizResponse", back_populates="attempt", cascade="all, delete-orphan")
+    # created_at ties within a transaction, so id breaks the tie deterministically.
+    responses = relationship(
+        "QuizResponse",
+        back_populates="attempt",
+        cascade="all, delete-orphan",
+        order_by="QuizResponse.created_at, QuizResponse.id",
+    )
 
 
 class QuizResponse(Base):
