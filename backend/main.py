@@ -1,6 +1,8 @@
 # App initialization, dependency injection setup
 
 from fastapi import Depends, FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DataError
 from routers import (
     auth,
     users,
@@ -25,3 +27,9 @@ app.include_router(quiz_question_options.router, dependencies=protected)
 app.include_router(quiz_attempts.router, dependencies=protected)
 app.include_router(quiz_responses.router, dependencies=protected)
 app.include_router(iala_lights_router.router, prefix="/iala-lights", dependencies=protected)
+
+
+# Postgres still rejects what the schemas do not bound, such as NUL bytes.
+@app.exception_handler(DataError)
+def reject_invalid_data(request, exc):
+    return JSONResponse(status_code=422, content={"detail": "Invalid data"})
