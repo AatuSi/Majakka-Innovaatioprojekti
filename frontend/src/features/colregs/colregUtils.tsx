@@ -1,10 +1,16 @@
 import type { ReactElement } from "react";
 
+/* ===========================================================================
+ * Domain model
+ * ========================================================================== */
+
 export type Rule = 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30;
 export type Color = "white" | "red" | "green" | "yellow";
+/** Illustrative fixture position: x to starboard, y forward, z upward. */
 export type Vec3 = readonly [x: number, y: number, z: number];
 export type Side = "port" | "starboard";
 export type State = "making-way" | "stopped" | "anchored";
+
 export type Shape =
   | "ball"
   | "diamond"
@@ -13,7 +19,10 @@ export type Shape =
   | "cones-apexes-together"
   | "cylinder"
   | "alpha-flag";
+
+/** Bearing sector in degrees clockwise from the bow, centred on `center`. */
 export type Sector = Readonly<{ center: number; width: number }>;
+
 export interface Light {
   readonly id: string;
   readonly color: Color;
@@ -22,11 +31,13 @@ export interface Light {
   readonly flash?: { readonly periodMs: number; readonly onMs: number; readonly phaseMs: number };
   readonly highIntensity?: boolean;
 }
+
 export interface DayShape {
   readonly id: string;
   readonly shape: Shape;
   readonly position: Vec3;
 }
+
 export interface Display {
   readonly rule: Rule;
   readonly lights: readonly Light[];
@@ -35,18 +46,24 @@ export interface Display {
   readonly deckLighting: boolean;
 }
 
-type Power = { readonly secondMasthead?: boolean };
-type Anchor = { readonly twoAnchorLights?: boolean; readonly illuminateDeck?: boolean };
-type Sail = { readonly rig?: "separate" | "tricolor" | "red-over-green" };
-type Tow = Power & { readonly towLengthM: number };
-type Ordinary =
-  | ({ readonly propulsion: "power" } & Power)
-  | ({ readonly propulsion: "sail" } & Sail);
-type FishingMotion = { readonly state: State };
+/* ---------------------------------------------------------------------------
+ * Scenarios
+ *
+ * Optional fields pick a permitted alternative from the Rules; mandatory
+ * lights can never be switched off.
+ * ------------------------------------------------------------------------- */
 
-/** Optional choices select permitted alternatives; required lights cannot be disabled. */
+type PowerDrivenOptions = { readonly secondMasthead?: boolean };
+type AnchorOptions = { readonly twoAnchorLights?: boolean; readonly illuminateDeck?: boolean };
+type SailingRigOptions = { readonly rig?: "separate" | "tricolor" | "red-over-green" };
+type TowingOptions = PowerDrivenOptions & { readonly towLengthM: number };
+type OrdinaryVessel =
+  | ({ readonly propulsion: "power" } & PowerDrivenOptions)
+  | ({ readonly propulsion: "sail" } & SailingRigOptions);
+type FishingState = { readonly state: State };
+
 export type Scenario = { readonly lengthM: number } & (
-  | ({ readonly rule: 23; readonly kind: "power" | "air-cushion" | "wig" } & Power)
+  | ({ readonly rule: 23; readonly kind: "power" | "air-cushion" | "wig" } & PowerDrivenOptions)
   | { readonly rule: 23; readonly kind: "under-12-all-round"; readonly offsetWhiteX?: number }
   | {
       readonly rule: 23;
@@ -54,8 +71,8 @@ export type Scenario = { readonly lengthM: number } & (
       readonly maximumSpeedKnots: number;
       readonly sidelightsPracticable: boolean;
     }
-  | ({ readonly rule: 24; readonly kind: "towing-astern" } & Tow)
-  | ({ readonly rule: 24; readonly kind: "pushing" | "towing-alongside" | "composite" } & Power)
+  | ({ readonly rule: 24; readonly kind: "towing-astern" } & TowingOptions)
+  | ({ readonly rule: 24; readonly kind: "pushing" | "towing-alongside" | "composite" } & PowerDrivenOptions)
   | { readonly rule: 24; readonly kind: "towed"; readonly towLengthM: number }
   | { readonly rule: 24; readonly kind: "pushed" | "towed-alongside" }
   | {
@@ -66,11 +83,11 @@ export type Scenario = { readonly lengthM: number } & (
       readonly dracone?: boolean;
     }
   | { readonly rule: 24; readonly kind: "tow-display-impracticable" }
-  | ({ readonly rule: 24; readonly kind: "assistance-tow-impracticable" } & Power)
-  | ({ readonly rule: 25; readonly kind: "sailing" } & Sail)
+  | ({ readonly rule: 24; readonly kind: "assistance-tow-impracticable" } & PowerDrivenOptions)
+  | ({ readonly rule: 25; readonly kind: "sailing" } & SailingRigOptions)
   | { readonly rule: 25; readonly kind: "small-sail-torch" | "oars-torch" }
-  | ({ readonly rule: 25; readonly kind: "oars-sailing-lights" } & Sail)
-  | ({ readonly rule: 25; readonly kind: "motor-sailing" } & Power)
+  | ({ readonly rule: 25; readonly kind: "oars-sailing-lights" } & SailingRigOptions)
+  | ({ readonly rule: 25; readonly kind: "motor-sailing" } & PowerDrivenOptions)
   | ({
       readonly rule: 26;
       readonly kind: "trawling";
@@ -78,546 +95,874 @@ export type Scenario = { readonly lengthM: number } & (
       /** Set only for fishing in close proximity (26(d), Annex II). */
       readonly netSignal?: "shooting" | "hauling" | "fast";
       readonly pairTrawling?: boolean;
-    } & FishingMotion)
+    } & FishingState)
   | ({
       readonly rule: 26;
       readonly kind: "fishing";
       readonly gear?: { readonly extentM: number; readonly bearingDeg: number };
       /** Optional Annex II display; only when hampered by purse-seine gear. */
       readonly purseSeineHampered?: boolean;
-    } & FishingMotion)
-  | ({ readonly rule: 26; readonly kind: "not-fishing" } & Ordinary)
+    } & FishingState)
+  | ({ readonly rule: 26; readonly kind: "not-fishing" } & OrdinaryVessel)
   | { readonly rule: 27; readonly kind: "nuc"; readonly makingWay: boolean }
-  | ({ readonly rule: 27; readonly kind: "ram"; readonly state: State } & Power & Anchor)
-  | ({ readonly rule: 27; readonly kind: "restricted-towing" } & Tow)
+  | ({ readonly rule: 27; readonly kind: "ram"; readonly state: State } & PowerDrivenOptions & AnchorOptions)
+  | ({ readonly rule: 27; readonly kind: "restricted-towing" } & TowingOptions)
   | ({
       readonly rule: 27;
       readonly kind: "dredging";
       readonly state: State;
       readonly obstructionSide?: Side;
-    } & Power)
+    } & PowerDrivenOptions)
   | { readonly rule: 27; readonly kind: "diving-small" }
-  | ({ readonly rule: 27; readonly kind: "mine-clearance"; readonly state: State } & Power & Anchor)
+  | ({ readonly rule: 27; readonly kind: "mine-clearance"; readonly state: State } & PowerDrivenOptions & AnchorOptions)
   | { readonly rule: 27; readonly kind: "under-12-exemption" }
   | ({
       readonly rule: 28;
       readonly kind: "constrained-draught";
       readonly showOptionalSignal?: boolean;
-    } & Power)
+    } & PowerDrivenOptions)
   | ({
       readonly rule: 29;
       readonly kind: "pilot";
       readonly state: "underway" | "anchored";
-    } & Anchor)
-  | ({ readonly rule: 29; readonly kind: "off-duty" } & Ordinary)
-  | ({ readonly rule: 30; readonly kind: "anchored" } & Anchor)
+    } & AnchorOptions)
+  | ({ readonly rule: 29; readonly kind: "off-duty" } & OrdinaryVessel)
+  | ({ readonly rule: 30; readonly kind: "anchored" } & AnchorOptions)
   | ({
       readonly rule: 30;
       readonly kind: "aground";
       readonly signalsPracticable?: boolean;
       readonly showOptionalUnder12Signals?: boolean;
-    } & Anchor)
+    } & AnchorOptions)
   | { readonly rule: 30; readonly kind: "under-7-anchor-exemption" }
 );
 
-const ALL: Sector = { center: 0, width: 360 };
-const FORWARD: Sector = { center: 0, width: 225 };
-const AFT: Sector = { center: 180, width: 135 };
+type Rule23Scenario = Extract<Scenario, { rule: 23 }>;
+type Rule24Scenario = Extract<Scenario, { rule: 24 }>;
+type Rule25Scenario = Extract<Scenario, { rule: 25 }>;
+type Rule26Scenario = Extract<Scenario, { rule: 26 }>;
+type Rule27Scenario = Extract<Scenario, { rule: 27 }>;
+type Rule28Scenario = Extract<Scenario, { rule: 28 }>;
+type Rule29Scenario = Extract<Scenario, { rule: 29 }>;
+type Rule30Scenario = Extract<Scenario, { rule: 30 }>;
+
+/* ===========================================================================
+ * Light arcs and fixture positions
+ *
+ * Bearings are measured clockwise from the bow. Coordinates are illustrative.
+ * ========================================================================== */
+
+const ALL_AROUND: Sector = { center: 0, width: 360 };
+const AHEAD: Sector = { center: 0, width: 225 }; // masthead-light arc
+const ASTERN: Sector = { center: 180, width: 135 }; // stern-light arc
 const PORT: Sector = { center: 303.75, width: 112.5 };
 const STARBOARD: Sector = { center: 56.25, width: 112.5 };
-const P = {
-  fore: [0, 20, 34],
-  aft: [0, -20, 46],
+
+const POS = {
+  foreMasthead: [0, 20, 34],
+  aftMasthead: [0, -20, 46],
   stern: [0, -40, 6],
-  signal: [0, 0, 26],
+  signalStack: [0, 0, 26],
   anchorFore: [0, 35, 30],
   anchorAft: [0, -35, 12],
 } as const satisfies Record<string, Vec3>;
-const GAP = 6;
-const positive = (n: number) => Number.isFinite(n) && n > 0;
-const requireThat: (ok: boolean, message: string) => asserts ok = (ok, message) => {
+
+const STACK_GAP = 6;
+
+/* Length thresholds from the Rules (all in metres). */
+const SECOND_MASTHEAD_MIN_LENGTH = 50;
+const SINGLE_ANCHOR_LIGHT_MAX_LENGTH = 50; // below this, one anchor light suffices
+const DECK_LIGHTING_MIN_LENGTH = 100;
+const THREE_MASTHEAD_LIGHTS_MIN_TOW_LENGTH = 200; // strictly greater than
+const GEAR_SIGNAL_MIN_EXTENT = 150; // strictly greater than
+const SIDE_TOW_LIGHTS_MIN_BREADTH = 25;
+
+/* ===========================================================================
+ * Fixture factories and small validation helpers
+ * ========================================================================== */
+
+function assertCondition(ok: boolean, message: string): asserts ok {
   if (!ok) throw new RangeError(message);
-};
-const light = (id: string, color: Color, position: Vec3, sector = ALL): Light => ({
+}
+function assertPositiveFinite(value: number, name: string): void {
+  assertCondition(Number.isFinite(value) && value > 0, `${name} must be a positive finite number.`);
+}
+function assertFinite(value: number, name: string): void {
+  assertCondition(Number.isFinite(value), `${name} must be finite.`);
+}
+function assertLengthBelow(lengthM: number, maxExclusive: number, ruleText: string): void {
+  assertCondition(lengthM < maxExclusive, `${ruleText} requires length < ${maxExclusive} m.`);
+}
+
+const makeLight = (id: string, color: Color, position: Vec3, sector: Sector = ALL_AROUND): Light => ({
   id,
   color,
   position,
   sector,
 });
-const shape = (id: string, kind: Shape, position: Vec3): DayShape => ({
-  id,
-  shape: kind,
-  position,
-});
-const stack = (
+const makeShape = (id: string, kind: Shape, position: Vec3): DayShape => ({ id, shape: kind, position });
+
+/** One light per color, stacked vertically downward from `position`. */
+function stackedLights(
   id: string,
   colors: readonly Color[],
-  [x, y, z]: Vec3 = P.signal,
-  sector = ALL,
-): Light[] => colors.map((color, i) => light(`${id}-${i}`, color, [x, y, z - i * GAP], sector));
-const shapes = (id: string, kinds: readonly Shape[], [x, y, z]: Vec3 = P.signal): DayShape[] =>
-  kinds.map((kind, i) => shape(`${id}-${i}`, kind, [x, y, z - i * GAP]));
-const sides = (forward = 10, combined = false): Light[] => [
-  light("port", "red", [combined ? 0 : -10, forward, 6], PORT),
-  light("starboard", "green", [combined ? 0 : 10, forward, 6], STARBOARD),
-];
-const stern = () => light("stern", "white", P.stern, AFT);
-const running = () => [...sides(), stern()];
-const power = (length: number, second = false): Light[] => [
-  light("masthead-forward", "white", P.fore, FORWARD),
-  ...(length >= 50 || second ? [light("masthead-aft", "white", P.aft, FORWARD)] : []),
-  ...running(),
-];
-const anchorLights = (length: number, two = false): Light[] =>
-  length >= 50 || two
-    ? [light("anchor-forward", "white", P.anchorFore), light("anchor-aft", "white", P.anchorAft)]
-    : [light("anchor", "white", P.anchorFore)];
-const towing = (length: number, towLength: number, second = false): Light[] => {
-  requireThat(positive(towLength), "towLengthM must be positive.");
+  position: Vec3 = POS.signalStack,
+  sector: Sector = ALL_AROUND,
+): Light[] {
+  return colors.map((color, index) =>
+    makeLight(`${id}-${index}`, color, [position[0], position[1], position[2] - index * STACK_GAP], sector),
+  );
+}
+
+function stackedShapes(id: string, kinds: readonly Shape[], position: Vec3 = POS.signalStack): DayShape[] {
+  return kinds.map((kind, index) =>
+    makeShape(`${id}-${index}`, kind, [position[0], position[1], position[2] - index * STACK_GAP]),
+  );
+}
+
+/** Sidelights, either as separate fixtures or combined in one lantern. */
+function sidelights(forwardY = 10, combinedLantern = false): Light[] {
+  const x = combinedLantern ? 0 : 10;
   return [
-    ...stack(
-      "towing-masthead",
-      towLength > 200 ? ["white", "white", "white"] : ["white", "white"],
-      P.fore,
-      FORWARD,
-    ),
-    ...(length >= 50 || second ? [light("masthead-aft", "white", P.aft, FORWARD)] : []),
-    ...running(),
-    light("towing", "yellow", [0, -40, 12], AFT),
+    makeLight("port", "red", [-x, forwardY, 6], PORT),
+    makeLight("starboard", "green", [x, forwardY, 6], STARBOARD),
   ];
-};
-function sailing(length: number, rig: Sail["rig"] = "separate"): Light[] {
+}
+const sternLight = (): Light => makeLight("stern", "white", POS.stern, ASTERN);
+const underwayLights = (): Light[] => [...sidelights(), sternLight()];
+
+/* ===========================================================================
+ * Reusable light sets (Rules 23/25 and vessels in ordinary service)
+ * ========================================================================== */
+
+function powerDrivenLights(lengthM: number, secondMasthead = false): Light[] {
+  const lights = [makeLight("masthead-forward", "white", POS.foreMasthead, AHEAD)];
+  if (lengthM >= SECOND_MASTHEAD_MIN_LENGTH || secondMasthead) {
+    lights.push(makeLight("masthead-aft", "white", POS.aftMasthead, AHEAD));
+  }
+  return [...lights, ...underwayLights()];
+}
+
+function anchorLights(lengthM: number, twoAnchorLights = false): Light[] {
+  if (lengthM < SINGLE_ANCHOR_LIGHT_MAX_LENGTH && !twoAnchorLights) {
+    return [makeLight("anchor", "white", POS.anchorFore)];
+  }
+  return [
+    makeLight("anchor-forward", "white", POS.anchorFore),
+    makeLight("anchor-aft", "white", POS.anchorAft),
+  ];
+}
+
+function towingVesselLights(
+  lengthM: number,
+  towLengthM: number,
+  secondMasthead = false,
+  showTowLight = true,
+): Light[] {
+  assertCondition(Number.isFinite(towLengthM) && towLengthM > 0, "towLengthM must be positive.");
+  // Long tows (> 200 m) add a third white masthead light.
+  const mastheadStack: readonly Color[] =
+    towLengthM > THREE_MASTHEAD_LIGHTS_MIN_TOW_LENGTH
+      ? ["white", "white", "white"]
+      : ["white", "white"];
+  const lights = stackedLights("towing-masthead", mastheadStack, POS.foreMasthead, AHEAD);
+
+  if (lengthM >= SECOND_MASTHEAD_MIN_LENGTH || secondMasthead) {
+    lights.push(makeLight("masthead-aft", "white", POS.aftMasthead, AHEAD));
+  }
+  lights.push(...underwayLights());
+  if (showTowLight) lights.push(makeLight("towing", "yellow", [0, -40, 12], ASTERN));
+  return lights;
+}
+
+function sailingLights(lengthM: number, rig: SailingRigOptions["rig"] = "separate"): Light[] {
   if (rig === "tricolor") {
-    requireThat(length < 20, "The combined mast-top lantern requires length < 20 m.");
+    assertCondition(lengthM < 20, "The combined mast-top lantern requires length < 20 m.");
     const position: Vec3 = [0, 0, 34];
     return [
-      light("port", "red", position, PORT),
-      light("starboard", "green", position, STARBOARD),
-      light("stern", "white", position, AFT),
+      makeLight("port", "red", position, PORT),
+      makeLight("starboard", "green", position, STARBOARD),
+      makeLight("stern", "white", position, ASTERN),
     ];
   }
   return [
-    ...running(),
-    ...(rig === "red-over-green" ? stack("sailing", ["red", "green"], [0, 0, 34]) : []),
+    ...underwayLights(),
+    ...(rig === "red-over-green" ? stackedLights("sailing", ["red", "green"], [0, 0, 34]) : []),
   ];
 }
 
-export function buildDisplay(s: Scenario): Display {
-  requireThat(positive(s.lengthM), "lengthM must be a positive finite number.");
-  const lights: Light[] = [],
-    day: DayShape[] = [],
-    notes: string[] = [];
-  let deckLighting = false;
-  const addAnchor = (options: Anchor = {}, includeBall = true) => {
-    lights.push(...anchorLights(s.lengthM, options.twoAnchorLights));
-    if (includeBall) day.push(shape("anchor-ball", "ball", P.anchorFore));
-    deckLighting = s.lengthM >= 100 || !!options.illuminateDeck;
-  };
-  const addRam = () => {
-    lights.push(...stack("ram", ["red", "white", "red"]));
-    day.push(...shapes("ram", ["ball", "diamond", "ball"]));
-  };
-  const addTow = (options: Tow) => {
-    lights.push(...towing(s.lengthM, options.towLengthM, options.secondMasthead));
-    if (options.towLengthM > 200) day.push(shape("tow-diamond", "diamond", [0, 20, 26]));
-  };
-  switch (s.rule) {
-    case 23:
-      if (s.kind === "under-12-all-round") {
-        requireThat(s.lengthM < 12, "23(d)(i) requires length < 12 m.");
-        const x = s.offsetWhiteX ?? 0;
-        requireThat(Number.isFinite(x), "offsetWhiteX must be finite.");
-        lights.push(light("all-round-white", "white", [x, 20, 34]), ...sides(10, x !== 0));
-        if (x !== 0)
-          notes.push(
-            "23(d)(iii): offset fitting only if centreline fitting is impracticable; use combined sidelights.",
-          );
-      } else if (s.kind === "under-7-slow") {
-        requireThat(
-          s.lengthM < 7 && s.maximumSpeedKnots >= 0 && s.maximumSpeedKnots <= 7,
-          "23(d)(ii) requires length < 7 m and maximum speed <= 7 knots.",
-        );
-        lights.push(light("all-round-white", "white", P.fore));
-        if (s.sidelightsPracticable) lights.push(...sides());
-        notes.push("Sidelights must also be shown if practicable.");
-      } else {
-        lights.push(...power(s.lengthM, s.secondMasthead));
-        if (s.kind !== "power") {
-          lights.push({
-            ...light("special-flash", s.kind === "wig" ? "red" : "yellow", [0, -12, 54]),
-            flash: { periodMs: 500, onMs: 250, phaseMs: 0 },
-            highIntensity: s.kind === "wig",
-          });
-          notes.push(
-            s.kind === "wig"
-              ? "23(c): take-off, landing or flight near the surface only."
-              : "23(b): air-cushion vessel in non-displacement mode only.",
-          );
-        }
-      }
-      break;
-    case 24:
-      switch (s.kind) {
-        case "towing-astern":
-          addTow(s);
-          break;
-        case "pushing":
-        case "towing-alongside":
-          lights.push(...towing(s.lengthM, 200, s.secondMasthead).filter((l) => l.id !== "towing"));
-          break;
-        case "composite":
-          lights.push(...power(s.lengthM, s.secondMasthead));
-          notes.push("24(b): rigid composite unit; lengthM is the length of the unit.");
-          break;
-        case "towed":
-          requireThat(positive(s.towLengthM), "towLengthM must be positive.");
-          lights.push(...running());
-          if (s.towLengthM > 200) day.push(shape("tow-diamond", "diamond", P.signal));
-          break;
-        case "pushed":
-          lights.push(...sides(38));
-          break;
-        case "towed-alongside":
-          lights.push(...sides(38), stern());
-          break;
-        case "submerged-tow": {
-          requireThat(
-            positive(s.breadthM) && positive(s.towLengthM),
-            "Breadth and tow length must be positive.",
-          );
-          // Compress physical dimensions to a common drawing frame. Longitudinal
-          // marker count is derived from metres; intermediate gaps are <= 100 m.
-          const segments = Math.ceil(s.lengthM / 100);
-          for (let i = 0; i <= segments; i++) {
-            if (i === 0 && s.dracone) continue;
-            lights.push(light(`tow-end-${i}`, "white", [0, 40 - (80 * i) / segments, 6]));
-          }
-          if (s.breadthM >= 25)
-            lights.push(
-              light("tow-port", "white", [-16, 0, 6]),
-              light("tow-starboard", "white", [16, 0, 6]),
-            );
-          day.push(shape("tow-aft-diamond", "diamond", [0, -40, 14]));
-          if (s.towLengthM > 200) day.push(shape("tow-forward-diamond", "diamond", [0, 40, 14]));
-          notes.push(
-            "24(g): represents the last object or the combined tow; dimensions refer to that object/group.",
-          );
-          break;
-        }
-        case "tow-display-impracticable":
-          notes.push(
-            "24(h): take all possible measures to light the tow or indicate its presence; no fixed substitute light pattern.",
-          );
-          break;
-        case "assistance-tow-impracticable":
-          lights.push(...power(s.lengthM, s.secondMasthead));
-          notes.push(
-            "24(i): only for a vessel not normally towing, assisting a vessel in distress/need, when towing lights are impracticable. Indicate the relationship, particularly by illuminating the towline.",
-          );
-          break;
-      }
-      notes.push(
-        "24(f): vessels pushed/towed alongside in a group are lighted as one vessel. Tow length is measured from towing vessel stern to the far end of the tow.",
-      );
-      break;
-    case 25:
-      switch (s.kind) {
-        case "sailing":
-        case "oars-sailing-lights":
-          lights.push(...sailing(s.lengthM, s.rig));
-          break;
-        case "small-sail-torch":
-          requireThat(s.lengthM < 7, "25(d)(i) requires length < 7 m.");
-          notes.push("Use the normal sailing lights if practicable.");
-          notes.push(
-            "Keep a white torch/lantern ready; exhibit in time to prevent collision. Not a permanent all-round light.",
-          );
-          break;
-        case "oars-torch":
-          notes.push(
-            "25(d)(ii): keep a white torch/lantern ready; exhibit in time to prevent collision.",
-          );
-          break;
-        case "motor-sailing":
-          lights.push(...power(s.lengthM, s.secondMasthead));
-          day.push(shape("motoring-cone", "cone-down", [0, 25, 26]));
-          notes.push(
-            "25(e): cone forward by day; propulsion by machinery means Rule 23 lights at night.",
-          );
-          break;
-      }
-      break;
-    case 26:
-      if (s.kind === "not-fishing") {
-        lights.push(
-          ...(s.propulsion === "power"
-            ? power(s.lengthM, s.secondMasthead)
-            : sailing(s.lengthM, s.rig)),
-        );
-        notes.push(
-          "26(e): ordinary underway display, with no fishing signals. For anchor/grounded state use Rule 30.",
-        );
-        break;
-      }
-      lights.push(...stack("fishing", [s.kind === "trawling" ? "green" : "red", "white"]));
-      day.push(shape("fishing-cones", "cones-apexes-together", P.signal));
-      if (s.state === "making-way") lights.push(...running());
-      if (s.kind === "trawling") {
-        if (s.lengthM >= 50 || s.aftMasthead)
-          lights.push(light("trawling-masthead", "white", P.aft, FORWARD));
-        if (s.netSignal) {
-          const colors = {
-            shooting: ["white", "white"],
-            hauling: ["white", "red"],
-            fast: ["red", "red"],
-          } as const;
-          lights.push(...stack("net", colors[s.netSignal], [12, 0, 14]));
-          notes.push(
-            "26(d), Annex II: additional net signals in close proximity; compulsory at >= 20 m, permitted below 20 m. Range >= 1 mile and less than the main fishing lights.",
-          );
-        }
-        if (s.pairTrawling)
-          notes.push(
-            "Annex II: night searchlight forward and toward the other trawler; compulsory at >= 20 m, permitted below 20 m. Not represented as an all-round light.",
-          );
-      } else {
-        if (s.gear) {
-          requireThat(
-            Number.isFinite(s.gear.extentM) &&
-              s.gear.extentM >= 0 &&
-              Number.isFinite(s.gear.bearingDeg),
-            "Invalid gear extent/bearing.",
-          );
-          if (s.gear.extentM > 150) {
-            const a = (s.gear.bearingDeg * Math.PI) / 180;
-            const position: Vec3 = [20 * Math.sin(a), 20 * Math.cos(a), 20];
-            lights.push(light("gear", "white", position));
-            day.push(shape("gear-cone", "cone-up", position));
-          }
-        }
-        if (s.purseSeineHampered) {
-          lights.push(
-            ...stack("purse-seine", ["yellow", "yellow"], [12, 0, 14]).map((l, i) => ({
-              ...l,
-              flash: { periodMs: 2000, onMs: 1000, phaseMs: i * 1000 },
-            })),
-          );
-          notes.push(
-            "26(d), Annex II: optional alternating yellow signals, only while hampered by purse-seine gear; range >= 1 mile and less than main fishing lights.",
-          );
-        }
-      }
-      notes.push(
-        "26(a): these fishing signals also apply at anchor; do not add ordinary anchor lights.",
-      );
-      break;
-    case 27:
-      switch (s.kind) {
-        case "nuc":
-          lights.push(...stack("nuc", ["red", "red"]));
-          day.push(...shapes("nuc", ["ball", "ball"]));
-          if (s.makingWay) lights.push(...running());
-          break;
-        case "ram":
-          addRam();
-          if (s.state === "making-way") lights.push(...power(s.lengthM, s.secondMasthead));
-          if (s.state === "anchored") addAnchor(s);
-          break;
-        case "restricted-towing":
-          addRam();
-          addTow(s);
-          break;
-        case "dredging": {
-          addRam();
-          if (s.state === "making-way") lights.push(...power(s.lengthM, s.secondMasthead));
-          if (s.obstructionSide) {
-            const x = s.obstructionSide === "starboard" ? 16 : -16;
-            lights.push(
-              ...stack("obstruction", ["red", "red"], [x, 0, 18]),
-              ...stack("passage", ["green", "green"], [-x, 0, 18]),
-            );
-            day.push(
-              ...shapes("obstruction", ["ball", "ball"], [x, 0, 18]),
-              ...shapes("passage", ["diamond", "diamond"], [-x, 0, 18]),
-            );
-          }
-          notes.push("27(d): at anchor this display replaces the Rule 30 anchor signals.");
-          break;
-        }
-        case "diving-small":
-          lights.push(...stack("diving", ["red", "white", "red"]));
-          day.push(shape("diving-flag", "alpha-flag", P.signal));
-          notes.push(
-            "27(e): only when vessel size makes the full 27(d) display impracticable. Rigid Alpha flag >= 1 m high, visible all round.",
-          );
-          break;
-        case "mine-clearance":
-          if (s.state === "anchored") addAnchor(s);
-          else lights.push(...power(s.lengthM, s.secondMasthead));
-          for (const [i, position] of (
-            [
-              [0, 20, 54],
-              [-16, 20, 46],
-              [16, 20, 46],
-            ] as const
-          ).entries()) {
-            lights.push(light(`mine-${i}`, "green", position));
-            day.push(shape(`mine-${i}`, "ball", position));
-          }
-          notes.push("27(f): danger within 1000 m.");
-          break;
-        case "under-12-exemption":
-          requireThat(s.lengthM < 12, "27(g) requires length < 12 m.");
-          notes.push(
-            "27(g): Rule 27 lights/shapes are not required below 12 m, except when diving. This empty display encodes only that exemption, not duties under other rules.",
-          );
-          break;
-      }
-      if (s.lengthM < 12 && s.kind !== "diving-small")
-        notes.push("27(g): below 12 m these signals are optional unless engaged in diving.");
-      notes.push("27(h): these are not distress signals.");
-      break;
-    case 28:
-      lights.push(...power(s.lengthM, s.secondMasthead));
-      if (s.showOptionalSignal !== false) {
-        lights.push(...stack("draught", ["red", "red", "red"]));
-        day.push(shape("draught-cylinder", "cylinder", P.signal));
-      }
-      notes.push(
-        "28: additional draught signals are optional; applies to a vessel constrained by her draught.",
-      );
-      break;
-    case 29:
-      if (s.kind === "off-duty") {
-        lights.push(
-          ...(s.propulsion === "power"
-            ? power(s.lengthM, s.secondMasthead)
-            : sailing(s.lengthM, s.rig)),
-        );
-        notes.push("29(b): ordinary underway display; for anchor/grounded state use Rule 30.");
-      } else {
-        lights.push(...stack("pilot", ["white", "red"], [0, 0, 34]));
-        if (s.state === "underway") lights.push(...running());
-        else addAnchor(s);
-      }
-      break;
-    case 30:
-      if (s.kind === "under-7-anchor-exemption") {
-        requireThat(s.lengthM < 7, "30(e) requires length < 7 m.");
-        notes.push(
-          "30(e): only away from narrow channels, fairways and places where vessels normally navigate.",
-        );
-      } else if (s.kind === "anchored") addAnchor(s);
-      else {
-        addAnchor(s, false); // Three balls replace the anchor ball by day.
-        // 30(d) incorporates (a)/(b), not the deck-illumination duty in (c).
-        deckLighting = !!s.illuminateDeck;
-        if ((s.lengthM >= 12 || s.showOptionalUnder12Signals) && s.signalsPracticable !== false) {
-          lights.push(...stack("aground", ["red", "red"]));
-          day.push(...shapes("aground", ["ball", "ball", "ball"]));
-        }
-        notes.push(
-          "30(d),(f): additional aground signals if practicable; not required below 12 m. Anchor lights remain.",
-        );
-      }
-      break;
-    default:
-      return assertNever(s);
+function ordinaryVesselLights(lengthM: number, vessel: OrdinaryVessel): Light[] {
+  return vessel.propulsion === "power"
+    ? powerDrivenLights(lengthM, vessel.secondMasthead)
+    : sailingLights(lengthM, vessel.rig);
+}
+
+/* ===========================================================================
+ * Display accumulator shared by all rule builders
+ * ========================================================================== */
+
+class DisplayBuilder {
+  private readonly lights: Light[] = [];
+  private readonly dayShapes: DayShape[] = [];
+  private readonly notes: string[] = [];
+  private deckLighting = false;
+
+  addLight(...args: Parameters<typeof makeLight>): this {
+    this.lights.push(makeLight(...args));
+    return this;
   }
-  return { rule: s.rule, lights, shapes: day, notes, deckLighting };
+  addLights(...items: readonly Light[]): this {
+    this.lights.push(...items);
+    return this;
+  }
+  addShape(...args: Parameters<typeof makeShape>): this {
+    this.dayShapes.push(makeShape(...args));
+    return this;
+  }
+  addShapes(...items: readonly DayShape[]): this {
+    this.dayShapes.push(...items);
+    return this;
+  }
+  note(text: string): this {
+    this.notes.push(text);
+    return this;
+  }
+  setDeckLighting(value: boolean): this {
+    this.deckLighting = value;
+    return this;
+  }
+
+  toDisplay(rule: Rule): Display {
+    return {
+      rule,
+      lights: this.lights,
+      shapes: this.dayShapes,
+      notes: this.notes,
+      deckLighting: this.deckLighting,
+    };
+  }
 }
-function assertNever(value: never): never {
-  throw new Error(`Unknown scenario: ${JSON.stringify(value)}`);
+
+/* ---------------------------------------------------------------------------
+ * Composite signal groups reused across rules
+ * ------------------------------------------------------------------------- */
+
+/** Rule 30 anchor signals; the day ball may be suppressed (vessel aground). */
+function addAnchorSignals(
+  builder: DisplayBuilder,
+  lengthM: number,
+  options: AnchorOptions,
+  { withBall = true } = {},
+): void {
+  builder.addLights(...anchorLights(lengthM, options.twoAnchorLights));
+  if (withBall) builder.addShape("anchor-ball", "ball", POS.anchorFore);
+  builder.setDeckLighting(lengthM >= DECK_LIGHTING_MIN_LENGTH || !!options.illuminateDeck);
 }
+
+/** Rule 27(c) rigid-restricted-ability lights and shapes. */
+function addRamSignals(builder: DisplayBuilder): void {
+  builder
+    .addLights(...stackedLights("ram", ["red", "white", "red"]))
+    .addShapes(...stackedShapes("ram", ["ball", "diamond", "ball"]));
+}
+
+/** Rule 24(a)/(e) towing lights plus the > 200 m day diamond. */
+function addTowingSignals(builder: DisplayBuilder, lengthM: number, tow: TowingOptions): void {
+  builder.addLights(...towingVesselLights(lengthM, tow.towLengthM, tow.secondMasthead));
+  if (tow.towLengthM > THREE_MASTHEAD_LIGHTS_MIN_TOW_LENGTH) {
+    builder.addShape("tow-diamond", "diamond", [0, 20, 26]);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Per-kind handler maps. One handler per scenario kind, so each rule reads as
+ * a flat list of labelled cases instead of a nested switch.
+ * ------------------------------------------------------------------------- */
+
+type HandlerMap<T extends { kind: string }> = {
+  // Intersection also narrows union-valued kinds, e.g. "power" | "wig".
+  [K in T["kind"]]: (scenario: T & { kind: K }, builder: DisplayBuilder) => void;
+};
+type Handler<T extends { kind: string }> = (scenario: T, builder: DisplayBuilder) => void;
+
+function dispatch<T extends { kind: string }>(
+  handlers: HandlerMap<T>,
+  scenario: T,
+  builder: DisplayBuilder,
+): void {
+  const lookup = handlers as unknown as Partial<Record<string, Handler<T>>>;
+  const handler = lookup[scenario.kind];
+
+  if (handler === undefined) {
+    throw new RangeError(`Unknown scenario kind: ${scenario.kind}`);
+  }
+
+  handler(scenario, builder);
+}
+
+/* ===========================================================================
+ * Rule 23 — power-driven vessels
+ * ========================================================================== */
+
+const WIG_FLASH = { periodMs: 500, onMs: 250, phaseMs: 0 } as const;
+
+/** Rule 23(b)/(c) high-intensity flashing light for air-cushion vessels and WIG craft. */
+function specialCraftLight(color: "yellow" | "red"): Light {
+  return {
+    ...makeLight("special-flash", color, [0, -12, 54]),
+    flash: { ...WIG_FLASH },
+    highIntensity: color === "red", // WIG craft
+  };
+}
+
+const RULE_23_HANDLERS: HandlerMap<Rule23Scenario> = {
+  power: (s, b) => b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead)),
+
+  "air-cushion": (s, b) => {
+    b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead), specialCraftLight("yellow"));
+    b.note("23(b): air-cushion vessel in non-displacement mode only.");
+  },
+
+  wig: (s, b) => {
+    b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead), specialCraftLight("red"));
+    b.note("23(c): take-off, landing or flight near the surface only.");
+  },
+
+  "under-12-all-round": (s, b) => {
+    assertLengthBelow(s.lengthM, 12, "23(d)(i)");
+    const offsetWhiteX = s.offsetWhiteX ?? 0;
+    assertFinite(offsetWhiteX, "offsetWhiteX");
+    b.addLights(
+      makeLight("all-round-white", "white", [offsetWhiteX, 20, 34]),
+      ...sidelights(10, offsetWhiteX !== 0),
+    );
+    if (offsetWhiteX !== 0) {
+      b.note(
+        "23(d)(iii): offset fitting only if centreline fitting is impracticable; use combined sidelights.",
+      );
+    }
+  },
+
+  "under-7-slow": (s, b) => {
+    assertCondition(
+      s.lengthM < 7 && s.maximumSpeedKnots >= 0 && s.maximumSpeedKnots <= 7,
+      "23(d)(ii) requires length < 7 m and maximum speed <= 7 knots.",
+    );
+    b.addLights(makeLight("all-round-white", "white", POS.foreMasthead));
+    if (s.sidelightsPracticable) b.addLights(...sidelights());
+    b.note("Sidelights must also be shown if practicable.");
+  },
+};
+
+function buildRule23(scenario: Rule23Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_23_HANDLERS, scenario, builder);
+}
+
+/* ===========================================================================
+ * Rule 24 — towing and pushing
+ * ========================================================================== */
+
+const RULE_24_HANDLERS: HandlerMap<Rule24Scenario> = {
+  "towing-astern": (s, b) => addTowingSignals(b, s.lengthM, s),
+
+  // Pushing and towing alongside: same masthead stack as towing astern, but no yellow tow light.
+  pushing: (s, b) => b.addLights(...towingVesselLights(s.lengthM, 200, s.secondMasthead, false)),
+  "towing-alongside": (s, b) => b.addLights(...towingVesselLights(s.lengthM, 200, s.secondMasthead, false)),
+
+  composite: (s, b) => {
+    b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead));
+    b.note("24(b): rigid composite unit; lengthM is the length of the unit.");
+  },
+
+  towed: (s, b) => {
+    assertCondition(Number.isFinite(s.towLengthM) && s.towLengthM > 0, "towLengthM must be positive.");
+    b.addLights(...underwayLights());
+    if (s.towLengthM > THREE_MASTHEAD_LIGHTS_MIN_TOW_LENGTH) {
+      b.addShape("tow-diamond", "diamond", POS.signalStack);
+    }
+  },
+
+  pushed: (_, b) => b.addLights(...sidelights(38)),
+  "towed-alongside": (_, b) => b.addLights(...sidelights(38), sternLight()),
+
+  "submerged-tow": (s, b) => {
+    assertCondition(
+      Number.isFinite(s.breadthM) && s.breadthM > 0 && Number.isFinite(s.towLengthM) && s.towLengthM > 0,
+      "Breadth and tow length must be positive.",
+    );
+    // Compress physical dimensions to a common drawing frame. Longitudinal
+    // marker count is derived from metres; intermediate gaps are <= 100 m.
+    const segmentCount = Math.ceil(s.lengthM / 100);
+    for (let index = 0; index <= segmentCount; index++) {
+      if (index === 0 && s.dracone) continue;
+      b.addLight(`tow-end-${index}`, "white", [0, 40 - (80 * index) / segmentCount, 6]);
+    }
+    if (s.breadthM >= SIDE_TOW_LIGHTS_MIN_BREADTH) {
+      b.addLights(
+        makeLight("tow-port", "white", [-16, 0, 6]),
+        makeLight("tow-starboard", "white", [16, 0, 6]),
+      );
+    }
+    b.addShape("tow-aft-diamond", "diamond", [0, -40, 14]);
+    if (s.towLengthM > THREE_MASTHEAD_LIGHTS_MIN_TOW_LENGTH) {
+      b.addShape("tow-forward-diamond", "diamond", [0, 40, 14]);
+    }
+    b.note(
+      "24(g): represents the last object or the combined tow; dimensions refer to that object/group.",
+    );
+  },
+
+  "tow-display-impracticable": (_, b) => {
+    b.note(
+      "24(h): take all possible measures to light the tow or indicate its presence; no fixed substitute light pattern.",
+    );
+  },
+
+  "assistance-tow-impracticable": (s, b) => {
+    b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead));
+    b.note(
+      "24(i): only for a vessel not normally towing, assisting a vessel in distress/need, when towing lights are impracticable. Indicate the relationship, particularly by illuminating the towline.",
+    );
+  },
+};
+
+function buildRule24(scenario: Rule24Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_24_HANDLERS, scenario, builder);
+  builder.note(
+    "24(f): vessels pushed/towed alongside in a group are lighted as one vessel. Tow length is measured from towing vessel stern to the far end of the tow.",
+  );
+}
+
+/* ===========================================================================
+ * Rule 25 — sailing vessels and vessels under oars
+ * ========================================================================== */
+
+const RULE_25_HANDLERS: HandlerMap<Rule25Scenario> = {
+  sailing: (s, b) => b.addLights(...sailingLights(s.lengthM, s.rig)),
+  "oars-sailing-lights": (s, b) => b.addLights(...sailingLights(s.lengthM, s.rig)),
+
+  "small-sail-torch": (s, b) => {
+    assertLengthBelow(s.lengthM, 7, "25(d)(i)");
+    b.note("Use the normal sailing lights if practicable.");
+    b.note(
+      "Keep a white torch/lantern ready; exhibit in time to prevent collision. Not a permanent all-round light.",
+    );
+  },
+
+  "oars-torch": (_, b) => {
+    b.note(
+      "25(d)(ii): keep a white torch/lantern ready; exhibit in time to prevent collision.",
+    );
+  },
+
+  "motor-sailing": (s, b) => {
+    b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead));
+    b.addShape("motoring-cone", "cone-down", [0, 25, 26]);
+    b.note(
+      "25(e): cone forward by day; propulsion by machinery means Rule 23 lights at night.",
+    );
+  },
+};
+
+function buildRule25(scenario: Rule25Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_25_HANDLERS, scenario, builder);
+}
+
+/* ===========================================================================
+ * Rule 26 — fishing vessels
+ * ========================================================================== */
+
+const NET_SIGNAL_STACKS = {
+  shooting: ["white", "white"],
+  hauling: ["white", "red"],
+  fast: ["red", "red"],
+} as const satisfies Record<"shooting" | "hauling" | "fast", readonly Color[]>;
+
+const PURSE_SEINE_FLASH_PERIOD_MS = 2000;
+
+const RULE_26_HANDLERS: HandlerMap<Rule26Scenario> = {
+  trawling: (s, b) => {
+    b.addLights(...stackedLights("fishing", ["green", "white"]));
+    b.addShape("fishing-cones", "cones-apexes-together", POS.signalStack);
+    if (s.state === "making-way") b.addLights(...underwayLights());
+    if (s.lengthM >= SECOND_MASTHEAD_MIN_LENGTH || s.aftMasthead) {
+      b.addLight("trawling-masthead", "white", POS.aftMasthead, AHEAD);
+    }
+    if (s.netSignal) {
+      b.addLights(...stackedLights("net", NET_SIGNAL_STACKS[s.netSignal], [12, 0, 14]));
+      b.note(
+        "26(d), Annex II: additional net signals in close proximity; compulsory at >= 20 m, permitted below 20 m. Range >= 1 mile and less than the main fishing lights.",
+      );
+    }
+    if (s.pairTrawling) {
+      b.note(
+        "Annex II: night searchlight forward and toward the other trawler; compulsory at >= 20 m, permitted below 20 m. Not represented as an all-round light.",
+      );
+    }
+  },
+
+  fishing: (s, b) => {
+    b.addLights(...stackedLights("fishing", ["red", "white"]));
+    b.addShape("fishing-cones", "cones-apexes-together", POS.signalStack);
+    if (s.state === "making-way") b.addLights(...underwayLights());
+    if (s.gear) {
+      assertCondition(
+        Number.isFinite(s.gear.extentM) &&
+          s.gear.extentM >= 0 &&
+          Number.isFinite(s.gear.bearingDeg),
+        "Invalid gear extent/bearing.",
+      );
+      if (s.gear.extentM > GEAR_SIGNAL_MIN_EXTENT) {
+        const bearingRad = (s.gear.bearingDeg * Math.PI) / 180;
+        const position: Vec3 = [20 * Math.sin(bearingRad), 20 * Math.cos(bearingRad), 14];
+        b.addLight("gear", "white", position);
+        b.addShape("gear-cone", "cone-up", position);
+      }
+    }
+    if (s.purseSeineHampered) {
+      const signals = stackedLights("purse-seine", ["yellow", "yellow"], [12, 0, 14]).map(
+        (light, index) => ({
+          ...light,
+          flash: { periodMs: PURSE_SEINE_FLASH_PERIOD_MS, onMs: 1000, phaseMs: index * 1000 },
+        }),
+      );
+      b.addLights(...signals);
+      b.note(
+        "26(d), Annex II: optional alternating yellow signals, only while hampered by purse-seine gear; range >= 1 mile and less than main fishing lights.",
+      );
+    }
+  },
+
+  "not-fishing": (s, b) => {
+    b.addLights(...ordinaryVesselLights(s.lengthM, s));
+    b.note(
+      "26(e): ordinary underway display, with no fishing signals. For anchor/grounded state use Rule 30.",
+    );
+  },
+};
+
+function buildRule26(scenario: Rule26Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_26_HANDLERS, scenario, builder);
+  if (scenario.kind !== "not-fishing") {
+    builder.note(
+      "26(a): these fishing signals also apply at anchor; do not add ordinary anchor lights.",
+    );
+  }
+}
+
+/* ===========================================================================
+ * Rule 27 — vessels restricted in their ability to manoeuvre
+ * ========================================================================== */
+
+const MINE_SIGNAL_POSITIONS = [
+  [0, 20, 54],
+  [-16, 20, 46],
+  [16, 20, 46],
+] as const satisfies readonly Vec3[];
+
+const RULE_27_HANDLERS: HandlerMap<Rule27Scenario> = {
+  nuc: (s, b) => {
+    b.addLights(...stackedLights("nuc", ["red", "red"]));
+    b.addShapes(...stackedShapes("nuc", ["ball", "ball"]));
+    if (s.makingWay) b.addLights(...underwayLights());
+  },
+
+  ram: (s, b) => {
+    addRamSignals(b);
+    if (s.state === "making-way") {
+      b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead));
+    }
+    if (s.state === "anchored") addAnchorSignals(b, s.lengthM, s);
+  },
+
+  "restricted-towing": (s, b) => {
+    addRamSignals(b);
+    addTowingSignals(b, s.lengthM, s);
+  },
+
+  dredging: (s, b) => {
+    addRamSignals(b);
+    if (s.state === "making-way") {
+      b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead));
+    }
+    if (s.obstructionSide) {
+      // Red balls mark the side with the obstruction; green diamonds mark the clear side.
+      const obstructionX = s.obstructionSide === "starboard" ? 16 : -16;
+      const passageX = -obstructionX;
+      b.addLights(
+        ...stackedLights("obstruction", ["red", "red"], [obstructionX, 0, 14]),
+        ...stackedLights("passage", ["green", "green"], [passageX, 0, 14]),
+      );
+      b.addShapes(
+        ...stackedShapes("obstruction", ["ball", "ball"], [obstructionX, 0, 14]),
+        ...stackedShapes("passage", ["diamond", "diamond"], [passageX, 0, 14]),
+      );
+    }
+    b.note("27(d): at anchor this display replaces the Rule 30 anchor signals.");
+  },
+
+  "diving-small": (_, b) => {
+    b.addLights(...stackedLights("diving", ["red", "white", "red"]));
+    b.addShape("diving-flag", "alpha-flag", POS.signalStack);
+    b.note(
+      "27(e): only when vessel size makes the full 27(d) display impracticable. Rigid Alpha flag >= 1 m high, visible all round.",
+    );
+  },
+
+  "mine-clearance": (s, b) => {
+    if (s.state === "anchored") addAnchorSignals(b, s.lengthM, s);
+    else b.addLights(...powerDrivenLights(s.lengthM, s.secondMasthead));
+    MINE_SIGNAL_POSITIONS.forEach((position, index) => {
+      b.addLight(`mine-${index}`, "green", position);
+      b.addShape(`mine-${index}`, "ball", position);
+    });
+    b.note("27(f): danger within 1000 m.");
+  },
+
+  "under-12-exemption": (s, b) => {
+    assertLengthBelow(s.lengthM, 12, "27(g)");
+    b.note(
+      "27(g): Rule 27 lights/shapes are not required below 12 m, except when diving. This empty display encodes only that exemption, not duties under other rules.",
+    );
+  },
+};
+
+function buildRule27(scenario: Rule27Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_27_HANDLERS, scenario, builder);
+  if (scenario.lengthM < 12 && scenario.kind !== "diving-small") {
+    builder.note("27(g): below 12 m these signals are optional unless engaged in diving.");
+  }
+  builder.note("27(h): these are not distress signals.");
+}
+
+/* ===========================================================================
+ * Rule 28 — vessels constrained by their draught
+ * ========================================================================== */
+
+function buildRule28(scenario: Rule28Scenario, builder: DisplayBuilder): void {
+  builder.addLights(...powerDrivenLights(scenario.lengthM, scenario.secondMasthead));
+  if (scenario.showOptionalSignal !== false) {
+    builder
+      .addLights(...stackedLights("draught", ["red", "red", "red"]))
+      .addShape("draught-cylinder", "cylinder", POS.signalStack);
+  }
+  builder.note(
+    "28: additional draught signals are optional; applies to a vessel constrained by her draught.",
+  );
+}
+
+/* ===========================================================================
+ * Rule 29 — pilot vessels
+ * ========================================================================== */
+
+const RULE_29_HANDLERS: HandlerMap<Rule29Scenario> = {
+  pilot: (s, b) => {
+    b.addLights(...stackedLights("pilot", ["white", "red"], [0, 0, 34]));
+    if (s.state === "underway") b.addLights(...underwayLights());
+    else addAnchorSignals(b, s.lengthM, s);
+  },
+
+  "off-duty": (s, b) => {
+    b.addLights(...ordinaryVesselLights(s.lengthM, s));
+    b.note("29(b): ordinary underway display; for anchor/grounded state use Rule 30.");
+  },
+};
+
+function buildRule29(scenario: Rule29Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_29_HANDLERS, scenario, builder);
+}
+
+/* ===========================================================================
+ * Rule 30 — anchored and aground
+ * ========================================================================== */
+
+const RULE_30_HANDLERS: HandlerMap<Rule30Scenario> = {
+  anchored: (s, b) => addAnchorSignals(b, s.lengthM, s),
+
+  aground: (s, b) => {
+    addAnchorSignals(b, s.lengthM, s, { withBall: false }); // three balls replace the anchor ball
+    // 30(d) incorporates (a)/(b), not the deck-illumination duty in (c).
+    b.setDeckLighting(!!s.illuminateDeck);
+    if ((s.lengthM >= 12 || s.showOptionalUnder12Signals) && s.signalsPracticable !== false) {
+      b.addLights(...stackedLights("aground", ["red", "red"]));
+      b.addShapes(...stackedShapes("aground", ["ball", "ball", "ball"]));
+    }
+    b.note(
+      "30(d),(f): additional aground signals if practicable; not required below 12 m. Anchor lights remain.",
+    );
+  },
+
+  "under-7-anchor-exemption": (s, b) => {
+    assertLengthBelow(s.lengthM, 7, "30(e)");
+    b.note(
+      "30(e): only away from narrow channels, fairways and places where vessels normally navigate.",
+    );
+  },
+};
+
+function buildRule30(scenario: Rule30Scenario, builder: DisplayBuilder): void {
+  dispatch(RULE_30_HANDLERS, scenario, builder);
+}
+
+/* ===========================================================================
+ * Entry point
+ * ========================================================================== */
+
+ const ruleBuilders = {
+   23: buildRule23,
+   24: buildRule24,
+   25: buildRule25,
+   26: buildRule26,
+   27: buildRule27,
+   28: buildRule28,
+   29: buildRule29,
+   30: buildRule30,
+ } satisfies {
+   [R in Rule]: (
+     scenario: Extract<Scenario, { rule: R }>,
+     builder: DisplayBuilder,
+   ) => void;
+ };
+
+ function runRuleBuilder(scenario: Scenario, builder: DisplayBuilder): void {
+   const run = ruleBuilders[scenario.rule] as (
+     scenario: Scenario,
+     builder: DisplayBuilder,
+   ) => void;
+
+   run(scenario, builder);
+ }
+export function buildDisplay(scenario: Scenario): Display {
+  assertPositiveFinite(scenario.lengthM, "lengthM");
+  const builder = new DisplayBuilder();
+
+  runRuleBuilder(scenario, builder);
+
+  return builder.toDisplay(scenario.rule);
+}
+
+
+/* ===========================================================================
+ * Geometry and animation
+ * ========================================================================== */
 
 /** Ideal nominal sectors, including shared endpoints; no real-world cutoff falloff. */
 export function isVisible(sector: Sector, bearingDeg: number): boolean {
-  requireThat(Number.isFinite(bearingDeg), "bearingDeg must be finite.");
-  const difference = ((((bearingDeg - sector.center) % 360) + 540) % 360) - 180;
-  return Math.abs(difference) <= sector.width / 2 + 1e-9;
+  assertFinite(bearingDeg, "bearingDeg");
+  const angularDifference = ((((bearingDeg - sector.center) % 360) + 540) % 360) - 180;
+  return Math.abs(angularDifference) <= sector.width / 2 + 1e-9;
 }
-export function isLit(l: Light, timeMs: number): boolean {
-  requireThat(Number.isFinite(timeMs), "timeMs must be finite.");
-  if (!l.flash) return true;
-  const { periodMs, phaseMs, onMs } = l.flash;
+
+export function isLit(light: Light, timeMs: number): boolean {
+  assertFinite(timeMs, "timeMs");
+  if (!light.flash) return true;
+  const { periodMs, phaseMs, onMs } = light.flash;
   return (((timeMs + phaseMs) % periodMs) + periodMs) % periodMs < onMs;
 }
+
 export interface ProjectedPoint {
   readonly x: number;
   readonly y: number;
   readonly depth: number;
 }
+
 /** Sea-level orthographic view; SVG y increases downward. */
 export function project([x, y, z]: Vec3, bearingDeg: number): ProjectedPoint {
-  requireThat(Number.isFinite(bearingDeg), "bearingDeg must be finite.");
-  const a = (bearingDeg * Math.PI) / 180;
-  return { x: -x * Math.cos(a) + y * Math.sin(a), y: -z, depth: x * Math.sin(a) + y * Math.cos(a) };
+  assertFinite(bearingDeg, "bearingDeg");
+  const angleRad = (bearingDeg * Math.PI) / 180;
+  return {
+    x: -x * Math.cos(angleRad) + y * Math.sin(angleRad),
+    y: -z,
+    depth: x * Math.sin(angleRad) + y * Math.cos(angleRad),
+  };
 }
+
 export function projectDisplay(display: Display, bearingDeg: number, timeMs = 0) {
-  requireThat(
+  assertCondition(
     Number.isFinite(bearingDeg) && Number.isFinite(timeMs),
     "Bearing/time must be finite.",
   );
   return {
     ...display,
     lights: display.lights
-      .filter((l) => isVisible(l.sector, bearingDeg))
-      .map((l) => ({ ...l, ...project(l.position, bearingDeg), on: isLit(l, timeMs) }))
+      .filter((light) => isVisible(light.sector, bearingDeg))
+      .map((light) => ({
+        ...light,
+        ...project(light.position, bearingDeg),
+        on: isLit(light, timeMs),
+      }))
       .sort((a, b) => a.depth - b.depth),
     shapes: display.shapes
-      .map((s) => ({ ...s, ...project(s.position, bearingDeg) }))
+      .map((shape) => ({ ...shape, ...project(shape.position, bearingDeg) }))
       .sort((a, b) => a.depth - b.depth),
   };
 }
+
+/* ===========================================================================
+ * Rendering
+ * ========================================================================== */
+
 const COLORS: Record<Color, string> = {
   white: "#fff9e8",
   red: "#ff4545",
   green: "#36ef86",
   yellow: "#ffd84d",
 };
-/** Dependency-free SVG string. Use projectDisplay for a React SVG component. */
-export function renderSvg(
-  scenario: Scenario,
-  bearingDeg: number,
-  timeMs = 0,
-): ReactElement<any, any> {
-  const view = projectDisplay(buildDisplay(scenario), bearingDeg, timeMs);
-  const lit = view.lights.filter((l) => l.on);
-  const circles = lit.map((l) => {
-    // Combined sidelights share one position. At the exact bow boundary show
-    // both halves: green to the observer's left, red to the right.
-    const opposite = l.id === "port" ? "starboard" : l.id === "starboard" ? "port" : undefined;
-    const combined =
-      opposite &&
-      lit.some(
-        (other) => other.id === opposite && other.position.every((v, i) => v === l.position[i]),
-      );
-    if (combined) {
-      const sweep = l.id === "port" ? 1 : 0;
-      return (
-        <path
-          transform={`translate(${l.x} ${l.y})`}
-          d={`M 0 -1.6 A 1.6 1.6 0 0 ${sweep} 0 1.6 Z`}
-          fill={COLORS[l.color]}
-        >
-          <title>${l.id}</title>
-        </path>
-      );
-    }
-    return (
-      <circle cx={l.x} cy={l.y} r="1.6" fill={COLORS[l.color]}>
-        <title>${l.id}</title>
-      </circle>
+
+const samePosition = (a: Vec3, b: Vec3): boolean =>
+  a.every((coordinate, index) => coordinate === b[index]);
+
+type ProjectedLight = ReturnType<typeof projectDisplay>["lights"][number];
+
+/**
+ * Combined sidelights share one fixture position. At the exact bow boundary
+ * show both halves: green to the observer's left, red to the right.
+ */
+function renderLight(light: ProjectedLight, litLights: readonly ProjectedLight[]): ReactElement {
+  const oppositeId =
+    light.id === "port" ? "starboard" : light.id === "starboard" ? "port" : undefined;
+  const isCombined =
+    oppositeId !== undefined &&
+    litLights.some(
+      (other) => other.id === oppositeId && samePosition(other.position, light.position),
     );
-  });
+
+  if (isCombined) {
+    const sweep = light.id === "port" ? 1 : 0;
+    return (
+      <path
+        key={light.id}
+        transform={`translate(${light.x} ${light.y})`}
+        d={`M 0 -1.6 A 1.6 1.6 0 0 ${sweep} 0 1.6 Z`}
+        fill={COLORS[light.color]}
+      >
+        <title>{light.id}</title>
+      </path>
+    );
+  }
+  return (
+    <circle key={light.id} cx={light.x} cy={light.y} r="1.6" fill={COLORS[light.color]}>
+      <title>{light.id}</title>
+    </circle>
+  );
+}
+
+/** React SVG elements; wrap the result in an <svg> with an appropriate viewBox. */
+export function renderSvg(scenario: Scenario, bearingDeg: number, timeMs = 0): ReactElement {
+  const view = projectDisplay(buildDisplay(scenario), bearingDeg, timeMs);
+  const litLights = view.lights.filter((light) => light.on);
   return (
     <>
-      <rect x="-60" y="-65" width="120" height="80" fill="#080f1d" />${circles}
+      <rect x="-60" y="-65" width="120" height="80" fill="#080f1d" />
+      {litLights.map((light) => renderLight(light, litLights))}
     </>
   );
 }
 
-/** Starter catalogue. Change length/state/options to generate further variants. */
+/* ===========================================================================
+ * Starter catalogue. Change length/state/options to generate further variants.
+ * ========================================================================== */
+
 export const EXAMPLES = [
   { rule: 23, kind: "power", lengthM: 30 },
   { rule: 23, kind: "power", lengthM: 60 },

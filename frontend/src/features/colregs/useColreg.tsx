@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { renderSvg } from "./colregUtils";
 import type { Scenario } from "./colregUtils";
 
