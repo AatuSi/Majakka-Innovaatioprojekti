@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from database import get_db
 import models
 import schemas
+import validation
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
@@ -36,6 +37,11 @@ def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(get_db)):
     db_quiz = models.Quiz(name=quiz.name)
 
     for question in quiz.questions:
+        validation.require_iala_light(db, question.iala_light_id)
+
+        for option in question.options:
+            validation.require_iala_light(db, option.iala_light_id)
+
         db_question = models.QuizQuestion(
             question_text=question.question_text,
             iala_light_id=question.iala_light_id,
@@ -67,7 +73,11 @@ def update_quiz(quiz_id: UUID, quiz: schemas.QuizUpdate, db: Session = Depends(g
     if db_quiz is None:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    db_quiz.name = quiz.name
+    fields = quiz.model_dump(exclude_unset=True)
+
+    if "name" in fields:
+        db_quiz.name = fields["name"]
+
     db.commit()
     db.refresh(db_quiz)
     return db_quiz

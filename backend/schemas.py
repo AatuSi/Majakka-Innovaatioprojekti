@@ -36,6 +36,16 @@ class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
 # --- OPTION SCHEMAS ---
 
 class QuizQuestionOptionBase(BaseModel):
@@ -47,6 +57,15 @@ class QuizQuestionOptionBase(BaseModel):
 
 class QuizQuestionOptionCreate(QuizQuestionOptionBase):
     pass
+
+
+# Fields left out keep their current value. An explicit null clears a nullable
+# field; for the NOT NULL columns (is_correct, position) null means "unchanged".
+class QuizQuestionOptionUpdate(BaseModel):
+    option_text: Optional[str] = None
+    iala_light_id: Optional[UUID] = None
+    is_correct: Optional[bool] = None
+    position: Optional[int] = None
 
 
 class QuizQuestionOptionResponse(QuizQuestionOptionBase):
@@ -70,9 +89,12 @@ class QuizQuestionCreate(QuizQuestionBase):
     options: List[QuizQuestionOptionCreate] = []
 
 
-# Options are managed through their own endpoints.
-class QuizQuestionUpdate(QuizQuestionBase):
-    pass
+# Options are managed through their own endpoints. Fields left out keep their
+# current value; an explicit null clears question_text or iala_light_id.
+class QuizQuestionUpdate(BaseModel):
+    question_text: Optional[str] = None
+    iala_light_id: Optional[UUID] = None
+    position: Optional[int] = None
 
 
 class QuizQuestionResponse(QuizQuestionBase):
@@ -95,9 +117,10 @@ class QuizCreate(QuizBase):
     questions: List[QuizQuestionCreate] = []
 
 
-# Questions are managed through their own endpoints.
-class QuizUpdate(QuizBase):
-    pass
+# Questions are managed through their own endpoints. A name left out keeps its
+# current value; an explicit null clears it.
+class QuizUpdate(BaseModel):
+    name: Optional[str] = None
 
 
 class QuizResponse(QuizBase):
