@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 const topics = [
   {
     title: "Veneiden kulkuvalot",
@@ -27,7 +29,7 @@ const topics = [
 
 export default function HomePage() {
   return (
-    <main className="bg-[#0b1830] text-white">
+    <>
       <section className="relative overflow-hidden px-6 pb-24 pt-20 sm:pt-28">
         <div
           aria-hidden="true"
@@ -46,18 +48,20 @@ export default function HomePage() {
             jokainen pimeällä vesillä liikkuva tarvitsee.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <a
-              href="#aiheet"
+            <Link
+              to="/"
+              hash="aiheet"
               className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-[#0b1830] transition hover:bg-amber-200"
             >
               Tutustu aiheisiin
-            </a>
-            <a
-              href="#miksi"
+            </Link>
+            <Link
+              to="/"
+              hash="miksi"
               className="rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40"
             >
               Miksi tämä on tärkeää?
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -151,6 +155,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-    </main>
+    </>
   );
 }
