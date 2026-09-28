@@ -4,7 +4,6 @@ import { ialaQuiz } from './questions'
 
 export default function IALAQuizPage() {
   return (
-    <main>
       <QuizRunner
         quiz={ialaQuiz}
         relatedLink={
@@ -16,6 +15,5 @@ export default function IALAQuizPage() {
           </Link>
         }
       />
-    </main>
   )
 }
