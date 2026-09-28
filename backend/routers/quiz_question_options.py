@@ -6,11 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from database import get_db
+from security import require_admin
 import models
 import schemas
 import validation
 
 router = APIRouter(tags=["quiz_question_options"])
+
+admin_only = [Depends(require_admin)]
 
 
 @router.get("/quiz-questions/{question_id}/options", response_model=list[schemas.QuizQuestionOptionResponse])
@@ -33,7 +36,7 @@ def get_option(option_id: UUID, db: Session = Depends(get_db)):
     return option
 
 
-@router.post("/quiz-questions/{question_id}/options", status_code=201, response_model=schemas.QuizQuestionOptionResponse)
+@router.post("/quiz-questions/{question_id}/options", status_code=201, response_model=schemas.QuizQuestionOptionResponse, dependencies=admin_only)
 def create_option(question_id: UUID, option: schemas.QuizQuestionOptionCreate, db: Session = Depends(get_db)):
     question = db.query(models.QuizQuestion).filter(models.QuizQuestion.id == question_id).first()
     
@@ -55,7 +58,7 @@ def create_option(question_id: UUID, option: schemas.QuizQuestionOptionCreate, d
     return db_option
 
 
-@router.put("/quiz-question-options/{option_id}", response_model=schemas.QuizQuestionOptionResponse)
+@router.put("/quiz-question-options/{option_id}", response_model=schemas.QuizQuestionOptionResponse, dependencies=admin_only)
 def update_option(option_id: UUID, option: schemas.QuizQuestionOptionUpdate, db: Session = Depends(get_db)):
     db_option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == option_id).first()
     
@@ -83,7 +86,7 @@ def update_option(option_id: UUID, option: schemas.QuizQuestionOptionUpdate, db:
     return db_option
 
 
-@router.delete("/quiz-question-options/{option_id}", status_code=204)
+@router.delete("/quiz-question-options/{option_id}", status_code=204, dependencies=admin_only)
 def delete_option(option_id: UUID, db: Session = Depends(get_db)):
     option = db.query(models.QuizQuestionOption).filter(models.QuizQuestionOption.id == option_id).first()
     

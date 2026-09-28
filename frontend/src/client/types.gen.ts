@@ -229,6 +229,28 @@ export type QuizQuestionOptionResponse = {
 };
 
 /**
+ * QuizQuestionOptionUpdate
+ */
+export type QuizQuestionOptionUpdate = {
+    /**
+     * Option Text
+     */
+    option_text?: string | null;
+    /**
+     * Iala Light Id
+     */
+    iala_light_id?: string | null;
+    /**
+     * Is Correct
+     */
+    is_correct?: boolean | null;
+    /**
+     * Position
+     */
+    position?: number | null;
+};
+
+/**
  * QuizQuestionResponse
  */
 export type QuizQuestionResponse = {
@@ -277,7 +299,7 @@ export type QuizQuestionUpdate = {
     /**
      * Position
      */
-    position?: number;
+    position?: number | null;
 };
 
 /**
@@ -1014,7 +1036,7 @@ export type GetOptionResponses = {
 export type GetOptionResponse = GetOptionResponses[keyof GetOptionResponses];
 
 export type UpdateOptionData = {
-    body: QuizQuestionOptionCreate;
+    body: QuizQuestionOptionUpdate;
     path: {
         /**
          * Option Id

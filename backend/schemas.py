@@ -1,8 +1,13 @@
 from enum import Enum
-from typing import List, Optional, Any, Dict
+from typing import Annotated, List, Optional, Any, Dict
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+# Column bounds, so oversized input fails validation instead of the insert.
+Name = Annotated[str, Field(max_length=255)]
+Label = Annotated[str, Field(max_length=100)]
+Position = Annotated[int, Field(ge=-2**31, le=2**31 - 1)]
 
 
 class UserRole(str, Enum):
@@ -13,7 +18,7 @@ class UserRole(str, Enum):
 # --- USER SCHEMAS ---
 
 class UserBase(BaseModel):
-    username: str
+    username: Name
 
 
 class UserCreate(UserBase):
@@ -23,7 +28,7 @@ class UserCreate(UserBase):
 
 # Fields left out keep their current value.
 class UserUpdate(BaseModel):
-    username: Optional[str] = None
+    username: Optional[Name] = None
     password: Optional[str] = None
     role: Optional[UserRole] = None
 
@@ -52,7 +57,7 @@ class QuizQuestionOptionBase(BaseModel):
     option_text: Optional[str] = None
     iala_light_id: Optional[UUID] = None
     is_correct: bool = False
-    position: int = 0
+    position: Position = 0
 
 
 class QuizQuestionOptionCreate(QuizQuestionOptionBase):
@@ -65,7 +70,7 @@ class QuizQuestionOptionUpdate(BaseModel):
     option_text: Optional[str] = None
     iala_light_id: Optional[UUID] = None
     is_correct: Optional[bool] = None
-    position: Optional[int] = None
+    position: Optional[Position] = None
 
 
 class QuizQuestionOptionResponse(QuizQuestionOptionBase):
@@ -82,7 +87,7 @@ class QuizQuestionOptionResponse(QuizQuestionOptionBase):
 class QuizQuestionBase(BaseModel):
     question_text: Optional[str] = None
     iala_light_id: Optional[UUID] = None
-    position: int = 0
+    position: Position = 0
 
 
 class QuizQuestionCreate(QuizQuestionBase):
@@ -94,7 +99,7 @@ class QuizQuestionCreate(QuizQuestionBase):
 class QuizQuestionUpdate(BaseModel):
     question_text: Optional[str] = None
     iala_light_id: Optional[UUID] = None
-    position: Optional[int] = None
+    position: Optional[Position] = None
 
 
 class QuizQuestionResponse(QuizQuestionBase):
@@ -110,7 +115,7 @@ class QuizQuestionResponse(QuizQuestionBase):
 # --- QUIZ SCHEMAS ---
 
 class QuizBase(BaseModel):
-    name: Optional[str] = None
+    name: Optional[Name] = None
 
 
 class QuizCreate(QuizBase):
@@ -120,7 +125,7 @@ class QuizCreate(QuizBase):
 # Questions are managed through their own endpoints. A name left out keeps its
 # current value; an explicit null clears it.
 class QuizUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[Name] = None
 
 
 class QuizResponse(QuizBase):
@@ -167,9 +172,9 @@ class QuizAttemptResponse(BaseModel):
 
 
 class IalaLightBase(BaseModel):
-    name: str
-    category: str
-    rhythm: str
+    name: Name
+    category: Label
+    rhythm: Label
     description: Optional[str] = None
     config: Dict[str, Any]
 

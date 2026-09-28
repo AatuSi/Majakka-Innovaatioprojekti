@@ -6,11 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
+from security import require_admin
 import models
 import schemas
 import validation
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
+
+admin_only = [Depends(require_admin)]
 
 
 # Loaded up front because the response schema serializes both levels.
@@ -32,7 +35,7 @@ def get_quiz(quiz_id: UUID, db: Session = Depends(get_db)):
     return quiz
 
 
-@router.post("", status_code=201, response_model=schemas.QuizResponse)
+@router.post("", status_code=201, response_model=schemas.QuizResponse, dependencies=admin_only)
 def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(get_db)):
     db_quiz = models.Quiz(name=quiz.name)
 
@@ -66,7 +69,7 @@ def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(get_db)):
     return db_quiz
 
 
-@router.put("/{quiz_id}", response_model=schemas.QuizResponse)
+@router.put("/{quiz_id}", response_model=schemas.QuizResponse, dependencies=admin_only)
 def update_quiz(quiz_id: UUID, quiz: schemas.QuizUpdate, db: Session = Depends(get_db)):
     db_quiz = db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
 
@@ -83,7 +86,7 @@ def update_quiz(quiz_id: UUID, quiz: schemas.QuizUpdate, db: Session = Depends(g
     return db_quiz
 
 
-@router.delete("/{quiz_id}", status_code=204)
+@router.delete("/{quiz_id}", status_code=204, dependencies=admin_only)
 def delete_quiz(quiz_id: UUID, db: Session = Depends(get_db)):
     quiz = db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
 
