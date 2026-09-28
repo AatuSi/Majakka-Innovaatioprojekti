@@ -7,10 +7,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import get_db
+from security import require_admin
 import models
 import schemas
 
 router = APIRouter(tags=["iala_lights"])
+
+admin_only = [Depends(require_admin)]
 
 @router.get("", response_model=list[schemas.IalaLightResponse])
 def list_iala_lights(
@@ -48,7 +51,7 @@ def get_iala_light(light_id: UUID, db: Session = Depends(get_db)):
     return light
 
 
-@router.post("", status_code=201, response_model=schemas.IalaLightResponse)
+@router.post("", status_code=201, response_model=schemas.IalaLightResponse, dependencies=admin_only)
 def create_iala_light(
     light_in: schemas.IalaLightCreate,
     db: Session = Depends(get_db),
@@ -76,7 +79,7 @@ def create_iala_light(
     return db_light
 
 
-@router.put("/{light_id}", response_model=schemas.IalaLightResponse)
+@router.put("/{light_id}", response_model=schemas.IalaLightResponse, dependencies=admin_only)
 def update_iala_light(
     light_id: UUID,
     light_in: schemas.IalaLightCreate,
@@ -107,7 +110,7 @@ def update_iala_light(
     return db_light
 
 
-@router.delete("/{light_id}", status_code=204)
+@router.delete("/{light_id}", status_code=204, dependencies=admin_only)
 def delete_iala_light(light_id: UUID, db: Session = Depends(get_db)):
     """Delete an IALA light from the catalog."""
     db_light = db.query(models.IalaLight).filter(models.IalaLight.id == light_id).first()

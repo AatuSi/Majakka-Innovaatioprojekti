@@ -56,6 +56,11 @@ def is_admin(user: models.User) -> bool:
     return user.role == models.UserRole.ADMIN
 
 
+def require_admin(user: models.User = Depends(get_current_user)) -> None:
+    if not is_admin(user):
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+
 def authorize_owner(user: models.User, owner_id: UUID) -> None:
     if not is_admin(user) and user.id != owner_id:
         raise HTTPException(status_code=403, detail="Not allowed")

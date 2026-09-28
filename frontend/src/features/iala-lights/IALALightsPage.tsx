@@ -297,7 +297,7 @@ export default function App() {
   const [activeSystem, setActiveSystem] = useState<IalaRegion>("A");
 
   return (
-    <div className="bg-[#0b1830] text-white min-h-screen">
+    <>
       {/* Hero */}
       <section className="relative overflow-hidden px-6 pb-24 pt-20 sm:pt-28">
         <div
@@ -525,7 +525,7 @@ export default function App() {
         </div>
       </section>
 
-    </div>
+    </>
   );
 }
 
