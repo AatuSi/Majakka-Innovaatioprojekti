@@ -50,9 +50,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="font-sans">
+      <body
+        className={`font-sans ${isLoginRoute ? "" : "min-h-dvh flex flex-col"}`}
+      >
         {!isLoginRoute && <Header />}
-        {children}
+        {isLoginRoute ? (
+          children
+        ) : (
+          <main className="bg-[#0b1830] text-white flex-1">{children}</main>
+        )}
         {!isLoginRoute && <Footer />}
         <TanStackDevtools
           config={{
