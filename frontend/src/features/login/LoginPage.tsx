@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { createUser, login } from "../../client";
+import { setAccessToken } from "../../api/config";
 
 function EyeIcon({ visible }: { visible: boolean }) {
   return visible ? (
@@ -34,10 +36,14 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [username, setUsername] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const isSignIn = mode === "sign-in";
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!isSignIn && password !== confirmPassword) {
@@ -47,7 +53,44 @@ export default function LoginPage() {
     }
 
     setPasswordError(false);
-    setSubmitted(true);
+    setErrorMessage("");
+    setSubmitted(false);
+    setIsSubmitting(true);
+
+    try {
+      if (!isSignIn) {
+        await createUser({
+          body: { username, password },
+          throwOnError: true,
+        });
+      }
+
+      const response = await login({
+        body: { username, password },
+        throwOnError: true,
+      });
+
+      setAccessToken(response.data.access_token);
+      await navigate({ to: "/" });
+    } catch (error) {
+      const detail =
+        error &&
+        typeof error === "object" &&
+        "detail" in error &&
+        typeof error.detail === "string"
+          ? error.detail
+          : undefined;
+
+      setErrorMessage(
+        detail === "Invalid credentials"
+          ? "Käyttäjätunnus tai salasana on väärä."
+          : detail === "Username already exists"
+            ? "Käyttäjätunnus on jo käytössä."
+            : "Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -133,6 +176,11 @@ export default function LoginPage() {
                     autoComplete="username"
                     placeholder="Kirjoita käyttäjätunnus"
                     required
+                    value={username}
+                    onChange={(event) => {
+                      setUsername(event.target.value);
+                      setErrorMessage("");
+                    }}
                     className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
                   />
                 </div>
@@ -157,7 +205,7 @@ export default function LoginPage() {
                         setPassword(event.target.value);
                         setPasswordError(false);
                       }}
-                      className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 pr-14 text-base text-white outline-none placeholder:text-[#aeb4c7] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
+                      className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 pr-14 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
                     />
                     <button
                       type="button"
@@ -183,7 +231,7 @@ export default function LoginPage() {
                       name="confirm-password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
-                      placeholder="Re-enter Password"
+                      placeholder="Kirjoita salasana uudelleen"
                       required
                       value={confirmPassword}
                       onChange={(event) => {
@@ -194,7 +242,7 @@ export default function LoginPage() {
                       aria-describedby={
                         passwordError ? "password-error" : undefined
                       }
-                      className={`h-[55px] w-full rounded-md border bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#aeb4c7] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25 ${
+                      className={`h-[55px] w-full rounded-md border bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25 ${
                         passwordError
                           ? "border-red-400"
                           : "border-transparent"
@@ -213,10 +261,24 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="h-[60px] w-full rounded-[10px] border border-black bg-[#1d90f4] px-6 text-xl font-semibold text-[#f7fafc] transition hover:bg-[#43a5f7] focus:outline-none focus:ring-2 focus:ring-[#8bc9ff] focus:ring-offset-2 focus:ring-offset-[#182130]"
                 >
-                  {isSignIn ? "Kirjaudu sisään" : "Luo tili"}
+                  {isSubmitting
+                    ? "Käsitellään..."
+                    : isSignIn
+                      ? "Kirjaudu sisään"
+                      : "Luo tili"}
                 </button>
+
+                {errorMessage && (
+                  <p
+                    role="alert"
+                    className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200"
+                  >
+                    {errorMessage}
+                  </p>
+                )}
 
                 {submitted && (
                   <p
