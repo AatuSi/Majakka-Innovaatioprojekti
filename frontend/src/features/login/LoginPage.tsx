@@ -1,8 +1,9 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { createUser, login } from "../../client";
-import { setAccessToken } from "../../api/config";
+import { useCallback, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { createUser, login } from '../../client'
+import { setAccessToken } from '../../api/config'
+import LoginSuccessModal from './LoginSuccessModal'
 
 function EyeIcon({ visible }: { visible: boolean }) {
   return visible ? (
@@ -26,70 +27,87 @@ function EyeIcon({ visible }: { visible: boolean }) {
         strokeWidth="1.8"
       />
     </svg>
-  );
+  )
 }
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
-  const [showPassword, setShowPassword] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [username, setUsername] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const [showPassword, setShowPassword] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [username, setUsername] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successState, setSuccessState] = useState<{
+    isOpen: boolean
+    mode: 'sign-in' | 'sign-up'
+    username: string
+  } | null>(null)
 
-  const isSignIn = mode === "sign-in";
+  const navigate = useNavigate()
+  const hasNavigatedRef = useRef(false)
+
+  const handleNavigateHome = useCallback(async () => {
+    if (hasNavigatedRef.current) return
+    hasNavigatedRef.current = true
+    await navigate({ to: '/' })
+  }, [navigate])
+
+  const isSignIn = mode === 'sign-in'
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault()
 
     if (!isSignIn && password !== confirmPassword) {
-      setPasswordError(true);
-      setSubmitted(false);
-      return;
+      setPasswordError(true)
+      setSubmitted(false)
+      return
     }
 
-    setPasswordError(false);
-    setErrorMessage("");
-    setSubmitted(false);
-    setIsSubmitting(true);
+    setPasswordError(false)
+    setErrorMessage('')
+    setSubmitted(false)
+    setIsSubmitting(true)
 
     try {
       if (!isSignIn) {
         await createUser({
           body: { username, password },
           throwOnError: true,
-        });
+        })
       }
 
       const response = await login({
         body: { username, password },
         throwOnError: true,
-      });
+      })
 
-      setAccessToken(response.data.access_token);
-      await navigate({ to: "/" });
+      setAccessToken(response.data.access_token)
+      setSuccessState({
+        isOpen: true,
+        mode,
+        username,
+      })
     } catch (error) {
       const detail =
         error &&
-        typeof error === "object" &&
-        "detail" in error &&
-        typeof error.detail === "string"
+        typeof error === 'object' &&
+        'detail' in error &&
+        typeof error.detail === 'string'
           ? error.detail
-          : undefined;
+          : undefined
 
       setErrorMessage(
-        detail === "Invalid credentials"
-          ? "Käyttäjätunnus tai salasana on väärä."
-          : detail === "Username already exists"
-            ? "Käyttäjätunnus on jo käytössä."
-            : "Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.",
-      );
+        detail === 'Invalid credentials'
+          ? 'Käyttäjätunnus tai salasana on väärä.'
+          : detail === 'Username already exists'
+            ? 'Käyttäjätunnus on jo käytössä.'
+            : 'Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.',
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -107,10 +125,7 @@ export default function LoginPage() {
             <Link to="/" className="transition hover:text-white">
               Etusivu
             </Link>
-            <Link
-              to="/IALA-lights"
-              className="transition hover:text-white"
-            >
+            <Link to="/IALA-lights" className="transition hover:text-white">
               IALA-valot
             </Link>
           </div>
@@ -124,7 +139,7 @@ export default function LoginPage() {
                   Yönavigoinnin oppimateriaali
                 </p>
                 <h1 className="font-sans text-4xl font-semibold tracking-tighter text-white sm:text-5xl">
-                  {isSignIn ? "Tervetuloa takaisin" : "Luo käyttäjätili"}
+                  {isSignIn ? 'Tervetuloa takaisin' : 'Luo käyttäjätili'}
                 </h1>
               </div>
 
@@ -132,14 +147,15 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setMode("sign-up");
-                    setPasswordError(false);
-                    setSubmitted(false);
+                    setMode('sign-up')
+                    setPasswordError(false)
+                    setSubmitted(false)
+                    setSuccessState(null)
                   }}
                   className={`h-12 rounded-lg px-4 text-base font-semibold transition sm:text-xl ${
                     !isSignIn
-                      ? "bg-[#4a5065] text-white"
-                      : "text-[#aeb4c7] hover:text-white"
+                      ? 'bg-[#4a5065] text-white'
+                      : 'text-[#aeb4c7] hover:text-white'
                   }`}
                 >
                   Rekisteröityminen
@@ -147,14 +163,15 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setMode("sign-in");
-                    setPasswordError(false);
-                    setSubmitted(false);
+                    setMode('sign-in')
+                    setPasswordError(false)
+                    setSubmitted(false)
+                    setSuccessState(null)
                   }}
                   className={`h-12 rounded-lg px-4 text-base font-semibold transition sm:text-xl ${
                     isSignIn
-                      ? "bg-[#4a5065] text-white"
-                      : "text-[#aeb4c7] hover:text-white"
+                      ? 'bg-[#4a5065] text-white'
+                      : 'text-[#aeb4c7] hover:text-white'
                   }`}
                 >
                   Kirjautuminen
@@ -178,8 +195,8 @@ export default function LoginPage() {
                     required
                     value={username}
                     onChange={(event) => {
-                      setUsername(event.target.value);
-                      setErrorMessage("");
+                      setUsername(event.target.value)
+                      setErrorMessage('')
                     }}
                     className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
                   />
@@ -196,20 +213,24 @@ export default function LoginPage() {
                     <input
                       id="password"
                       name="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete={isSignIn ? "current-password" : "new-password"}
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete={
+                        isSignIn ? 'current-password' : 'new-password'
+                      }
                       placeholder="Kirjoita salasana"
                       required
                       value={password}
                       onChange={(event) => {
-                        setPassword(event.target.value);
-                        setPasswordError(false);
+                        setPassword(event.target.value)
+                        setPasswordError(false)
                       }}
                       className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 pr-14 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
                     />
                     <button
                       type="button"
-                      aria-label={showPassword ? "Piilota salasana" : "Näytä salasana"}
+                      aria-label={
+                        showPassword ? 'Piilota salasana' : 'Näytä salasana'
+                      }
                       onClick={() => setShowPassword((visible) => !visible)}
                       className="absolute inset-y-0 right-0 flex w-12 items-center justify-center border-l border-white/60 text-white transition hover:text-[#1d90f4]"
                     >
@@ -229,23 +250,21 @@ export default function LoginPage() {
                     <input
                       id="confirm-password"
                       name="confirm-password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       placeholder="Kirjoita salasana uudelleen"
                       required
                       value={confirmPassword}
                       onChange={(event) => {
-                        setConfirmPassword(event.target.value);
-                        setPasswordError(false);
+                        setConfirmPassword(event.target.value)
+                        setPasswordError(false)
                       }}
                       aria-invalid={passwordError}
                       aria-describedby={
-                        passwordError ? "password-error" : undefined
+                        passwordError ? 'password-error' : undefined
                       }
                       className={`h-[55px] w-full rounded-md border bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25 ${
-                        passwordError
-                          ? "border-red-400"
-                          : "border-transparent"
+                        passwordError ? 'border-red-400' : 'border-transparent'
                       }`}
                     />
                     {passwordError && (
@@ -261,14 +280,14 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="h-[60px] w-full rounded-[10px] border border-black bg-[#1d90f4] px-6 text-xl font-semibold text-[#f7fafc] transition hover:bg-[#43a5f7] focus:outline-none focus:ring-2 focus:ring-[#8bc9ff] focus:ring-offset-2 focus:ring-offset-[#182130]"
+                  disabled={isSubmitting || Boolean(successState?.isOpen)}
+                  className="h-[60px] w-full rounded-[10px] border border-black bg-[#1d90f4] px-6 text-xl font-semibold text-[#f7fafc] transition hover:bg-[#43a5f7] focus:outline-none focus:ring-2 focus:ring-[#8bc9ff] focus:ring-offset-2 focus:ring-offset-[#182130] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting
-                    ? "Käsitellään..."
+                    ? 'Käsitellään...'
                     : isSignIn
-                      ? "Kirjaudu sisään"
-                      : "Luo tili"}
+                      ? 'Kirjaudu sisään'
+                      : 'Luo tili'}
                 </button>
 
                 {errorMessage && (
@@ -286,8 +305,8 @@ export default function LoginPage() {
                     className="rounded-md border border-[#1d90f4]/30 bg-[#1d90f4]/10 px-4 py-3 text-sm text-[#c9e7ff]"
                   >
                     {isSignIn
-                      ? "Kirjautumispyyntö vastaanotettu."
-                      : "Käyttäjätilin luontipyyntö vastaanotettu."}
+                      ? 'Kirjautumispyyntö vastaanotettu.'
+                      : 'Käyttäjätilin luontipyyntö vastaanotettu.'}
                   </p>
                 )}
               </form>
@@ -299,9 +318,9 @@ export default function LoginPage() {
             className="relative hidden min-h-[520px] overflow-hidden bg-[#111827] lg:block"
             style={{
               backgroundImage:
-                "linear-gradient(90deg, #182130 5%, rgba(24,33,48,0.2) 100%), linear-gradient(0deg, #182130 0%, rgba(24,33,48,0.05) 48%), url(https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&w=1200&q=85)",
-              backgroundPosition: "center",
-              backgroundSize: "cover",
+                'linear-gradient(90deg, #182130 5%, rgba(24,33,48,0.2) 100%), linear-gradient(0deg, #182130 0%, rgba(24,33,48,0.05) 48%), url(https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&w=1200&q=85)',
+              backgroundPosition: 'center',
+              backgroundSize: 'cover',
             }}
           >
             <div className="absolute inset-0 flex items-center justify-center px-8">
@@ -312,6 +331,13 @@ export default function LoginPage() {
           </aside>
         </div>
       </div>
+
+      <LoginSuccessModal
+        isOpen={Boolean(successState?.isOpen)}
+        mode={successState?.mode ?? 'sign-in'}
+        username={successState?.username ?? username}
+        onNavigateHome={handleNavigateHome}
+      />
     </main>
-  );
+  )
 }
