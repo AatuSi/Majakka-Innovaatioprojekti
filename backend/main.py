@@ -1,8 +1,11 @@
 # App initialization, dependency injection setup
 
+import os
+
 from fastapi import Depends, FastAPI
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import DataError
+from fastapi.middleware.cors import CORSMiddleware
 from routers import (
     auth,
     users,
@@ -16,6 +19,17 @@ from routers import (
 from security import get_current_user
 
 app = FastAPI(generate_unique_id_function=lambda route: route.name)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    ).split(","),
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 protected = [Depends(get_current_user)]
 
