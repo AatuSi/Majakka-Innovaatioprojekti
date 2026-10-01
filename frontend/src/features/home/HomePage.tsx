@@ -4,14 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
-interface Topic {
-    title: string
-    tag: string
-    description: string
-    lights: string[]
-}
-
-const topics: Topic[] = [
+const topics = [
     {
         title: 'Veneiden kulkuvalot',
         tag: 'COLREG-SÄÄNNÖT',
@@ -294,7 +287,7 @@ export default function HomePage() {
                     <div className="rounded-3xl border border-[#2A3548] bg-[#0F1724]/95 p-8 lg:p-12 shadow-2xl backdrop-blur-xl">
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                             <div className="lg:col-span-5 space-y-5">
-                                <h2 className="text-3xl font-bold tracking-tight text-white">
+                                <h2 className="text-3xl font-bold tracking-tight text-[#1D90F4]">
                                     Ota yhteyttä
                                 </h2>
 
@@ -418,7 +411,7 @@ export default function HomePage() {
                                                 type="submit"
                                                 className={`${cutCorner} w-full sm:w-auto bg-[#1D90F4] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:bg-[#3BA0F6] active:scale-95 cursor-pointer`}
                                             >
-                                                Lähetä viesti →
+                                                Lähetä viesti <FontAwesomeIcon icon={faArrowRight} />
                                             </button>
                                         </div>
 
