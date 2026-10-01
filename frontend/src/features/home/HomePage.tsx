@@ -182,7 +182,7 @@ export default function HomePage() {
                     <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         {topics.map((topic) => (
                             <div
-                                className="group flex flex-col justify-between overflow-hidden rounded-xl border border-[#2A3548] bg-[#1E2839]/80 text-[#E3E3E3] transition-all duration-300 hover:-translate-y-1 hover:border-[#1D90F4]/60 hover:shadow-xl hover:shadow-[#1D90F4]/10"
+                                className="group flex flex-col justify-between overflow-hidden rounded-xl border border-[#2A3548] bg-[#1E2839]/80 text-[#E3E3E3] transition-all duration-300 hover:-translate-y-1 hover:border-[#1D90F4]/60 hover:shadow-xl"
                             >
                                 <div>
                                     <div className="relative flex h-36 items-center justify-center border-b border-[#2A3548]/40 bg-[#0F1724]">
