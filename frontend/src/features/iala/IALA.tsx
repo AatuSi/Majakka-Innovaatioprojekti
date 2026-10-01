@@ -1,12 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from "react";
-import '../../IALA-lights.css'
+import './IALA-lights.css'
 
-export const Route = createFileRoute('/IALA-lights')({
+export const Route = createFileRoute('/IALA')({
   component: App,
 })
-
-
 
 
 
@@ -27,6 +25,7 @@ interface BuoyType {
   char: string;
   shape: string;
   description: string;
+  kind: BuoyKind;
 }
 
 interface LateralRow {
@@ -40,6 +39,16 @@ interface LateralRow {
 }
 
 type IalaRegion = "A" | "B";
+type BuoyKind =
+  | "port"
+  | "starboard"
+  | "north"
+  | "south"
+  | "east"
+  | "west"
+  | "safe-water"
+  | "special"
+  | "isolated-danger";
 
 const characteristics: Characteristic[] = [
   {
@@ -141,6 +150,7 @@ const buoyTypes: BuoyType[] = [
     animClass: "light-flash-single",
     char: "Vl P",
     shape: "Tynnyri",
+    kind: "port",
     description:
       "Merkitsee väylän paapuuripuolen (vasen) kulkusuunnassa. Punainen tynnyripoiju punaisella välkkyvalolla. IALA-B-alueilla (Ameriikat, Japani) paapuuri- ja styyrpuuripuolen värit ovat päinvastoin.",
   },
@@ -150,6 +160,7 @@ const buoyTypes: BuoyType[] = [
     animClass: "light-flash-single",
     char: "Vl V",
     shape: "Kartio",
+    kind: "starboard",
     description:
       "Merkitsee väylän styyrpuuripuolen (oikea) IALA-A-alueilla. Vihreä kartiopoiju vihreällä välkkyvalolla. Muistiohje 'punainen paapuuriin, vihreä styyrpuuriin' pätee Euroopassa ja useimmilla kansainvälisillä vesillä.",
   },
@@ -159,33 +170,37 @@ const buoyTypes: BuoyType[] = [
     animClass: "light-flash-quick",
     char: "Np",
     shape: "Pilari / Sauva",
+    kind: "north",
     description:
       "Kulje merkin POHJOISPUOLELTA. Musta-keltainen pilaripoiju kahdella ylöspäin osoittavalla kartiolla. Nopea valkoinen valo (Np) tai erittäin nopea valkoinen valo (ENp). Kaksoiskartiohuippumerkki muistuttaa kirjainta P.",
   },
   {
     name: "Kardinaali — Eteläinen",
     lights: ["#f8fafc"],
-    animClass: "light-flash-group2",
+    animClass: "light-flash-cardinal-south",
     char: "Np(6)+PVl",
     shape: "Pilari / Sauva",
+    kind: "south",
     description:
       "Kulje merkin ETELÄPUOLELTA. Keltainen-musta poiju kahdella alaspäin osoittavalla kartiolla. Kuusi nopeaa välähdystä ja yksi pitkä välkky joka 15 sekunti — kello kuusi on kellotaulun alhaalla.",
   },
   {
     name: "Kardinaali — Itäinen",
     lights: ["#f8fafc"],
-    animClass: "light-flash-group3",
+    animClass: "light-flash-cardinal-east",
     char: "Np(3)",
     shape: "Pilari / Sauva",
+    kind: "east",
     description:
       "Kulje merkin ITÄPUOLELTA. Musta-keltainen-musta poiju kahdella ulospäin osoittavalla kartiolla. Kolme nopeaa välähdystä joka 10 sekunti — kolme on kellotaulun oikealla (idässä).",
   },
   {
     name: "Kardinaali — Läntinen",
     lights: ["#f8fafc"],
-    animClass: "light-flash-group2",
+    animClass: "light-flash-cardinal-west",
     char: "Np(9)",
     shape: "Pilari / Sauva",
+    kind: "west",
     description:
       "Kulje merkin LÄNSIPUOLELTA. Keltainen-musta-keltainen poiju kahdella sisäänpäin osoittavalla kartiolla. Yhdeksän nopeaa välähdystä joka 15 sekunti — yhdeksän on kellotaulun vasemmalla (lännessä).",
   },
@@ -195,6 +210,7 @@ const buoyTypes: BuoyType[] = [
     animClass: "light-flash-morse-a",
     char: "Mo(A) / PVl / Iso",
     shape: "Pallonmuotoinen",
+    kind: "safe-water",
     description:
       "Osoittaa turvallisen kulkuveden joka suuntaan — väylän keskilinja tai maatumismerkki. Punainen-valkoinen pystyraita pallonmuotoinen poiju, usein pitkä välkky, isofaasi tai Morse A valkoinen valo.",
   },
@@ -204,6 +220,7 @@ const buoyTypes: BuoyType[] = [
     animClass: "light-flash-single",
     char: "Vl K",
     shape: "Vaihteleva (X-huippumerkki)",
+    kind: "special",
     description:
       "Merkitsee merikortissa mainittua erityisaluetta tai -kohdetta — liikenteen erottelujärjestelmät, sotilasharjoitusalueet, kaapeli- ja putkistot tai vesiviljely. Keltainen runko keltaisella valolla (mikä tahansa tyyppi).",
   },
@@ -213,6 +230,7 @@ const buoyTypes: BuoyType[] = [
     animClass: "light-flash-group2",
     char: "Vl(2)",
     shape: "Pilari / Sauva",
+    kind: "isolated-danger",
     description:
       "Merkitsee eristyneen vaaran, jonka ympärillä on turvallista kulkuvettä. Musta-punainen vaakasuoraitattu poiju kahdella mustalla pallolla huippumerkkinä. Ryhmävälkky valkoinen valo (2) joka viisi sekuntia on standardi.",
   },
@@ -269,26 +287,144 @@ function CharCard({ c }: { c: Characteristic }) {
   );
 }
 
+function BuoyIllustration({ kind, name }: { kind: BuoyKind; name: string }) {
+  const darkMarkProps = {
+    fill: "#050505",
+    stroke: "#94a3b8",
+    strokeWidth: 1,
+    strokeLinejoin: "round" as const,
+  };
+
+  const marker = (() => {
+    switch (kind) {
+      case "port":
+        return (
+          <g fill="#ef2929">
+            <rect x="72" y="42" width="36" height="31" />
+            <rect x="82" y="70" width="16" height="116" rx="8" />
+          </g>
+        );
+      case "starboard":
+        return (
+          <g fill="#55b950">
+            <path d="M90 38 62 74h56Z" />
+            <rect x="82" y="69" width="16" height="117" rx="8" />
+          </g>
+        );
+      case "north":
+        return (
+          <>
+            <g {...darkMarkProps}>
+              <path d="M90 20 70 45h40Z" />
+              <path d="M90 43 70 68h40Z" />
+            </g>
+            <path d="M82 64h16v54H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+            <path d="M82 118h16v68H82Z" fill="#ffe500" />
+          </>
+        );
+      case "south":
+        return (
+          <>
+            <g {...darkMarkProps}>
+              <path d="M70 20h40L90 45Z" />
+              <path d="M70 43h40L90 68Z" />
+            </g>
+            <path d="M82 64h16v54H82Z" fill="#ffe500" />
+            <path d="M82 118h16v68H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+          </>
+        );
+      case "west":
+        return (
+          <>
+            <g {...darkMarkProps}>
+              <path d="M68 20h44L90 48Z" />
+              <path d="M90 48 68 76h44Z" />
+            </g>
+            <path d="M82 72h16v38H82Z" fill="#ffe500" />
+            <path d="M82 110h16v38H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+            <path d="M82 148h16v38H82Z" fill="#ffe500" />
+          </>
+        );
+      case "east":
+        return (
+          <>
+            <g {...darkMarkProps}>
+              <path d="M90 18 68 48h44Z" />
+              <path d="M68 48h44L90 78Z" />
+            </g>
+            <path d="M82 74h16v37H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+            <path d="M82 111h16v38H82Z" fill="#ffe500" />
+            <path d="M82 149h16v37H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+          </>
+        );
+      case "isolated-danger":
+        return (
+          <>
+            <circle cx="90" cy="39" r="21" {...darkMarkProps} />
+            <path d="M82 58h16v41H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+            <path d="M82 99h16v42H82Z" fill="#ef2929" />
+            <path d="M82 141h16v45H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
+          </>
+        );
+      case "safe-water":
+        return (
+          <g fill="#ed1738">
+            <circle cx="90" cy="40" r="20" />
+            <rect x="82" y="58" width="16" height="128" rx="8" />
+          </g>
+        );
+      case "special":
+        return (
+          <g fill="#f5d90a">
+            <path d="m69 22 13 20-13 20 21-12 21 12-13-20 13-20-21 12Z" />
+            <rect x="82" y="56" width="16" height="130" rx="8" />
+          </g>
+        );
+    }
+  })();
+
+  return (
+    <svg
+      viewBox="0 0 180 210"
+      role="img"
+      aria-label={`${name}, päivämerkki`}
+      className="h-52 w-full"
+    >
+      {marker}
+      <ellipse cx="90" cy="189" rx="28" ry="4" fill="#020617" opacity=".22" />
+    </svg>
+  );
+}
+
 function BuoyCard({ b }: { b: BuoyType }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/40 hover:bg-white/8">
-      <div className="flex items-center gap-2 mb-4">
-        {b.lights.map((col, i) => (
-          <LightDot key={i} color={col} animClass={b.animClass} size="md" />
-        ))}
-      </div>
-      <h3 className="font-serif text-xl font-semibold">{b.name}</h3>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-0.5 font-mono text-xs text-amber-300">
-          {b.char}
-        </span>
-        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-slate-400">
-          {b.shape}
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition hover:border-amber-300/40 hover:bg-white/8">
+      <div className="relative border-b border-white/10 bg-[#091428] px-4 pt-3">
+        <BuoyIllustration kind={b.kind} name={b.name} />
+        <span className="absolute left-4 top-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Päivämerkki
         </span>
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-slate-300">
-        {b.description}
-      </p>
+      <div className="p-6">
+        <div className="mb-4 flex items-center gap-2">
+          {b.lights.map((col, i) => (
+            <LightDot key={i} color={col} animClass={b.animClass} size="md" />
+          ))}
+          <span className="ml-1 text-xs text-slate-500">Yövalo</span>
+        </div>
+        <h3 className="font-serif text-xl font-semibold">{b.name}</h3>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-0.5 font-mono text-xs text-amber-300">
+            {b.char}
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-slate-400">
+            {b.shape}
+          </span>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-slate-300">
+          {b.description}
+        </p>
+      </div>
     </div>
   );
 }
@@ -297,7 +433,7 @@ export default function App() {
   const [activeSystem, setActiveSystem] = useState<IalaRegion>("A");
 
   return (
-    <>
+    <div className="bg-[#0b1830] text-white min-h-screen">
       {/* Hero */}
       <section className="relative overflow-hidden px-6 pb-24 pt-20 sm:pt-28">
         <div
@@ -525,8 +661,7 @@ export default function App() {
         </div>
       </section>
 
-    </>
+    </div>
   );
 }
-
 
