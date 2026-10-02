@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
     user = (
         db.query(models.User)
-        .filter(models.User.username == credentials.username)
+        .filter(func.lower(models.User.username) == func.lower(credentials.username))
         .first()
     )
 
