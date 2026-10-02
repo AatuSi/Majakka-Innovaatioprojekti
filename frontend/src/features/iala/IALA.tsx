@@ -288,97 +288,137 @@ function CharCard({ c }: { c: Characteristic }) {
 }
 
 function BuoyIllustration({ kind, name }: { kind: BuoyKind; name: string }) {
+  const bodyClipId = `marker-body-${kind}`;
   const darkMarkProps = {
     fill: "#050505",
     stroke: "#94a3b8",
-    strokeWidth: 1,
+    strokeWidth: 1.25,
     strokeLinejoin: "round" as const,
   };
 
-  const marker = (() => {
+  const body = (() => {
+    switch (kind) {
+      case "port":
+      case "starboard":
+        return (
+          <path
+            d="M81 68h18v112q0 9-9 9t-9-9Z"
+            fill={kind === "port" ? "#ef2929" : "#55b950"}
+          />
+        );
+      case "north":
+        return (
+          <g clipPath={`url(#${bodyClipId})`}>
+            <rect x="80" y="66" width="20" height="54" fill="#050505" />
+            <rect x="80" y="120" width="20" height="70" fill="#ffe500" />
+          </g>
+        );
+      case "south":
+        return (
+          <g clipPath={`url(#${bodyClipId})`}>
+            <rect x="80" y="66" width="20" height="54" fill="#ffe500" />
+            <rect x="80" y="120" width="20" height="70" fill="#050505" />
+          </g>
+        );
+      case "west":
+        return (
+          <g clipPath={`url(#${bodyClipId})`}>
+            <rect x="80" y="66" width="20" height="40" fill="#ffe500" />
+            <rect x="80" y="106" width="20" height="41" fill="#050505" />
+            <rect x="80" y="147" width="20" height="43" fill="#ffe500" />
+          </g>
+        );
+      case "east":
+        return (
+          <g clipPath={`url(#${bodyClipId})`}>
+            <rect x="80" y="66" width="20" height="40" fill="#050505" />
+            <rect x="80" y="106" width="20" height="41" fill="#ffe500" />
+            <rect x="80" y="147" width="20" height="43" fill="#050505" />
+          </g>
+        );
+      case "isolated-danger":
+        return (
+          <g clipPath={`url(#${bodyClipId})`}>
+            <rect x="80" y="66" width="20" height="40" fill="#050505" />
+            <rect x="80" y="106" width="20" height="42" fill="#ef2929" />
+            <rect x="80" y="148" width="20" height="42" fill="#050505" />
+          </g>
+        );
+      case "safe-water":
+        return (
+          <path d="M81 58h18v122q0 9-9 9t-9-9Z" fill="#ed1738" />
+        );
+      case "special":
+        return (
+          <path d="M81 57h18v123q0 9-9 9t-9-9Z" fill="#f5d90a" />
+        );
+    }
+  })();
+
+  const topMark = (() => {
     switch (kind) {
       case "port":
         return (
-          <g fill="#ef2929">
-            <rect x="72" y="42" width="36" height="31" />
-            <rect x="82" y="70" width="16" height="116" rx="8" />
+          <g>
+            <rect x="70" y="38" width="40" height="35" rx="1.5" fill="#ef2929" />
+            <path d="M75 43h30" stroke="#fca5a5" strokeOpacity=".45" strokeWidth="2" />
           </g>
         );
       case "starboard":
         return (
-          <g fill="#55b950">
-            <path d="M90 38 62 74h56Z" />
-            <rect x="82" y="69" width="16" height="117" rx="8" />
-          </g>
+          <path
+            d="M90 34 59 75h62Z"
+            fill="#55b950"
+            stroke="#86efac"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
         );
       case "north":
         return (
-          <>
-            <g {...darkMarkProps}>
-              <path d="M90 20 70 45h40Z" />
-              <path d="M90 43 70 68h40Z" />
-            </g>
-            <path d="M82 64h16v54H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-            <path d="M82 118h16v68H82Z" fill="#ffe500" />
-          </>
+          <g {...darkMarkProps}>
+            <path d="M90 42 67 72h46Z" />
+            <path d="M90 14 67 44h46Z" />
+          </g>
         );
       case "south":
         return (
-          <>
-            <g {...darkMarkProps}>
-              <path d="M70 20h40L90 45Z" />
-              <path d="M70 43h40L90 68Z" />
-            </g>
-            <path d="M82 64h16v54H82Z" fill="#ffe500" />
-            <path d="M82 118h16v68H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-          </>
+          <g {...darkMarkProps}>
+            <path d="M67 14h46L90 44Z" />
+            <path d="M67 42h46L90 72Z" />
+          </g>
         );
       case "west":
         return (
-          <>
-            <g {...darkMarkProps}>
-              <path d="M68 20h44L90 48Z" />
-              <path d="M90 48 68 76h44Z" />
-            </g>
-            <path d="M82 72h16v38H82Z" fill="#ffe500" />
-            <path d="M82 110h16v38H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-            <path d="M82 148h16v38H82Z" fill="#ffe500" />
-          </>
+          <g {...darkMarkProps}>
+            <path d="M65 15h50L90 48Z" />
+            <path d="M90 48 65 81h50Z" />
+          </g>
         );
       case "east":
         return (
-          <>
-            <g {...darkMarkProps}>
-              <path d="M90 18 68 48h44Z" />
-              <path d="M68 48h44L90 78Z" />
-            </g>
-            <path d="M82 74h16v37H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-            <path d="M82 111h16v38H82Z" fill="#ffe500" />
-            <path d="M82 149h16v37H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-          </>
+          <g {...darkMarkProps}>
+            <path d="M90 14 65 48h50Z" />
+            <path d="M65 48h50L90 82Z" />
+          </g>
         );
       case "isolated-danger":
         return (
-          <>
-            <circle cx="90" cy="39" r="21" {...darkMarkProps} />
-            <path d="M82 58h16v41H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-            <path d="M82 99h16v42H82Z" fill="#ef2929" />
-            <path d="M82 141h16v45H82Z" fill="#050505" stroke="#94a3b8" strokeWidth="1" />
-          </>
+          <circle cx="90" cy="39" r="22" {...darkMarkProps} />
         );
       case "safe-water":
         return (
-          <g fill="#ed1738">
-            <circle cx="90" cy="40" r="20" />
-            <rect x="82" y="58" width="16" height="128" rx="8" />
-          </g>
+          <circle cx="90" cy="39" r="21" fill="#ed1738" stroke="#fda4af" strokeWidth="1" />
         );
       case "special":
         return (
-          <g fill="#f5d90a">
-            <path d="m69 22 13 20-13 20 21-12 21 12-13-20 13-20-21 12Z" />
-            <rect x="82" y="56" width="16" height="130" rx="8" />
-          </g>
+          <path
+            d="m66 17 15 23-15 23 24-14 24 14-15-23 15-23-24 14Z"
+            fill="#f5d90a"
+            stroke="#fef08a"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
         );
     }
   })();
@@ -390,8 +430,34 @@ function BuoyIllustration({ kind, name }: { kind: BuoyKind; name: string }) {
       aria-label={`${name}, päivämerkki`}
       className="h-52 w-full"
     >
-      {marker}
-      <ellipse cx="90" cy="189" rx="28" ry="4" fill="#020617" opacity=".22" />
+      <defs>
+        <clipPath id={bodyClipId}>
+          <path d="M80 65h20v115q0 10-10 10t-10-10Z" />
+        </clipPath>
+        <filter id={`top-shadow-${kind}`} x="-30%" y="-30%" width="160%" height="170%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#020617" floodOpacity=".45" />
+        </filter>
+      </defs>
+      <ellipse cx="90" cy="190" rx="30" ry="4" fill="#020617" opacity=".24" />
+      <path d="M43 193q16-6 32 0t32 0 32 0" fill="none" stroke="#38bdf8" strokeOpacity=".2" />
+      {body}
+      {["north", "south", "east", "west", "isolated-danger"].includes(kind) && (
+        <path
+          d="M80 65h20v115q0 10-10 10t-10-10V65Z"
+          fill="none"
+          stroke="#cbd5e1"
+          strokeOpacity=".5"
+          strokeWidth="1"
+        />
+      )}
+      <path
+        d="M85 71v105"
+        stroke="#fff"
+        strokeOpacity=".12"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <g filter={`url(#top-shadow-${kind})`}>{topMark}</g>
     </svg>
   );
 }
