@@ -1,17 +1,27 @@
 import { Link } from "@tanstack/react-router";
 
-const topics = [
+type Topic = {
+  title: string;
+  description: string;
+  lights: string[];
+  // Page the card opens; topics without a page yet show a "Tulossa" badge.
+  to?: "/colregs" | "/IALA-lights" | "/IALA-quiz";
+};
+
+const topics: Topic[] = [
   {
     title: "Veneiden kulkuvalot",
     description:
       "Opi tunnistamaan punaisen, vihreän ja valkoisen kulkuvalon yhdistelmistä, mihin suuntaan alus on menossa ja kumman aluksen tulee väistää.",
     lights: ["#ef4444", "#22c55e", "#f8fafc"],
+    to: "/colregs",
   },
   {
     title: "IALA-valorytmit ja -poijumerkit",
     description:
       "Tutustu IALA-järjestelmän mukaisiin loistoihin ja niiden vilkkumissekvensseihin ja väreihin.",
     lights: ["#f59e0b", "#f8fafc"],
+    to: "/IALA-lights",
   },
   {
     title: "Alusten siluetit",
@@ -24,6 +34,7 @@ const topics = [
     description:
       "Testaa oppimasi tiedot käytännön tilanteissa ja seuraa omaa edistymistäsi.",
     lights: ["#f8fafc", "#f59e0b"],
+    to: "/IALA-quiz",
   },
 ];
 
@@ -51,7 +62,7 @@ export default function HomePage() {
             <Link
               to="/"
               hash="aiheet"
-              className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-[#0b1830] transition hover:bg-amber-200"
+              className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200"
             >
               Tutustu aiheisiin
             </Link>
@@ -66,7 +77,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="aiheet" className="bg-[#0f2140] px-6 py-20">
+      <section id="aiheet" className="bg-navy-900 px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
             <h2 className="font-serif text-3xl font-semibold sm:text-4xl">
@@ -78,31 +89,57 @@ export default function HomePage() {
             </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {topics.map((topic) => (
-              <div
-                key={topic.title}
-                className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/40 hover:bg-white/10"
-              >
-                <div className="flex gap-1.5">
-                  {topic.lights.map((color, index) => (
-                    <span
-                      key={`${topic.title}-${index}`}
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{
-                        backgroundColor: color,
-                        boxShadow: `0 0 8px ${color}`,
-                      }}
-                    />
-                  ))}
+            {topics.map((topic) => {
+              const content = (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    {topic.lights.map((color, index) => (
+                      <span
+                        key={`${topic.title}-${index}`}
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{
+                          backgroundColor: color,
+                          boxShadow: `0 0 8px ${color}`,
+                        }}
+                      />
+                    ))}
+                    {!topic.to && (
+                      <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-slate-400">
+                        Tulossa
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mt-4 font-serif text-xl font-semibold">
+                    {topic.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                    {topic.description}
+                  </p>
+                  {topic.to && (
+                    <p className="mt-4 text-sm font-semibold text-amber-300">
+                      Avaa <span aria-hidden="true">&rarr;</span>
+                    </p>
+                  )}
+                </>
+              );
+
+              return topic.to ? (
+                <Link
+                  key={topic.title}
+                  to={topic.to}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/40 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div
+                  key={topic.title}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-6 opacity-75"
+                >
+                  {content}
                 </div>
-                <h3 className="mt-4 font-serif text-xl font-semibold">
-                  {topic.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                  {topic.description}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

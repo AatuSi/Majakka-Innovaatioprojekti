@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import { HeadContent, Link, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import Footer from "../components/Footer";
@@ -33,6 +33,7 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -41,9 +42,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="font-sans min-h-dvh flex flex-col">
+      <body className="flex min-h-dvh flex-col bg-navy-950 font-sans text-white">
         <Header />
-        <main className="bg-[#0b1830] text-white flex-1">{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
         <Footer />
         <TanStackDevtools
           config={{
@@ -59,5 +60,27 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+function NotFound() {
+  return (
+    <section className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">
+        404
+      </p>
+      <h1 className="mt-4 font-serif text-4xl font-semibold">
+        Sivua ei löytynyt
+      </h1>
+      <p className="mt-4 text-slate-300">
+        Hakemaasi sivua ei ole olemassa tai se on siirretty.
+      </p>
+      <Link
+        to="/"
+        className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200"
+      >
+        Takaisin etusivulle
+      </Link>
+    </section>
   );
 }
