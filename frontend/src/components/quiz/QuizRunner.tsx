@@ -114,7 +114,7 @@ export default function QuizRunner({
   // --- Empty state -------------------------------------------------------
   if (total === 0) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#0b1830] text-white">
+      <div className="flex flex-1 flex-col">
         <section className={heroClasses}>
           <div className="relative mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">
@@ -125,7 +125,7 @@ export default function QuizRunner({
             </h1>
           </div>
         </section>
-        <section className="flex-1 border-t border-white/10 bg-[#0f2140] px-6 py-16">
+        <section className="flex-1 border-t border-white/10 bg-navy-900 px-6 py-16">
           <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
             <p className="font-serif text-xl font-semibold">
               Tietovisassa ei ole vielä kysymyksiä
@@ -142,7 +142,7 @@ export default function QuizRunner({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0b1830] text-white">
+    <div className="flex flex-1 flex-col">
       {/* Hero */}
       <section className={heroClasses}>
         <div
@@ -173,7 +173,7 @@ export default function QuizRunner({
         </div>
       </section>
 
-      <section className="flex-1 border-t border-white/10 bg-[#0f2140] px-6 py-16">
+      <section className="flex-1 border-t border-white/10 bg-navy-900 px-6 py-16">
         <div className="mx-auto max-w-3xl">
           {/* --- Intro state --------------------------------------------- */}
           {phase === 'intro' ? (
@@ -205,7 +205,7 @@ export default function QuizRunner({
               <button
                 type="button"
                 onClick={start}
-                className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-[#0b1830] transition hover:bg-amber-200 quiz-focus"
+                className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
               >
                 Aloita tietovisa
               </button>
@@ -364,7 +364,7 @@ export default function QuizRunner({
                     <button
                       type="button"
                       onClick={goToNext}
-                      className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-[#0b1830] transition hover:bg-amber-200 quiz-focus"
+                      className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
                     >
                       {index + 1 >= total
                         ? 'Näytä tulokset'
@@ -374,7 +374,7 @@ export default function QuizRunner({
                     <button
                       type="button"
                       onClick={checkAnswer}
-                      className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-[#0b1830] transition hover:bg-amber-200 quiz-focus"
+                      className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
                     >
                       Tarkista vastaus
                     </button>
@@ -473,7 +473,7 @@ export default function QuizRunner({
                 <button
                   type="button"
                   onClick={start}
-                  className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-[#0b1830] transition hover:bg-amber-200 quiz-focus"
+                  className="rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
                 >
                   Yritä uudelleen
                 </button>

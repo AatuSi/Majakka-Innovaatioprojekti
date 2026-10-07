@@ -9,8 +9,8 @@ const menu = [
 ];
 
 const company = [
-  { label: "Kirjaudu", href: "/sign-in" },
-  { label: "Rekisteröidy", href: "/sign-up" },
+  { label: "Kirjaudu", href: "/login" },
+  { label: "Rekisteröidy", href: "/login" },
 ];
 
 const contact = ["+358 12 345 6789", "email@osoite.fi", "Katuosoite 123"];
@@ -20,7 +20,7 @@ const headingClass = "text-xl font-light text-white";
 
 export default function Footer() {
   return (
-      <footer id="hanke" className="scroll-mt-20 bg-[#0F1724] font-['Inter',sans-serif] text-[#E3E3E3]">
+      <footer id="hanke" className="scroll-mt-20 border-t border-white/10 bg-[#0F1724] font-['Inter',sans-serif] text-[#E3E3E3]">
         <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div className="flex flex-col justify-between gap-10">
 

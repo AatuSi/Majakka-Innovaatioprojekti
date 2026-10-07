@@ -125,7 +125,7 @@ export default function LoginPage() {
             <Link to="/" className="transition hover:text-white">
               Etusivu
             </Link>
-            <Link to="/IALA-lights" className="transition hover:text-white">
+            <Link to="/IALA" className="transition hover:text-white">
               IALA-valot
             </Link>
           </div>

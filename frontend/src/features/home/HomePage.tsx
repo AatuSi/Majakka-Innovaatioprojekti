@@ -4,13 +4,22 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 
-const topics = [
+type Topic = {
+    title: string;
+    tag: string;
+    description: string;
+    lights: string[];
+    to?: '/colregs' | '/IALA' | '/IALA-quiz';
+};
+
+const topics: Topic[] = [
     {
         title: 'Veneiden kulkuvalot',
         tag: 'COLREG-SÄÄNNÖT',
         description:
             'Opi tunnistamaan punaisen, vihreän ja valkoisen kulkuvalon yhdistelmistä, mihin suuntaan alus on menossa ja kumman aluksen tulee väistää.',
         lights: ['#ef4444', '#22c55e', '#f8fafc'],
+        to: '/colregs',
     },
     {
         title: 'IALA-valorytmit ja -poijumerkit',
@@ -18,6 +27,7 @@ const topics = [
         description:
             'Tutustu IALA-järjestelmän mukaisiin loistoihin ja niiden vilkkumissekvensseihin ja väreihin.',
         lights: ['#f59e0b', '#f8fafc'],
+        to: '/IALA',
     },
     {
         title: 'Alusten siluetit',
@@ -32,6 +42,7 @@ const topics = [
         description:
             'Testaa oppimasi tiedot käytännön tilanteissa ja seuraa omaa edistymistäsi.',
         lights: ['#f8fafc', '#f59e0b'],
+        to: '/IALA-quiz',
     },
 ]
 
@@ -173,32 +184,60 @@ export default function HomePage() {
                     </div>
 
                     <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {topics.map((topic) => (
-                            <div
-                                className="group flex flex-col justify-between overflow-hidden rounded-xl border border-[#2A3548] bg-[#1E2839]/80 text-[#E3E3E3] transition-all duration-300 hover:-translate-y-1 hover:border-[#1D90F4]/60 hover:shadow-xl"
-                            >
-                                <div>
+                        {topics.map((topic) => {
+                            const cardContent = (
+                                <>
                                     <div className="relative flex h-36 items-center justify-center border-b border-[#2A3548]/40 bg-[#0F1724]">
                                         <span className="absolute top-3 left-3 text-[10px] text-[#718096]">
                                             {topic.tag}
                                         </span>
+                                        {!topic.to && (
+                                            <span className="absolute top-3 right-3 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-400">
+                                                Tulossa
+                                            </span>
+                                        )}
                                         <Lights
                                             colors={topic.lights}
                                             size="h-4 w-4"
                                         />
                                     </div>
 
-                                    <div className="p-5">
-                                        <h3 className="mt-1 text-xl font-light text-[#1D90F4]">
-                                            {topic.title}
-                                        </h3>
-                                        <p className="mt-3 text-sm leading-relaxed text-[#9fb0c7]">
-                                            {topic.description}
-                                        </p>
+                                    <div className="flex flex-1 flex-col justify-between p-5">
+                                        <div>
+                                            <h3 className="mt-1 text-xl font-light text-[#1D90F4]">
+                                                {topic.title}
+                                            </h3>
+                                            <p className="mt-3 text-sm leading-relaxed text-[#9fb0c7]">
+                                                {topic.description}
+                                            </p>
+                                        </div>
+                                        {topic.to && (
+                                            <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#1D90F4]">
+                                                <span>Avaa</span>
+                                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                                            </div>
+                                        )}
                                     </div>
+                                </>
+                            );
+
+                            return topic.to ? (
+                                <Link
+                                    key={topic.title}
+                                    to={topic.to}
+                                    className="group flex flex-col justify-between overflow-hidden rounded-xl border border-[#2A3548] bg-[#1E2839]/80 text-[#E3E3E3] transition-all duration-300 hover:-translate-y-1 hover:border-[#1D90F4]/60 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D90F4]"
+                                >
+                                    {cardContent}
+                                </Link>
+                            ) : (
+                                <div
+                                    key={topic.title}
+                                    className="flex flex-col justify-between overflow-hidden rounded-xl border border-[#2A3548] bg-[#1E2839]/50 text-[#E3E3E3] opacity-80"
+                                >
+                                    {cardContent}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
