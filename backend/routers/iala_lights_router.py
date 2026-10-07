@@ -17,7 +17,7 @@ admin_only = [Depends(require_admin)]
 
 @router.get("", response_model=list[schemas.IalaLightResponse])
 def list_iala_lights(
-    category: Optional[str] = Query(None, description="Filter by category (e.g. cardinal, lateral)"),
+    category: Optional[str] = Query(None, description="Filter by category (e.g. Kardinaalimerkit, Lateraalimerkit)"),
     search: Optional[str] = Query(None, description="Search by name, rhythm, or description"),
     db: Session = Depends(get_db),
 ):
@@ -28,12 +28,11 @@ def list_iala_lights(
         query = query.filter(models.IalaLight.category == category)
 
     if search:
-        search_pattern = f"%{search}%"
         query = query.filter(
             or_(
-                models.IalaLight.name.ilike(search_pattern),
-                models.IalaLight.rhythm.ilike(search_pattern),
-                models.IalaLight.description.ilike(search_pattern),
+                models.IalaLight.name.icontains(search, autoescape=True),
+                models.IalaLight.rhythm.icontains(search, autoescape=True),
+                models.IalaLight.description.icontains(search, autoescape=True),
             )
         )
 

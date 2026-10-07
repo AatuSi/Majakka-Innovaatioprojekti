@@ -9,6 +9,9 @@ Name = Annotated[str, Field(max_length=255)]
 Label = Annotated[str, Field(max_length=100)]
 Position = Annotated[int, Field(ge=-2**31, le=2**31 - 1)]
 
+Username = Annotated[Name, Field(min_length=1)]
+Password = Annotated[str, Field(min_length=1)]
+
 
 class UserRole(str, Enum):
     ADMIN = "admin"
@@ -22,14 +25,15 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    username: Username
+    password: Password
     role: Optional[UserRole] = UserRole.USER
 
 
 # Fields left out keep their current value.
 class UserUpdate(BaseModel):
-    username: Optional[Name] = None
-    password: Optional[str] = None
+    username: Optional[Username] = None
+    password: Optional[Password] = None
     role: Optional[UserRole] = None
 
 

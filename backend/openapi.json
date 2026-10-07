@@ -1360,10 +1360,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by category (e.g. cardinal, lateral)",
+              "description": "Filter by category (e.g. Kardinaalimerkit, Lateraalimerkit)",
               "title": "Category"
             },
-            "description": "Filter by category (e.g. cardinal, lateral)"
+            "description": "Filter by category (e.g. Kardinaalimerkit, Lateraalimerkit)"
           },
           {
             "name": "search",
@@ -2273,10 +2273,12 @@
           "username": {
             "type": "string",
             "maxLength": 255,
+            "minLength": 1,
             "title": "Username"
           },
           "password": {
             "type": "string",
+            "minLength": 1,
             "title": "Password"
           },
           "role": {
@@ -2342,7 +2344,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 255
+                "maxLength": 255,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -2353,7 +2356,8 @@
           "password": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               {
                 "type": "null"

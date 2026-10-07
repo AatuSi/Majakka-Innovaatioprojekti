@@ -151,7 +151,7 @@ Valotunnus: Kuusi nopeaa väläystä, jonka jälkeen 1 pitkä valo kymmenen seku
 Yleissääntönä merkki voidaan kiertää turvallisesti merkin eteläpuolelta.',
     '{
       "color": "white",
-      "rhythm": "Q(6) + LFl 10s",
+      "rhythm": "VQ(6) + LFl 10s",
       "sequence_ms": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 2000, 5600]
     }'::jsonb
 ),

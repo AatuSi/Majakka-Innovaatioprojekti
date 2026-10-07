@@ -1297,7 +1297,7 @@ export type ListIalaLightsData = {
         /**
          * Category
          *
-         * Filter by category (e.g. cardinal, lateral)
+         * Filter by category (e.g. Kardinaalimerkit, Lateraalimerkit)
          */
         category?: string | null;
         /**
