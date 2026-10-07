@@ -14,3 +14,11 @@
   --color-navy-950: #0b1830; /* page background */
   --color-navy-900: #0f2140; /* alternating section background */
 }
+
+html {
+  scroll-behavior: smooth !important;
+}
+
+body {
+  background-color: #182130;
+}

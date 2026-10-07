@@ -1,4 +1,10 @@
-import { HeadContent, Link, Scripts, createRootRoute } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Link,
+  Scripts,
+  createRootRoute,
+  useRouterState,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import Footer from "../components/Footer";
@@ -37,15 +43,25 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const isLoginRoute = useRouterState({
+    select: (state) => state.location.pathname === "/login",
+  });
+
   return (
     <html lang="fi">
       <head>
         <HeadContent />
       </head>
-      <body className="flex min-h-dvh flex-col bg-navy-950 font-sans text-white">
-        <Header />
-        <main className="flex flex-1 flex-col">{children}</main>
-        <Footer />
+      <body
+        className={`bg-navy-950 font-sans text-white ${isLoginRoute ? "" : "flex min-h-dvh flex-col"}`}
+      >
+        {!isLoginRoute && <Header />}
+        {isLoginRoute ? (
+          children
+        ) : (
+          <main className="flex flex-1 flex-col">{children}</main>
+        )}
+        {!isLoginRoute && <Footer />}
         <TanStackDevtools
           config={{
             position: "bottom-right",
