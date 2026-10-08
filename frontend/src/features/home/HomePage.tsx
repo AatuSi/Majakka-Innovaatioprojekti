@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { scrollIfAlreadyHere } from '../../components/navigation'
 
 type Topic = {
     title: string;
@@ -136,6 +137,7 @@ export default function HomePage() {
                             <Link
                                 to="/"
                                 hash="aiheet"
+                                onClick={(event) => scrollIfAlreadyHere(event, '/', 'aiheet')}
                                 className={`${cutCorner} inline-flex items-center gap-2 bg-[#1D90F4] px-7 py-3.5 text-lg font-semibold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:-translate-y-0.25 hover:bg-[#3BA0F6]`}
                             >
                                 Tutustu aiheisiin
@@ -145,6 +147,7 @@ export default function HomePage() {
                             <Link
                                 to="/"
                                 hash="miksi"
+                                onClick={(event) => scrollIfAlreadyHere(event, '/', 'miksi')}
                                 className="px-3 py-3.5 text-lg font-medium text-[#1D90F4] underline-offset-4 hover:underline"
                             >
                                 Miksi tämä on tärkeää?
