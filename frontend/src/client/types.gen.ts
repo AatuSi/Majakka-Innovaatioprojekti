@@ -15,6 +15,20 @@ export type HttpValidationError = {
 };
 
 /**
+ * HealthResponse
+ */
+export type HealthResponse = {
+    /**
+     * Status
+     */
+    status: 'ok' | 'error';
+    /**
+     * Database
+     */
+    database: 'ok' | 'unavailable';
+};
+
+/**
  * IalaLightCreate
  */
 export type IalaLightCreate = {
@@ -469,6 +483,31 @@ export type ValidationError = {
         [key: string]: unknown;
     };
 };
+
+export type HealthCheckData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/health';
+};
+
+export type HealthCheckErrors = {
+    /**
+     * Service Unavailable
+     */
+    503: HealthResponse;
+};
+
+export type HealthCheckError = HealthCheckErrors[keyof HealthCheckErrors];
+
+export type HealthCheckResponses = {
+    /**
+     * Successful Response
+     */
+    200: HealthResponse;
+};
+
+export type HealthCheckResponse = HealthCheckResponses[keyof HealthCheckResponses];
 
 export type LoginData = {
     body: LoginRequest;

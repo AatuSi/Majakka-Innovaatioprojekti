@@ -6,7 +6,6 @@ import { scrollIfAlreadyHere } from '../../components/navigation'
 
 import ContactForm from './ContactForm'
 
-
 type Topic = {
     title: string;
     tag: string;

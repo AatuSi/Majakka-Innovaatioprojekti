@@ -8,7 +8,17 @@ import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    devtools({
+      // Vite already forwards browser warnings and errors to the terminal. With
+      // the devtools pipe on as well, the terminal is echoed back to the browser
+      // and every browser warning goes around in an endless loop.
+      consolePiping: { enabled: false },
+    }),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+  ],
 })
 
 export default config
