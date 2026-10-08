@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { scrollIfAlreadyHere } from '../../components/navigation'
+
 import ContactForm from './ContactForm'
 
 type Topic = {
