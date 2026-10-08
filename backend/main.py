@@ -8,6 +8,7 @@ from sqlalchemy.exc import DataError
 from fastapi.middleware.cors import CORSMiddleware
 from routers import (
     auth,
+    health,
     users,
     quizzes,
     quiz_questions,
@@ -33,6 +34,7 @@ app.add_middleware(
 
 protected = [Depends(get_current_user)]
 
+app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(quizzes.router, dependencies=protected)

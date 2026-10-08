@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, List, Optional, Any, Dict
+from typing import Annotated, List, Literal, Optional, Any, Dict
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
@@ -53,6 +53,13 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+# --- HEALTH SCHEMAS ---
+
+class HealthResponse(BaseModel):
+    status: Literal["ok", "error"]
+    database: Literal["ok", "unavailable"]
 
 
 # --- OPTION SCHEMAS ---
