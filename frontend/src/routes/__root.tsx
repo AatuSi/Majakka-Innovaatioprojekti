@@ -43,9 +43,11 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const isLoginRoute = useRouterState({
-    select: (state) => state.location.pathname === "/login",
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
   });
+  const isLoginRoute = pathname === "/login";
+  const isProfileRoute = pathname === "/profile";
 
   return (
     <html lang="fi">
@@ -55,13 +57,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body
         className={`bg-navy-950 font-sans text-white ${isLoginRoute ? "" : "flex min-h-dvh flex-col"}`}
       >
-        {!isLoginRoute && <Header />}
+        {!isLoginRoute && !isProfileRoute && <Header />}
         {isLoginRoute ? (
           children
         ) : (
           <main className="flex flex-1 flex-col">{children}</main>
         )}
-        {!isLoginRoute && <Footer />}
+        {!isLoginRoute && !isProfileRoute && <Footer />}
         <TanStackDevtools
           config={{
             position: "bottom-right",
