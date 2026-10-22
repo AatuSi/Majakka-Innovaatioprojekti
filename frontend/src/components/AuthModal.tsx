@@ -68,7 +68,7 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
 
     return () => {
       document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus?.();
+      previouslyFocused?.focus();
     };
   }, []);
 

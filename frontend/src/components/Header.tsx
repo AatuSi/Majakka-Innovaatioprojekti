@@ -3,6 +3,8 @@ import type { MouseEvent } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import LighthouseMark from "./LighthouseMark";
 import { scrollIfAlreadyHere } from "./navigation";
+import AuthModal from "./AuthModal";
+import { openAuthModal } from "./authModalStore";
 
 const cutCorner =
   "[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]";
@@ -117,8 +119,9 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link
-            to="/login"
+          <button
+            type="button"
+            onClick={() => openAuthModal("sign-in")}
             className={`${cutCorner} hidden bg-[#1D90F4] p-0.5 transition hover:bg-[#3BA0F6] sm:inline-block`}
           >
             <span
@@ -126,7 +129,7 @@ export default function Header() {
             >
               Kirjaudu
             </span>
-          </Link>
+          </button>
 
           <button
             type="button"
@@ -216,17 +219,22 @@ export default function Header() {
               </Link>
             </li>
             <li className="pt-2">
-              <Link
-                to="/login"
-                onClick={navigateTo("/login")}
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  openAuthModal("sign-in");
+                }}
                 className="block py-2 text-lg font-medium text-[#1D90F4]"
               >
                 Kirjaudu
-              </Link>
+              </button>
             </li>
           </ul>
         </nav>
       )}
+
+      <AuthModal />
     </header>
   );
 }
