@@ -94,49 +94,70 @@
 }
 
 .light-flash-single {
-  animation: flash-single 3s ease-in-out infinite;
+  --light-animation: flash-single 3s ease-in-out infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-group2 {
-  animation: flash-group2 5s ease-in-out infinite;
+  --light-animation: flash-group2 5s ease-in-out infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-group3 {
-  animation: flash-group3 7s ease-in-out infinite;
+  --light-animation: flash-group3 7s ease-in-out infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-quick {
-  animation: flash-quick 1s steps(1, end) infinite;
+  --light-animation: flash-quick 1s steps(1, end) infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-iso {
-  animation: flash-iso 2s steps(1) infinite;
+  --light-animation: flash-iso 2s steps(1) infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-occulting {
-  animation: flash-occulting 3s ease-in-out infinite;
+  --light-animation: flash-occulting 3s ease-in-out infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-fixed {
-  animation: flash-fixed 1s linear infinite;
+  --light-animation: flash-fixed 1s linear infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-longflash {
-  animation: flash-longflash 10s ease-in-out infinite;
+  --light-animation: flash-longflash 10s ease-in-out infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-morse-a {
-  animation: flash-morse-a 6s ease-in-out infinite;
+  --light-animation: flash-morse-a 6s ease-in-out infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-cardinal-east {
-  animation: flash-cardinal-east 10s steps(1) infinite;
+  --light-animation: flash-cardinal-east 10s steps(1) infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-cardinal-south {
-  animation: flash-cardinal-south 15s steps(1) infinite;
+  --light-animation: flash-cardinal-south 15s steps(1) infinite;
+  animation: var(--light-animation);
 }
 
 .light-flash-cardinal-west {
-  animation: flash-cardinal-west 15s steps(1) infinite;
+  --light-animation: flash-cardinal-west 15s steps(1) infinite;
+  animation: var(--light-animation);
+}
+
+.light-on-card-hover {
+  animation: none;
+  opacity: 0.05;
+}
+
+.group:hover .light-on-card-hover {
+  animation: var(--light-animation);
 }
