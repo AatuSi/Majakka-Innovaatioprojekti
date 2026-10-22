@@ -626,13 +626,13 @@ export default function App() {
                 color: "#ef4444",
                 label: "Punainen",
                 description:
-                  "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti, Persianlahden maat.",
+                  "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti",
               },
               {
                 side: "Styyrpuuri (oikea)",
                 color: "#22c55e",
                 label: "Vihreä",
-                description: "Vihreä kartiopoiju. Vihreä valo (mikä tahansa tyyppi).",
+                description: "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti",
               },
             ] as LateralRow[]).map((row) => (
               <div
@@ -676,8 +676,7 @@ export default function App() {
                 "Punainen paapuuriin, vihreä styyrpuuriin"
               </p>
               <p className="text-sm text-slate-300 leading-relaxed">
-                IALA-A-vesillä (Eurooppa, Afrikka, suurin osa Aasiasta)
-                punainen poiju merkitsee aina väylän paapuuripuolen
+                IALA-A-vesillä punainen poiju merkitsee aina väylän paapuuripuolen
                 kulkusuunnassa — yleensä kohti satamaa tai ylävirtaan.
               </p>
             </div>
