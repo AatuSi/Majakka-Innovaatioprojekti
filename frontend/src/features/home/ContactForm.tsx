@@ -12,6 +12,7 @@ import {
   validateField,
 } from '../../lib/validation'
 import type { FieldErrors, Rules } from '../../lib/validation'
+import { createContactMessage } from '../../client'
 
 const cutCorner =
   '[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]'
@@ -78,6 +79,8 @@ export default function ContactForm() {
   const [sent, setSent] = useState(false)
   const [submitFailed, setSubmitFailed] = useState(false)
   const fieldRefs = useRef<Partial<Record<FieldName, HTMLElement | null>>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     if (!sent) return
@@ -121,24 +124,51 @@ export default function ContactForm() {
     }
   }
 
-  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+     event.preventDefault()
 
     const nextErrors = validate(values, rules)
     setErrors(nextErrors)
 
     if (hasErrors(nextErrors)) {
       const firstInvalid = fieldOrder.find((name) => nextErrors[name])
-      if (firstInvalid) fieldRefs.current[firstInvalid]?.focus()
+
+      if (firstInvalid) {
+        fieldRefs.current[firstInvalid]?.focus()
+      }
+
       setSubmitFailed(true)
       setSent(false)
       return
     }
 
-    // There is no backend endpoint for messages yet, so sending is simulated.
-    setValues(emptyValues)
-    setSubmitFailed(false)
-    setSent(true)
+    setIsSubmitting(true)
+    setSent(false)
+    setErrorMessage('')
+
+     try {
+      await createContactMessage({
+        body: {
+          first_name: values.firstName,
+          last_name: values.lastName,
+          email: values.email,
+          topic: values.topic,
+          message: values.message,
+        },
+        throwOnError: true,
+      })
+
+      setValues(emptyValues)
+      setErrors({})
+      setSubmitFailed(false)
+      setSent(true)
+    } catch {
+      setErrorMessage(
+        'Viestin lähettäminen epäonnistui. Yritä uudelleen.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Props shared by every field: value, handlers and the error wiring.
@@ -274,7 +304,8 @@ export default function ContactForm() {
             type="submit"
             className={`${cutCorner} w-full sm:w-auto bg-[#1D90F4] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:bg-[#3BA0F6] active:scale-95 cursor-pointer`}
           >
-            Lähetä viesti <FontAwesomeIcon icon={faArrowRight} />
+            {isSubmitting ? 'Lähetetään...' : 'Lähetä viesti'}
+            {!isSubmitting && <FontAwesomeIcon icon={faArrowRight} />}
           </button>
         </div>
       </form>
@@ -287,6 +318,14 @@ export default function ContactForm() {
           </div>
         )}
       </output>
+      {errorMessage && (
+      <div
+        role="alert"
+        className="mt-4 rounded-xl border border-red-500/40 bg-red-500/20 p-3 text-center text-xs text-red-300"
+      >
+        {errorMessage}
+      </div>
+      )}
     </>
   )
 }
