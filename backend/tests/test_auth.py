@@ -7,7 +7,7 @@ import pytest
 from main import app
 from security import JWT_ALGORITHM, JWT_SECRET
 
-PUBLIC_ROUTES = {("POST", "/auth/login"), ("POST", "/users")}
+PUBLIC_ROUTES = {("POST", "/auth/login"), ("POST", "/users"), ("GET", "/health")}
 MISSING_ID = "00000000-0000-0000-0000-000000000000"
 
 PROTECTED_ROUTES = sorted(

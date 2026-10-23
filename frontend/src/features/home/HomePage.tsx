@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
-import type { SubmitEvent } from 'react'
 import { Link } from '@tanstack/react-router'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
-import { createContactMessage } from '../../client'
+import { scrollIfAlreadyHere } from '../../components/navigation'
+
+import ContactForm from './ContactForm'
 
 type Topic = {
     title: string;
@@ -49,8 +49,6 @@ const topics: Topic[] = [
 ]
 
 const cutCorner = '[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]';
-
-const field = 'w-full rounded-xl border border-[#2A3548] bg-[#121a26] px-4 py-2.5 text-sm text-[#E3E3E3] placeholder:text-[#526077] focus:border-[#1D90F4] focus:outline-none focus:ring-1 focus:ring-[#1D90F4] transition';
 
 const gridStyle = {
     backgroundImage: `
@@ -104,57 +102,6 @@ function Lights({ colors, size }: { colors: string[]; size: string }) {
 }
 
 export default function HomePage() {
-    const [sent, setSent] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
-
-    const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault()
-
-        const form = e.currentTarget
-        const formData = new FormData(form)
-
-        setIsSubmitting(true)
-        setSent(false)
-        setErrorMessage('')
-
-        try {
-            await createContactMessage({
-                body: {
-                    first_name: String(formData.get('firstName') ?? ''),
-                    last_name: String(formData.get('lastName') ?? ''),
-                    email: String(formData.get('email') ?? ''),
-                    topic: String(formData.get('topic') ?? ''),
-                    message: String(formData.get('message') ?? ''),
-                },
-                throwOnError: true,
-            })
-
-            setSent(true)
-            form.reset()
-        } catch {
-            setErrorMessage(
-                'Viestin lähettäminen epäonnistui. Yritä uudelleen.',
-            )
-        } finally {
-            setIsSubmitting(false)
-        }
-    }
-
-    useEffect(() => {
-        if (!sent) {
-            return
-        }
-
-        const timeout = window.setTimeout(() => {
-            setSent(false)
-        }, 5000)
-
-        return () => {
-            window.clearTimeout(timeout)
-        }
-    }, [sent])
-
     return (
         <div
             className="relative min-h-screen bg-[#182130] font-['Inter',sans-serif] text-[#E3E3E3]"
@@ -180,6 +127,7 @@ export default function HomePage() {
                             <Link
                                 to="/"
                                 hash="aiheet"
+                                onClick={(event) => scrollIfAlreadyHere(event, '/', 'aiheet')}
                                 className={`${cutCorner} inline-flex items-center gap-2 bg-[#1D90F4] px-7 py-3.5 text-lg font-semibold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:-translate-y-0.25 hover:bg-[#3BA0F6]`}
                             >
                                 Tutustu aiheisiin
@@ -189,6 +137,7 @@ export default function HomePage() {
                             <Link
                                 to="/"
                                 hash="miksi"
+                                onClick={(event) => scrollIfAlreadyHere(event, '/', 'miksi')}
                                 className="px-3 py-3.5 text-lg font-medium text-[#1D90F4] underline-offset-4 hover:underline"
                             >
                                 Miksi tämä on tärkeää?
@@ -404,114 +353,7 @@ export default function HomePage() {
                             </div>
                             <div className="lg:col-span-7">
                                 <div className="rounded-2xl border border-[#2A3548] bg-[#182130] p-6 sm:p-8">
-                                    <form onSubmit={handleSubmit} className="space-y-4">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs tracking-wider text-[#9fb0c7] mb-1.5">
-                                                    Etunimi
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    placeholder="Etunimi"
-                                                    className={field}
-                                                    name="firstName"
-                                                    autoComplete="given-name"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs tracking-wider text-[#9fb0c7] mb-1.5">
-                                                    Sukunimi
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    placeholder="Sukunimi"
-                                                    className={field}
-                                                    name="lastName"
-                                                    autoComplete="family-name"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs tracking-wider text-[#9fb0c7] mb-1.5">
-                                                    Sähköpostiosoite
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    required
-                                                    placeholder="email@address.com"
-                                                    className={field}
-                                                    name="email"
-                                                    autoComplete="email"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs tracking-wider text-[#9fb0c7] mb-1.5">
-                                                    Aihe
-                                                </label>
-                                                <div className="relative">
-                                                    <select
-                                                        name="topic"
-                                                        className={`${field} appearance-none pr-10 cursor-pointer`}
-                                                    >
-                                                        <option>Palautetta simulaattorista</option>
-                                                        <option>Koulutus- ja kurssisisällöt</option>
-                                                        <option>Väylä- ja loistotietojen korjaus</option>
-                                                        <option>Muu yhteydenotto</option>
-                                                    </select>
-                                                    <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[#718096]">
-                                                        <svg
-                                                            className="h-4 w-4"
-                                                            fill="none"
-                                                            viewBox="0 0 24 24"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                        >
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs tracking-wider text-[#9fb0c7] mb-1.5">
-                                                Viesti
-                                            </label>
-                                            <textarea
-                                                rows={4}
-                                                required
-                                                placeholder="Kirjoita viestisi tai havaintosi tähän..."
-                                                className={`${field} resize-none`}
-                                                name="message"
-                                            />
-                                        </div>
-
-                                        <div className="pt-2 flex flex-col sm:flex-row justify-end">
-                                            <button
-                                                type="submit"
-                                                disabled={isSubmitting}
-                                                className={`${cutCorner} w-full sm:w-auto bg-[#1D90F4] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:bg-[#3BA0F6] active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
-                                            >
-                                                {isSubmitting ? 'Lähetetään...' : 'Lähetä viesti'}
-                                                {!isSubmitting && <FontAwesomeIcon icon={faArrowRight} />}
-                                            </button>
-                                        </div>
-
-                                        {sent && (
-                                            <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/20 p-3 text-center font-mono text-xs text-emerald-300">
-                                                Viesti lähetetty onnistuneesti! Vastaus toimitetaan sähköpostiisi.
-                                            </div>
-                                        )}
-
-                                        {errorMessage && (
-                                            <div className="rounded-xl border border-red-500/40 bg-red-500/20 p-3 text-center text-xs text-red-300">
-                                                {errorMessage}
-                                            </div>
-                                        )}
-                                    </form>
+                                    <ContactForm />
                                 </div>
                             </div>
                         </div>
