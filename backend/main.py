@@ -15,6 +15,7 @@ from routers import (
     quiz_attempts,
     quiz_responses,
     iala_lights_router,
+    contact,
 )
 from security import get_current_user
 
@@ -41,6 +42,7 @@ app.include_router(quiz_question_options.router, dependencies=protected)
 app.include_router(quiz_attempts.router, dependencies=protected)
 app.include_router(quiz_responses.router, dependencies=protected)
 app.include_router(iala_lights_router.router, prefix="/iala-lights", dependencies=protected)
+app.include_router(contact.router)
 
 
 # Postgres still rejects what the schemas do not bound, such as NUL bytes.

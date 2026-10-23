@@ -5,6 +5,66 @@ export type ClientOptions = {
 };
 
 /**
+ * ContactMessageCreate
+ */
+export type ContactMessageCreate = {
+    /**
+     * First Name
+     */
+    first_name: string;
+    /**
+     * Last Name
+     */
+    last_name: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Topic
+     */
+    topic: string;
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
+ * ContactMessageResponse
+ */
+export type ContactMessageResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * First Name
+     */
+    first_name: string;
+    /**
+     * Last Name
+     */
+    last_name: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Topic
+     */
+    topic: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -1444,3 +1504,28 @@ export type UpdateIalaLightResponses = {
 };
 
 export type UpdateIalaLightResponse = UpdateIalaLightResponses[keyof UpdateIalaLightResponses];
+
+export type CreateContactMessageData = {
+    body: ContactMessageCreate;
+    path?: never;
+    query?: never;
+    url: '/contact';
+};
+
+export type CreateContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateContactMessageError = CreateContactMessageErrors[keyof CreateContactMessageErrors];
+
+export type CreateContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    201: ContactMessageResponse;
+};
+
+export type CreateContactMessageResponse = CreateContactMessageResponses[keyof CreateContactMessageResponses];

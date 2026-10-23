@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS iala_lights CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS result CASCADE;
 DROP TABLE IF EXISTS account CASCADE;
+DROP TABLE IF EXISTS contact_messages CASCADE;
 
 DROP TYPE IF EXISTS user_role CASCADE;
 
@@ -105,6 +106,16 @@ CREATE TABLE quiz_responses (
         FOREIGN KEY (selected_option_id) REFERENCES quiz_question_options (id)
         ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+CREATE TABLE contact_messages(
+    id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    first_name VARCHAR(100) NOT NULL,
+    last_name  VARCHAR(100) NOT NULL,
+    email      VARCHAR(320) NOT NULL,
+    topic      VARCHAR(100) NOT NULL,
+    message    TEXT         NOT NULL,  
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT now()      
+)
 
 CREATE INDEX idx_quiz_questions_quiz_id ON quiz_questions (quiz_id);
 CREATE INDEX idx_quiz_questions_iala_light_id ON quiz_questions (iala_light_id);

@@ -1,8 +1,10 @@
-import { useState, type SubmitEvent } from 'react'
+import { useState, useEffect } from 'react'
+import type { SubmitEvent } from 'react'
 import { Link } from '@tanstack/react-router'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { createContactMessage } from '../../client'
 
 type Topic = {
     title: string;
@@ -103,13 +105,55 @@ function Lights({ colors, size }: { colors: string[]; size: string }) {
 
 export default function HomePage() {
     const [sent, setSent] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
 
-    const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
         e.preventDefault()
-        setSent(true)
-        e.currentTarget.reset()
-        setTimeout(() => setSent(false), 5000)
+
+        const form = e.currentTarget
+        const formData = new FormData(form)
+
+        setIsSubmitting(true)
+        setSent(false)
+        setErrorMessage('')
+
+        try {
+            await createContactMessage({
+                body: {
+                    first_name: String(formData.get('firstName') ?? ''),
+                    last_name: String(formData.get('lastName') ?? ''),
+                    email: String(formData.get('email') ?? ''),
+                    topic: String(formData.get('topic') ?? ''),
+                    message: String(formData.get('message') ?? ''),
+                },
+                throwOnError: true,
+            })
+
+            setSent(true)
+            form.reset()
+        } catch {
+            setErrorMessage(
+                'Viestin lähettäminen epäonnistui. Yritä uudelleen.',
+            )
+        } finally {
+            setIsSubmitting(false)
+        }
     }
+
+    useEffect(() => {
+        if (!sent) {
+            return
+        }
+
+        const timeout = window.setTimeout(() => {
+            setSent(false)
+        }, 5000)
+
+        return () => {
+            window.clearTimeout(timeout)
+        }
+    }, [sent])
 
     return (
         <div
@@ -448,15 +492,23 @@ export default function HomePage() {
                                         <div className="pt-2 flex flex-col sm:flex-row justify-end">
                                             <button
                                                 type="submit"
-                                                className={`${cutCorner} w-full sm:w-auto bg-[#1D90F4] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:bg-[#3BA0F6] active:scale-95 cursor-pointer`}
+                                                disabled={isSubmitting}
+                                                className={`${cutCorner} w-full sm:w-auto bg-[#1D90F4] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-[#1D90F4]/20 transition hover:bg-[#3BA0F6] active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                                             >
-                                                Lähetä viesti <FontAwesomeIcon icon={faArrowRight} />
+                                                {isSubmitting ? 'Lähetetään...' : 'Lähetä viesti'}
+                                                {!isSubmitting && <FontAwesomeIcon icon={faArrowRight} />}
                                             </button>
                                         </div>
 
                                         {sent && (
                                             <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/20 p-3 text-center font-mono text-xs text-emerald-300">
                                                 Viesti lähetetty onnistuneesti! Vastaus toimitetaan sähköpostiisi.
+                                            </div>
+                                        )}
+
+                                        {errorMessage && (
+                                            <div className="rounded-xl border border-red-500/40 bg-red-500/20 p-3 text-center text-xs text-red-300">
+                                                {errorMessage}
                                             </div>
                                         )}
                                     </form>

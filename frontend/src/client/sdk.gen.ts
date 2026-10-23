@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateAttemptData, CreateAttemptErrors, CreateAttemptResponses, CreateIalaLightData, CreateIalaLightErrors, CreateIalaLightResponses, CreateOptionData, CreateOptionErrors, CreateOptionResponses, CreateQuestionData, CreateQuestionErrors, CreateQuestionResponses, CreateQuizData, CreateQuizErrors, CreateQuizResponses, CreateResponseData, CreateResponseErrors, CreateResponseResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAttemptData, DeleteAttemptErrors, DeleteAttemptResponses, DeleteIalaLightData, DeleteIalaLightErrors, DeleteIalaLightResponses, DeleteOptionData, DeleteOptionErrors, DeleteOptionResponses, DeleteQuestionData, DeleteQuestionErrors, DeleteQuestionResponses, DeleteQuizData, DeleteQuizErrors, DeleteQuizResponses, DeleteResponseData, DeleteResponseErrors, DeleteResponseResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAttemptData, GetAttemptErrors, GetAttemptResponses, GetIalaLightData, GetIalaLightErrors, GetIalaLightResponses, GetOptionData, GetOptionErrors, GetOptionResponses, GetQuestionData, GetQuestionErrors, GetQuestionResponses, GetQuizData, GetQuizErrors, GetQuizResponses, GetResponseData, GetResponseErrors, GetResponseResponses, GetUserData, GetUserErrors, GetUserResponses, ListAttemptsData, ListAttemptsResponses, ListIalaLightsData, ListIalaLightsErrors, ListIalaLightsResponses, ListOptionsData, ListOptionsErrors, ListOptionsResponses, ListQuestionsData, ListQuestionsErrors, ListQuestionsResponses, ListQuizzesData, ListQuizzesResponses, ListResponsesData, ListResponsesErrors, ListResponsesResponses, ListUsersData, ListUsersResponses, LoginData, LoginErrors, LoginResponses, UpdateIalaLightData, UpdateIalaLightErrors, UpdateIalaLightResponses, UpdateOptionData, UpdateOptionErrors, UpdateOptionResponses, UpdateQuestionData, UpdateQuestionErrors, UpdateQuestionResponses, UpdateQuizData, UpdateQuizErrors, UpdateQuizResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
+import type { CreateAttemptData, CreateAttemptErrors, CreateAttemptResponses, CreateContactMessageData, CreateContactMessageErrors, CreateContactMessageResponses, CreateIalaLightData, CreateIalaLightErrors, CreateIalaLightResponses, CreateOptionData, CreateOptionErrors, CreateOptionResponses, CreateQuestionData, CreateQuestionErrors, CreateQuestionResponses, CreateQuizData, CreateQuizErrors, CreateQuizResponses, CreateResponseData, CreateResponseErrors, CreateResponseResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAttemptData, DeleteAttemptErrors, DeleteAttemptResponses, DeleteIalaLightData, DeleteIalaLightErrors, DeleteIalaLightResponses, DeleteOptionData, DeleteOptionErrors, DeleteOptionResponses, DeleteQuestionData, DeleteQuestionErrors, DeleteQuestionResponses, DeleteQuizData, DeleteQuizErrors, DeleteQuizResponses, DeleteResponseData, DeleteResponseErrors, DeleteResponseResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAttemptData, GetAttemptErrors, GetAttemptResponses, GetIalaLightData, GetIalaLightErrors, GetIalaLightResponses, GetOptionData, GetOptionErrors, GetOptionResponses, GetQuestionData, GetQuestionErrors, GetQuestionResponses, GetQuizData, GetQuizErrors, GetQuizResponses, GetResponseData, GetResponseErrors, GetResponseResponses, GetUserData, GetUserErrors, GetUserResponses, ListAttemptsData, ListAttemptsResponses, ListIalaLightsData, ListIalaLightsErrors, ListIalaLightsResponses, ListOptionsData, ListOptionsErrors, ListOptionsResponses, ListQuestionsData, ListQuestionsErrors, ListQuestionsResponses, ListQuizzesData, ListQuizzesResponses, ListResponsesData, ListResponsesErrors, ListResponsesResponses, ListUsersData, ListUsersResponses, LoginData, LoginErrors, LoginResponses, UpdateIalaLightData, UpdateIalaLightErrors, UpdateIalaLightResponses, UpdateOptionData, UpdateOptionErrors, UpdateOptionResponses, UpdateQuestionData, UpdateQuestionErrors, UpdateQuestionResponses, UpdateQuizData, UpdateQuizErrors, UpdateQuizResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -377,6 +377,18 @@ export const getIalaLight = <ThrowOnError extends boolean = false>(options: Opti
 export const updateIalaLight = <ThrowOnError extends boolean = false>(options: Options<UpdateIalaLightData, ThrowOnError>): RequestResult<UpdateIalaLightResponses, UpdateIalaLightErrors, ThrowOnError> => (options.client ?? client).put<UpdateIalaLightResponses, UpdateIalaLightErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/iala-lights/{light_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create Contact Message
+ */
+export const createContactMessage = <ThrowOnError extends boolean = false>(options: Options<CreateContactMessageData, ThrowOnError>): RequestResult<CreateContactMessageResponses, CreateContactMessageErrors, ThrowOnError> => (options.client ?? client).post<CreateContactMessageResponses, CreateContactMessageErrors, ThrowOnError>({
+    url: '/contact',
     ...options,
     headers: {
         'Content-Type': 'application/json',
