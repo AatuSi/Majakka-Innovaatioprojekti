@@ -115,7 +115,7 @@ CREATE TABLE contact_messages(
     topic      VARCHAR(100) NOT NULL,
     message    TEXT         NOT NULL,  
     created_at TIMESTAMPTZ  NOT NULL DEFAULT now()      
-)
+);
 
 CREATE INDEX idx_quiz_questions_quiz_id ON quiz_questions (quiz_id);
 CREATE INDEX idx_quiz_questions_iala_light_id ON quiz_questions (iala_light_id);
