@@ -197,3 +197,22 @@ class IalaLightResponse(IalaLightBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class ContactMessageCreate(BaseModel):
+    first_name: Annotated[str, Field(min_length=1, max_length=100)]
+    last_name: Annotated[str, Field(min_length=1, max_length=100)]
+    email: Annotated[str, Field(min_length=3, max_length=320)]
+    topic: Annotated[str, Field(min_length=1, max_length=100)]
+    message: Annotated[str, Field(min_length=1, max_length=5000)]
+
+
+class ContactMessageResponse(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+    email: str
+    topic: str
+    message: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
