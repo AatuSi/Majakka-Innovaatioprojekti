@@ -3,6 +3,7 @@ import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { createUser, login } from "../client";
 import { setAccessToken } from "../api/config";
+import { loginUser } from "./authUserStore";
 import { closeAuthModal, useAuthModal } from "./authModalStore.ts";
 import type { AuthMode } from "./authModalStore.ts";
 
@@ -134,6 +135,7 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
       });
 
       setAccessToken(response.data.access_token);
+      loginUser(username);
       setSuccess({ mode, username });
     } catch (error) {
       const detail =
