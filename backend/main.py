@@ -8,6 +8,7 @@ from sqlalchemy.exc import DataError
 from fastapi.middleware.cors import CORSMiddleware
 from routers import (
     auth,
+    health,
     users,
     quizzes,
     quiz_questions,
@@ -15,6 +16,7 @@ from routers import (
     quiz_attempts,
     quiz_responses,
     iala_lights_router,
+    contact,
 )
 from security import get_current_user
 
@@ -33,6 +35,7 @@ app.add_middleware(
 
 protected = [Depends(get_current_user)]
 
+app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(quizzes.router, dependencies=protected)
@@ -41,6 +44,7 @@ app.include_router(quiz_question_options.router, dependencies=protected)
 app.include_router(quiz_attempts.router, dependencies=protected)
 app.include_router(quiz_responses.router, dependencies=protected)
 app.include_router(iala_lights_router.router, prefix="/iala-lights", dependencies=protected)
+app.include_router(contact.router)
 
 
 # Postgres still rejects what the schemas do not bound, such as NUL bytes.

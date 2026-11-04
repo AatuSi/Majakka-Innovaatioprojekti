@@ -1,0 +1,21 @@
+{
+  "name": "majakka-innovaatioprojekti",
+  "version": "1.0.0",
+  "description": "just for the initial commit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AatuSi/Majakka-Innovaatioprojekti.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AatuSi/Majakka-Innovaatioprojekti/issues"
+  },
+  "homepage": "https://github.com/AatuSi/Majakka-Innovaatioprojekti#readme"
+}

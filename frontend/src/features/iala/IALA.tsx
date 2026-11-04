@@ -23,15 +23,11 @@ interface BuoyType {
 
 interface LateralRow {
   side: string;
-  colorA: string;
-  colorB: string;
-  labelA: string;
-  labelB: string;
-  regionA: string;
-  regionB: string;
+  color: string;
+  label: string;
+  description: string;
 }
 
-type IalaRegion = "A" | "B";
 type BuoyKind =
   | "port"
   | "starboard"
@@ -145,7 +141,7 @@ const buoyTypes: BuoyType[] = [
     shape: "Tynnyri",
     kind: "port",
     description:
-      "Merkitsee väylän paapuuripuolen (vasen) kulkusuunnassa. Punainen tynnyripoiju punaisella välkkyvalolla. IALA-B-alueilla (Ameriikat, Japani) paapuuri- ja styyrpuuripuolen värit ovat päinvastoin.",
+      "Merkitsee väylän paapuuripuolen (vasen) kulkusuunnassa IALA-A-alueella. Punainen tynnyripoiju punaisella välkkyvalolla.",
   },
   {
     name: "Lateraali — Styyrpuuri (IALA-A)",
@@ -233,15 +229,17 @@ function LightDot({
   color,
   animClass,
   size = "md",
+  animateOnCardHover = false,
 }: {
   color: string;
   animClass: string;
   size?: "sm" | "md" | "lg";
+  animateOnCardHover?: boolean;
 }) {
   const s = size === "lg" ? 20 : size === "md" ? 13 : 9;
   return (
     <span
-      className={`inline-block rounded-full ${animClass}`}
+      className={`inline-block rounded-full ${animClass}${animateOnCardHover ? " light-on-card-hover" : ""}`}
       style={{
         width: s,
         height: s,
@@ -258,7 +256,12 @@ function CharCard({ c }: { c: Characteristic }) {
   return (
     <div className="group rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/40 hover:bg-white/8">
       <div className="flex items-center gap-3">
-        <LightDot color={c.color} animClass={c.animClass} size="lg" />
+        <LightDot
+          color={c.color}
+          animClass={c.animClass}
+          size="lg"
+          animateOnCardHover
+        />
         <div>
           <span className="block font-mono text-xs text-amber-300">{c.abbr}</span>
           <span className="block font-serif text-lg font-semibold leading-tight">
@@ -457,7 +460,7 @@ function BuoyIllustration({ kind, name }: { kind: BuoyKind; name: string }) {
 
 function BuoyCard({ b }: { b: BuoyType }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition hover:border-amber-300/40 hover:bg-white/8">
+    <div className="group overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition hover:border-amber-300/40 hover:bg-white/8">
       <div className="relative border-b border-white/10 bg-[#091428] px-4 pt-3">
         <BuoyIllustration kind={b.kind} name={b.name} />
         <span className="absolute left-4 top-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -467,7 +470,13 @@ function BuoyCard({ b }: { b: BuoyType }) {
       <div className="p-6">
         <div className="mb-4 flex items-center gap-2">
           {b.lights.map((col, i) => (
-            <LightDot key={i} color={col} animClass={b.animClass} size="md" />
+            <LightDot
+              key={i}
+              color={col}
+              animClass={b.animClass}
+              size="md"
+              animateOnCardHover
+            />
           ))}
           <span className="ml-1 text-xs text-slate-500">Yövalo</span>
         </div>
@@ -489,8 +498,6 @@ function BuoyCard({ b }: { b: BuoyType }) {
 }
 
 export default function App() {
-  const [activeSystem, setActiveSystem] = useState<IalaRegion>("A");
-
   return (
     <div className="bg-[#0b1830] text-white min-h-screen">
       {/* Hero */}
@@ -523,13 +530,13 @@ export default function App() {
       </section>
 
       {/* Stats bar */}
-      <section className="bg-navy-900 border-y border-white/10 px-6 py-6">
+      <section className="bg-[#0f2140] border-y border-white/10 px-6 py-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
               { label: "Värivaihtoehdot", value: "4", sub: "Punainen · Vihreä · Valkoinen · Keltainen" },
               { label: "Kardinaalipisteet", value: "4", sub: "P · E · I · L" },
-              { label: "IALA-alueet", value: "2", sub: "Alue A & Alue B" },
+              { label: "IALA-alue", value: "1", sub: "Alue A" },
               { label: "Loistotyypit", value: "12+", sub: "K · Vl · Pim · Iso · Np · Mo …" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
@@ -572,7 +579,7 @@ export default function App() {
       </section>
 
       {/* Buoy Types */}
-      <section id="buoys" className="bg-navy-900 px-6 py-20">
+      <section id="buoys" className="bg-[#0f2140] px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl mb-12">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300 mb-2">
@@ -595,7 +602,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* IALA-A vs IALA-B */}
+      {/* IALA-A */}
       <section id="rules" className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl mb-10">
@@ -603,63 +610,41 @@ export default function App() {
               Osio 3
             </p>
             <h2 className="font-serif text-3xl font-semibold sm:text-4xl">
-              Alue A vai Alue B
+              Vasen ja Oikea
             </h2>
             <p className="mt-4 text-slate-300">
-              Maailma on jaettu kahteen IALA-alueeseen. Ainoa ero niiden välillä
-              on punaisen ja vihreän värin sijoittelu paapuuri- ja
-              styyrpuurilateraalimerkkeihin. Valitse alueesi alta.
+              Suomessa ja muualla Euroopassa punainen lateraalimerkki osoittaa väylän
+              paapuuripuolen ja vihreä lateraalimerkki styyrpuuripuolen
+              kulkusuunnassa.
             </p>
-          </div>
-
-          <div className="mb-10 inline-flex rounded-full border border-white/10 bg-white/5 p-1">
-            {(["A", "B"] as IalaRegion[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => setActiveSystem(r)}
-                className={`rounded-full px-6 py-2 text-sm font-semibold transition ${
-                  activeSystem === r
-                    ? "bg-amber-300 text-navy-950"
-                    : "text-slate-300 hover:text-white"
-                }`}
-              >
-                IALA-{r}
-              </button>
-            ))}
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {([
               {
                 side: "Paapuuri (vasen)",
-                colorA: "#ef4444",
-                colorB: "#22c55e",
-                labelA: "Punainen",
-                labelB: "Vihreä",
-                regionA:
-                  "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti, Persianlahden maat.",
-                regionB:
-                  "Ameriikat, Japani, Etelä-Korea, Filippiinit.",
+                color: "#ef4444",
+                label: "Punainen",
+                description:
+                  "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti",
               },
               {
                 side: "Styyrpuuri (oikea)",
-                colorA: "#22c55e",
-                colorB: "#ef4444",
-                labelA: "Vihreä",
-                labelB: "Punainen",
-                regionA: "Vihreä kartiopoiju. Vihreä valo (mikä tahansa tyyppi).",
-                regionB: "Punainen kartiopoiju. Punainen valo (mikä tahansa tyyppi).",
+                color: "#22c55e",
+                label: "Vihreä",
+                description: "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti",
               },
             ] as LateralRow[]).map((row) => (
               <div
                 key={row.side}
-                className="rounded-2xl border border-white/10 bg-white/5 p-6"
+                className="group rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/40 hover:bg-white/8"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <LightDot
-                    color={activeSystem === "A" ? row.colorA : row.colorB}
+                    color={row.color}
                     animClass="light-flash-single"
                     size="lg"
+                    animateOnCardHover
                   />
                   <div>
                     <p className="text-xs text-slate-400">Lateraalimerkki</p>
@@ -669,19 +654,15 @@ export default function App() {
                 <dl className="space-y-3 text-sm">
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-wide text-amber-300">
-                      Väri alueella IALA-{activeSystem}
+                      Väri alueella IALA-A
                     </dt>
-                    <dd className="mt-0.5 text-slate-300">
-                      {activeSystem === "A" ? row.labelA : row.labelB}
-                    </dd>
+                    <dd className="mt-0.5 text-slate-300">{row.label}</dd>
                   </div>
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-wide text-amber-300">
                       Kattavuus
                     </dt>
-                    <dd className="mt-0.5 text-slate-300">
-                      {activeSystem === "A" ? row.regionA : row.regionB}
-                    </dd>
+                    <dd className="mt-0.5 text-slate-300">{row.description}</dd>
                   </div>
                 </dl>
               </div>
@@ -691,30 +672,13 @@ export default function App() {
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-300 mb-3">
                 Muistisääntö
               </p>
-              {activeSystem === "A" ? (
-                <>
-                  <p className="font-serif text-xl font-semibold mb-3">
-                    "Punainen paapuuriin, vihreä styyrpuuriin"
-                  </p>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    IALA-A-vesillä (Eurooppa, Afrikka, suurin osa Aasiasta)
-                    punainen poiju merkitsee aina väylän paapuuripuolen
-                    kulkusuunnassa — yleensä kohti satamaa tai ylävirtaan.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="font-serif text-xl font-semibold mb-3">
-                    "Red Right Returning"
-                  </p>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    Klassinen amerikkalainen muistisääntö: pidä punaiset poijut
-                    oikealla puolellasi palatessasi mereltä (sisämaahan tai
-                    ylävirtaan). IALA-B-vesillä styyrpuurin lateraalimerkit
-                    ovat punaisia.
-                  </p>
-                </>
-              )}
+              <p className="font-serif text-xl font-semibold mb-3">
+                "Punainen paapuuriin, vihreä styyrpuuriin"
+              </p>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                IALA-A-vesillä punainen poiju merkitsee aina väylän paapuuripuolen
+                kulkusuunnassa — yleensä kohti satamaa tai ylävirtaan.
+              </p>
             </div>
           </div>
         </div>

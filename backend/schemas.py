@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, List, Optional, Any, Dict
+from typing import Annotated, List, Literal, Optional, Any, Dict
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
@@ -53,6 +53,13 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+# --- HEALTH SCHEMAS ---
+
+class HealthResponse(BaseModel):
+    status: Literal["ok", "error"]
+    database: Literal["ok", "unavailable"]
 
 
 # --- OPTION SCHEMAS ---
@@ -187,6 +194,25 @@ class IalaLightCreate(IalaLightBase):
 
 class IalaLightResponse(IalaLightBase):
     id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ContactMessageCreate(BaseModel):
+    first_name: Annotated[str, Field(min_length=1, max_length=100)]
+    last_name: Annotated[str, Field(min_length=1, max_length=100)]
+    email: Annotated[str, Field(min_length=3, max_length=320)]
+    topic: Annotated[str, Field(min_length=1, max_length=100)]
+    message: Annotated[str, Field(min_length=1, max_length=5000)]
+
+
+class ContactMessageResponse(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+    email: str
+    topic: str
+    message: str
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

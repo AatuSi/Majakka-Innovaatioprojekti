@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { createUser, login } from '../../client'
 import { setAccessToken } from '../../api/config'
 import LoginSuccessModal from './LoginSuccessModal'
@@ -31,7 +31,10 @@ function EyeIcon({ visible }: { visible: boolean }) {
 }
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const { mode: initialMode } = useSearch({ from: '/login' })
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>(
+    initialMode ?? 'sign-in',
+  )
   const [showPassword, setShowPassword] = useState(false)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -125,8 +128,27 @@ export default function LoginPage() {
             <Link to="/" className="transition hover:text-white">
               Etusivu
             </Link>
+            <Link
+              to="/colregs"
+              className="hidden transition hover:text-white lg:inline"
+            >
+              Kulkuvalot
+            </Link>
             <Link to="/IALA" className="transition hover:text-white">
-              IALA-valot
+              IALA-loistot
+            </Link>
+            <Link
+              to="/IALA-quiz"
+              className="hidden transition hover:text-white lg:inline"
+            >
+              Tietovisat
+            </Link>
+            <Link
+              to="/"
+              hash="hanke"
+              className="hidden transition hover:text-white lg:inline"
+            >
+              Hankkeesta
             </Link>
           </div>
         </nav>

@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import LighthouseMark from "./LighthouseMark";
+import { scrollIfAlreadyHere } from "./navigation";
+import { openAuthModal } from "./authModalStore";
 
 const menu = [
   { label: "Etusivu", hash: "" },
@@ -9,9 +11,9 @@ const menu = [
 ];
 
 const company = [
-  { label: "Kirjaudu", href: "/login" },
-  { label: "Rekisteröidy", href: "/login" },
-];
+  { label: "Kirjaudu", mode: "sign-in" },
+  { label: "Rekisteröidy", mode: "sign-up" },
+] as const;
 
 const contact = ["+358 12 345 6789", "email@osoite.fi", "Katuosoite 123"];
 
@@ -56,7 +58,12 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {menu.map((item) => (
                   <li key={item.label}>
-                    <Link to="/" hash={item.hash} className={linkClass}>
+                    <Link
+                      to="/"
+                      hash={item.hash}
+                      className={linkClass}
+                      onClick={(event) => scrollIfAlreadyHere(event, "/", item.hash)}
+                    >
                       {item.label}
                     </Link>
                   </li>
@@ -69,9 +76,13 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {company.map((item) => (
                   <li key={item.label}>
-                    <a href={item.href} className={linkClass}>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal(item.mode)}
+                      className={linkClass}
+                    >
                       {item.label}
-                    </a>
+                    </button>
                   </li>
               ))}
             </ul>

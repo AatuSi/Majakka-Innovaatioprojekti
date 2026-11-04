@@ -5,6 +5,66 @@ export type ClientOptions = {
 };
 
 /**
+ * ContactMessageCreate
+ */
+export type ContactMessageCreate = {
+    /**
+     * First Name
+     */
+    first_name: string;
+    /**
+     * Last Name
+     */
+    last_name: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Topic
+     */
+    topic: string;
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
+ * ContactMessageResponse
+ */
+export type ContactMessageResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * First Name
+     */
+    first_name: string;
+    /**
+     * Last Name
+     */
+    last_name: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Topic
+     */
+    topic: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -12,6 +72,20 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * HealthResponse
+ */
+export type HealthResponse = {
+    /**
+     * Status
+     */
+    status: 'ok' | 'error';
+    /**
+     * Database
+     */
+    database: 'ok' | 'unavailable';
 };
 
 /**
@@ -469,6 +543,31 @@ export type ValidationError = {
         [key: string]: unknown;
     };
 };
+
+export type HealthCheckData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/health';
+};
+
+export type HealthCheckErrors = {
+    /**
+     * Service Unavailable
+     */
+    503: HealthResponse;
+};
+
+export type HealthCheckError = HealthCheckErrors[keyof HealthCheckErrors];
+
+export type HealthCheckResponses = {
+    /**
+     * Successful Response
+     */
+    200: HealthResponse;
+};
+
+export type HealthCheckResponse = HealthCheckResponses[keyof HealthCheckResponses];
 
 export type LoginData = {
     body: LoginRequest;
@@ -1444,3 +1543,28 @@ export type UpdateIalaLightResponses = {
 };
 
 export type UpdateIalaLightResponse = UpdateIalaLightResponses[keyof UpdateIalaLightResponses];
+
+export type CreateContactMessageData = {
+    body: ContactMessageCreate;
+    path?: never;
+    query?: never;
+    url: '/contact';
+};
+
+export type CreateContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateContactMessageError = CreateContactMessageErrors[keyof CreateContactMessageErrors];
+
+export type CreateContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    201: ContactMessageResponse;
+};
+
+export type CreateContactMessageResponse = CreateContactMessageResponses[keyof CreateContactMessageResponses];

@@ -49,7 +49,8 @@ def clean_tables():
         "quiz_questions",
         "quizzes",
         "iala_lights",
-        "users"
+        "users",
+        "contact_messages"
     ]
     
     with psycopg.connect(PSYCOPG_DATABASE_URL) as conn:

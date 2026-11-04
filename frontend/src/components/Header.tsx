@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import LighthouseMark from "./LighthouseMark";
+import { scrollIfAlreadyHere } from "./navigation";
+import AuthModal from "./AuthModal";
+import { openAuthModal } from "./authModalStore";
 
 const cutCorner =
   "[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]";
@@ -13,11 +17,36 @@ const navLinkActive = "text-[#1D90F4] after:scale-x-100";
 const navLinkInactive = "text-white after:scale-x-0";
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
   const pathname = useLocation({ select: (location) => location.pathname });
+  const href = useLocation({ select: (location) => location.href });
   const isQuiz = pathname.endsWith("-quiz");
 
-  const closeMenu = () => setOpen(false);
+  // The menu remembers the location it was opened at, so any navigation,
+  // including the browser's back and forward buttons, closes it.
+  const [menuOpenAt, setMenuOpenAt] = useState<string | null>(null);
+  const open = menuOpenAt === href;
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closeMenu = () => setMenuOpenAt(null);
+
+  const navigateTo = (to: string, hash?: string) => (event: MouseEvent) => {
+    closeMenu();
+    scrollIfAlreadyHere(event, to, hash);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpenAt(null);
+        menuButtonRef.current?.focus();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   return (
     <header className="sticky top-0 z-50 border-b-[1px] border-[#676767] bg-[#182130]/95 font-['Inter',sans-serif] backdrop-blur">
@@ -25,7 +54,7 @@ export default function Header() {
         <Link
           to="/"
           className="flex items-center gap-2 text-2xl font-semibold text-white"
-          onClick={closeMenu}
+          onClick={navigateTo("/")}
         >
           <LighthouseMark />
           Majakka
@@ -40,7 +69,7 @@ export default function Header() {
                 className={navLinkBase}
                 activeProps={{ className: navLinkActive }}
                 inactiveProps={{ className: navLinkInactive }}
-                onClick={closeMenu}
+                onClick={navigateTo("/")}
               >
                 Etusivu
               </Link>
@@ -51,7 +80,7 @@ export default function Header() {
                 className={navLinkBase}
                 activeProps={{ className: navLinkActive }}
                 inactiveProps={{ className: navLinkInactive }}
-                onClick={closeMenu}
+                onClick={navigateTo("/colregs")}
               >
                 Kulkuvalot
               </Link>
@@ -62,7 +91,7 @@ export default function Header() {
                 className={navLinkBase}
                 activeProps={{ className: navLinkActive }}
                 inactiveProps={{ className: navLinkInactive }}
-                onClick={closeMenu}
+                onClick={navigateTo("/IALA")}
               >
                 IALA-loistot
               </Link>
@@ -71,7 +100,7 @@ export default function Header() {
               <Link
                 to="/IALA-quiz"
                 className={`${navLinkBase} ${isQuiz ? navLinkActive : navLinkInactive}`}
-                onClick={closeMenu}
+                onClick={navigateTo("/IALA-quiz")}
               >
                 Tietovisat
               </Link>
@@ -81,7 +110,7 @@ export default function Header() {
                 to="/"
                 hash="hanke"
                 className={`${navLinkBase} ${navLinkInactive}`}
-                onClick={closeMenu}
+                onClick={navigateTo("/", "hanke")}
               >
                 Hankkeesta
               </Link>
@@ -90,8 +119,9 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link
-            to="/login"
+          <button
+            type="button"
+            onClick={() => openAuthModal("sign-in")}
             className={`${cutCorner} hidden bg-[#1D90F4] p-0.5 transition hover:bg-[#3BA0F6] sm:inline-block`}
           >
             <span
@@ -99,14 +129,16 @@ export default function Header() {
             >
               Kirjaudu
             </span>
-          </Link>
+          </button>
 
           <button
             type="button"
             className="rounded p-2 text-white lg:hidden"
             aria-label={open ? "Sulje valikko" : "Avaa valikko"}
             aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
+            aria-controls="mobile-menu"
+            ref={menuButtonRef}
+            onClick={() => setMenuOpenAt(open ? null : href)}
           >
             <svg
               width="24"
@@ -129,6 +161,7 @@ export default function Header() {
 
       {open && (
         <nav
+          id="mobile-menu"
           aria-label="Päävalikko"
           className="border-t border-[#2A3548] px-6 pb-5 lg:hidden"
         >
@@ -137,7 +170,7 @@ export default function Header() {
               <Link
                 to="/"
                 activeOptions={{ exact: true }}
-                onClick={closeMenu}
+                onClick={navigateTo("/")}
                 className="block py-2 text-lg text-white hover:text-[#1D90F4]"
                 activeProps={{ className: "text-[#1D90F4] font-medium" }}
               >
@@ -147,7 +180,7 @@ export default function Header() {
             <li>
               <Link
                 to="/colregs"
-                onClick={closeMenu}
+                onClick={navigateTo("/colregs")}
                 className="block py-2 text-lg text-white hover:text-[#1D90F4]"
                 activeProps={{ className: "text-[#1D90F4] font-medium" }}
               >
@@ -157,7 +190,7 @@ export default function Header() {
             <li>
               <Link
                 to="/IALA"
-                onClick={closeMenu}
+                onClick={navigateTo("/IALA")}
                 className="block py-2 text-lg text-white hover:text-[#1D90F4]"
                 activeProps={{ className: "text-[#1D90F4] font-medium" }}
               >
@@ -167,7 +200,7 @@ export default function Header() {
             <li>
               <Link
                 to="/IALA-quiz"
-                onClick={closeMenu}
+                onClick={navigateTo("/IALA-quiz")}
                 className={`block py-2 text-lg hover:text-[#1D90F4] ${
                   isQuiz ? "text-[#1D90F4] font-medium" : "text-white"
                 }`}
@@ -179,24 +212,29 @@ export default function Header() {
               <Link
                 to="/"
                 hash="hanke"
-                onClick={closeMenu}
+                onClick={navigateTo("/", "hanke")}
                 className="block py-2 text-lg text-white hover:text-[#1D90F4]"
               >
                 Hankkeesta
               </Link>
             </li>
             <li className="pt-2">
-              <Link
-                to="/login"
-                onClick={closeMenu}
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  openAuthModal("sign-in");
+                }}
                 className="block py-2 text-lg font-medium text-[#1D90F4]"
               >
                 Kirjaudu
-              </Link>
+              </button>
             </li>
           </ul>
         </nav>
       )}
+
+      <AuthModal />
     </header>
   );
 }

@@ -135,3 +135,19 @@ class IalaLight(Base):
 
     questions = relationship("QuizQuestion", back_populates="iala_light")
     options = relationship("QuizQuestionOption", back_populates="iala_light")
+
+
+class ContactMessage(Base):
+    __tablename__ = "contact_messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(320), nullable=False)
+    topic = Column(String(100), nullable=False)
+    message = Column(Text, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
