@@ -47,7 +47,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     select: (state) => state.location.pathname,
   });
   const isLoginRoute = pathname === "/login";
-  const isProfileRoute = pathname === "/profile";
+
+  const isProfileRoute = pathname === "/profile" || pathname.startsWith("/profile/");
 
   return (
     <html lang="fi">
