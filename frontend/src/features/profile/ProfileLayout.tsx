@@ -15,6 +15,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import LighthouseMark from '#/components/LighthouseMark'
 import { useNotificationStore } from './notificationStore'
+import ProfileAvatar from './ProfileAvatar'
 
 export default function ProfileLayout() {
   const [collapsed, setCollapsed] = useState(false)
@@ -213,7 +214,6 @@ export default function ProfileLayout() {
                       </button>
                     )}
                   </div>
-
                   <div className="max-h-80 overflow-y-auto divide-y divide-[#2A374B]/50">
                     {notifications.length === 0 ? (
                       <div className="px-4 py-6 text-center text-xs text-[#718096]">
@@ -252,10 +252,9 @@ export default function ProfileLayout() {
                 </div>
               )}
             </div>
-
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-[#1d90f4] bg-[#131B27] text-xs font-bold text-white">
-                <p>FL</p>
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#1d90f4] bg-[#131B27] text-xs text-[#38bdf8]">
+                <ProfileAvatar />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-white">Firstname Lastname</span>

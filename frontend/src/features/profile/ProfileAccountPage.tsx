@@ -1,4 +1,5 @@
-import { useState, type SubmitEvent } from 'react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent, SubmitEvent } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUser,
@@ -8,8 +9,11 @@ import {
   faIdCard,
   faXmark,
   faGraduationCap,
+  faUpload,
 } from '@fortawesome/free-solid-svg-icons'
 import Toast from '../../components/Toast'
+import { selectAvatarIcon, selectUploadedAvatar, uploadAvatar, useAvatar } from './avatarStore'
+import ProfileAvatar from './ProfileAvatar'
 
 const mockQuizHistoryData = [
   { id: '1', score: 10, totalQuestions: 10, duration: 270 },
@@ -21,8 +25,9 @@ const availableIcons = [faUser, faGraduationCap]
 
 export default function ProfileAccountPage() {
   const [profileSaved, setProfileSaved] = useState(false)
-  const [selectedIcon, setSelectedIcon] = useState(faUser)
+  const { selectedIcon, uploadedImage } = useAvatar()
   const [showAvatarModal, setShowAvatarModal] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const completedCount = mockQuizHistoryData.length
   const totalPossibleTests = 24
@@ -46,6 +51,15 @@ export default function ProfileAccountPage() {
     setTimeout(() => setProfileSaved(false), 3000)
   }
 
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file?.type.startsWith('image/')) return
+
+    uploadAvatar(file)
+    setShowAvatarModal(false)
+  }
+
   return (
     <main className="relative mx-auto grid w-full max-w-[1350px] grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_340px] overflow-hidden">
       <Toast show={profileSaved} message="Tiedot tallennettu onnistuneesti!" />
@@ -54,8 +68,8 @@ export default function ProfileAccountPage() {
           <div className="h-[120px] w-full border-b border-[#2A374B] bg-[#101927]" />
           <div className="px-6 pb-6">
             <div className="mb-4 flex items-end justify-between">
-              <div className="-mt-[38px] flex h-[76px] w-[76px] items-center justify-center rounded-full border-[3px] border-[#1E2839] bg-[#131B27] text-2xl text-[#38bdf8] shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-                <FontAwesomeIcon icon={selectedIcon} />
+              <div className="-mt-[38px] flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full border-[3px] border-[#1E2839] bg-[#131B27] text-2xl text-[#38bdf8] shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                <ProfileAvatar />
               </div>
               <button
                 type="button"
@@ -162,13 +176,13 @@ export default function ProfileAccountPage() {
                 <FontAwesomeIcon icon={faXmark} className="text-lg" />
               </button>
             </div>
-            <div className="grid grid-cols-5 gap-3 mb-6">
+            <div className="grid grid-cols-5 gap-3 mb-4">
               {availableIcons.map((icon, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => {
-                    setSelectedIcon(icon)
+                    selectAvatarIcon(icon)
                     setShowAvatarModal(false)
                   }}
                   className={`flex h-14 w-14 items-center justify-center rounded-xl border transition cursor-pointer ${
@@ -180,7 +194,39 @@ export default function ProfileAccountPage() {
                   <FontAwesomeIcon icon={icon} className="text-xl" />
                 </button>
               ))}
+              {uploadedImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    selectUploadedAvatar()
+                    setShowAvatarModal(false)
+                  }}
+                  aria-label="Käytä omaa kuvaa"
+                  className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border transition cursor-pointer ${
+                    selectedIcon === null
+                      ? 'border-[#1d90f4]'
+                      : 'border-[#2A374B] hover:border-slate-500'
+                  }`}
+                >
+                  <img src={uploadedImage} alt="" className="h-full w-full object-cover" />
+                </button>
+              )}
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2A374B] bg-[#131B27] px-4 py-2.5 text-xs font-semibold text-white transition hover:border-[#1d90f4] hover:bg-[#1d90f4]/10 cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faUpload} />
+              <span>Lataa oma kuva</span>
+            </button>
           </div>
         </div>
       )}

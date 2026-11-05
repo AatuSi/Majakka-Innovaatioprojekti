@@ -5,12 +5,12 @@ import {
   faBell,
   faTrashCan,
   faStar as faStarSolid,
-  faUser,
   faCheckDouble,
   faEnvelopeOpen,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 import { useNotificationStore } from './notificationStore'
+import ProfileAvatar from './ProfileAvatar'
 
 export default function ProfileNotificationPage() {
   const { notifications, setNotifications } = useNotificationStore()
@@ -210,11 +210,8 @@ export default function ProfileNotificationPage() {
                             className="rounded border-[#2A374B] bg-[#131B27] accent-[#1d90f4] cursor-pointer"
                             aria-label={`Valitse: ${msg.title}`}
                           />
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#131B27] text-xs text-[#38bdf8] border border-[#2A374B]">
-                            <FontAwesomeIcon
-                              icon={faUser}
-                              className="text-[10px]"
-                            />
+                          <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-[#131B27] text-[10px] text-[#38bdf8] border border-[#2A374B]">
+                            <ProfileAvatar />
                           </div>
                           <span className="text-xs text-white">
                             Firstname Lastname
@@ -274,10 +271,9 @@ export default function ProfileNotificationPage() {
                     </button>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#131B27] text-xs text-[#38bdf8] border border-[#2A374B]">
-                    <FontAwesomeIcon icon={faUser} />
+                  <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#131B27] text-xs text-[#38bdf8] border border-[#2A374B]">
+                    <ProfileAvatar />
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-white">
