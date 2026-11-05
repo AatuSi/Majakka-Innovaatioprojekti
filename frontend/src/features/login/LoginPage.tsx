@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { createUser, login } from '../../client'
 import { setAccessToken } from '../../api/config'
+import { loginUser } from '../../components/authUserStore'
 import LoginSuccessModal from './LoginSuccessModal'
 
 function EyeIcon({ visible }: { visible: boolean }) {
@@ -88,6 +89,7 @@ export default function LoginPage() {
       })
 
       setAccessToken(response.data.access_token)
+      loginUser(username)
       setSuccessState({
         isOpen: true,
         mode,
