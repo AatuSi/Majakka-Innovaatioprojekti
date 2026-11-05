@@ -97,6 +97,8 @@ class QuizQuestionOptionResponse(QuizQuestionOptionBase):
 
 class QuizQuestionBase(BaseModel):
     question_text: Optional[str] = None
+    explanation: Optional[str] = None
+    hint: Optional[str] = None
     iala_light_id: Optional[UUID] = None
     position: Position = 0
 
@@ -109,6 +111,8 @@ class QuizQuestionCreate(QuizQuestionBase):
 # current value; an explicit null clears question_text or iala_light_id.
 class QuizQuestionUpdate(BaseModel):
     question_text: Optional[str] = None
+    explanation: Optional[str] = None
+    hint: Optional[str] = None
     iala_light_id: Optional[UUID] = None
     position: Optional[Position] = None
 
