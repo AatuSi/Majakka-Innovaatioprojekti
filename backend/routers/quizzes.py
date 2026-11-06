@@ -47,6 +47,8 @@ def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(get_db)):
 
         db_question = models.QuizQuestion(
             question_text=question.question_text,
+            explanation=question.explanation,
+            hint=question.hint,
             iala_light_id=question.iala_light_id,
             position=question.position,
         )

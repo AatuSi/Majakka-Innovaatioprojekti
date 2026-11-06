@@ -17,6 +17,7 @@ from routers import (
     quiz_responses,
     iala_lights_router,
     contact,
+    public_quizzes
 )
 from security import get_current_user
 
@@ -38,6 +39,7 @@ protected = [Depends(get_current_user)]
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(public_quizzes.public_router)
 app.include_router(quizzes.router, dependencies=protected)
 app.include_router(quiz_questions.router, dependencies=protected)
 app.include_router(quiz_question_options.router, dependencies=protected)

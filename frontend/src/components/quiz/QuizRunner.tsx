@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { QuizAnswer, QuizDefinition } from './types'
 import './quiz.css'
+import { checkPublicAnswer, createAttempt } from '../../client'
+import { useAuthUser } from '../authUserStore'
 
 type Phase = 'intro' | 'active' | 'result'
 
@@ -66,6 +68,10 @@ export default function QuizRunner({
   const question = quiz.questions[index]
   const correctCount = answers.filter((answer) => answer.correct).length
 
+  const [savingAttempt, setSavingAttempt] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const authUser = useAuthUser()
+
   function start() {
     setPhase('active')
     setIndex(0)
@@ -77,26 +83,76 @@ export default function QuizRunner({
     setElapsedMs(0)
   }
 
-  function checkAnswer() {
+  async function saveAttempt(completedAnswers: QuizAnswer[]) {
+    if (!authUser) return
+
+    setSavingAttempt(true)
+    setSaveError(null)
+
+    try {
+      await createAttempt({
+        body: {
+          user_id: authUser.id,
+          quiz_id: quiz.id,
+          responses: completedAnswers.map((answer) => ({
+            question_id: answer.questionId,
+            selected_option_id: answer.selectedOptionId,
+          })),
+        },
+        throwOnError: true,
+      })
+    } catch {
+      setSaveError(
+        'Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.',
+      )
+    } finally {
+      setSavingAttempt(false)
+    }
+  }
+
+  async function checkAnswer() {
     if (selectedOptionId === null) {
       setShowValidation(true)
       return
     }
 
-    setRevealed(true)
-    setAnswers((previous) => [
-      ...previous,
-      {
-        questionId: question.id,
-        selectedOptionId,
-        correct: selectedOptionId === question.correctOptionId,
-      },
-    ])
+    try {
+      const result = await checkPublicAnswer({
+        path: { quiz_id: quiz.id },
+        body: {
+          question_id: question.id,
+          selected_option_id: selectedOptionId,
+        },
+        throwOnError: true,
+      })
+
+      setRevealed(true)
+      setAnswers((previous) => [
+        ...previous,
+        {
+          questionId: question.id,
+          selectedOptionId,
+          correct: result.data.correct,
+          correctOptionId:result.data.correct_option_id,
+          explanation: result.data.explanation ?? undefined,
+        },
+      ])
+    } catch {
+      setShowValidation(true)
+    }
   }
 
-  function goToNext() {
+  const currentAnswer = answers.find(
+    (answer) => answer.questionId === question.id,
+  )
+
+  async function goToNext() {
     if (index + 1 >= total) {
       setElapsedMs(startedAt === null ? 0 : Date.now() - startedAt)
+
+      if (authUser) {
+        await saveAttempt(answers)
+      }
       setPhase('result')
       return
     }
@@ -266,7 +322,8 @@ export default function QuizRunner({
                   <div className="mt-6 space-y-3">
                     {question.options.map((option) => {
                       const isSelected = selectedOptionId === option.id
-                      const isCorrect = option.id === question.correctOptionId
+                      const answerWasChecked = currentAnswer !== undefined
+                      
 
                       let stateClasses =
                         'border-white/10 bg-white/5 hover:border-amber-300/40 hover:bg-white/10'
@@ -275,19 +332,19 @@ export default function QuizRunner({
                         : 'border-white/30'
                       let dotClasses = 'bg-amber-300'
 
-                      if (revealed && isCorrect) {
-                        stateClasses = 'border-green-400/60 bg-green-400/10'
-                        markClasses = 'border-green-400'
-                        dotClasses = 'bg-green-400'
-                      } else if (revealed && isSelected) {
-                        stateClasses = 'border-red-400/60 bg-red-400/10'
-                        markClasses = 'border-red-400'
-                        dotClasses = 'bg-red-400'
-                      } else if (revealed) {
-                        stateClasses = 'border-white/10 bg-white/5 opacity-60'
-                      } else if (isSelected) {
-                        stateClasses = 'border-amber-300 bg-amber-300/10'
-                      }
+                       if (answerWasChecked && isSelected) {
+                          if (currentAnswer.correct) {
+                            stateClasses = 'border-green-400/60 bg-green-400/10'
+                            markClasses = 'border-green-400'
+                            dotClasses = 'bg-green-400'
+                          } else {
+                            stateClasses = 'border-red-400/60 bg-red-400/10'
+                            markClasses = 'border-red-400'
+                            dotClasses = 'bg-red-400'
+                          }
+                        } else if (answerWasChecked) {
+                          stateClasses = 'border-white/10 bg-white/5 opacity-60'
+                        }
 
                       return (
                         <label
@@ -342,18 +399,18 @@ export default function QuizRunner({
                   {revealed ? (
                     <div
                       className={`mt-4 rounded-xl border p-4 ${
-                        selectedOptionId === question.correctOptionId
+                        currentAnswer?.correct
                           ? 'border-green-400/40 bg-green-400/10'
                           : 'border-red-400/40 bg-red-400/10'
                       }`}
                     >
                       <p className="text-sm font-semibold">
-                        {selectedOptionId === question.correctOptionId
+                        {currentAnswer?.correct
                           ? 'Oikein'
                           : 'Väärin'}
                       </p>
                       <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                        {question.explanation}
+                        {currentAnswer?.explanation ?? 'Selitystä ei ole saatavilla.'}
                       </p>
                     </div>
                   ) : null}
@@ -422,20 +479,36 @@ export default function QuizRunner({
                     style={{ width: `${(correctCount / total) * 100}%` }}
                   />
                 </div>
+                {savingAttempt ? (
+                  <p className="mt-4 text-sm text-slate-400">
+                    Tallennetaan tulosta...
+                  </p>
+                ) : null}
+
+                {saveError ? (
+                  <p
+                    role="alert"
+                    className="mt-4 rounded-xl border border-red-400/40 bg-red-400/10 px-4 py-3 text-sm text-red-200"
+                  >
+                    {saveError}
+                  </p>
+                ) : null}
               </div>
 
               {/* Per-question review */}
               <ol className="mt-6 space-y-3">
                 {quiz.questions.map((item, itemIndex) => {
-                  const answer = answers.find(
-                    (entry) => entry.questionId === item.id,
-                  )
-                  const chosen = item.options.find(
-                    (option) => option.id === answer?.selectedOptionId,
-                  )
-                  const correct = item.options.find(
-                    (option) => option.id === item.correctOptionId,
-                  )
+                    const answer = answers.find(
+                      (entry) => entry.questionId === item.id,
+                    )
+
+                    const chosen = item.options.find(
+                      (option) => option.id === answer?.selectedOptionId,
+                    )
+
+                    const correct = item.options.find(
+                        (option) => option.id === answer?.correctOptionId,
+                    )
 
                   return (
                     <li
