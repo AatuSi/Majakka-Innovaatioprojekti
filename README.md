@@ -25,3 +25,10 @@ It checks, through the generated client: `/health`, CORS for the frontend origin
 Needs Node 22.18 or newer. `API_URL` (default `http://localhost:8000`) chooses the backend and `FRONTEND_ORIGIN` (default `http://localhost:3000`) the origin CORS must allow.
 
 The frontend finds the API through `VITE_API_URL`; see `frontend/.env.example`. In development the browser console warns once when the API cannot be reached.
+
+## Database initialization
+
+Initialize the database and add the production seed data:
+
+```bash
+python init_db.py

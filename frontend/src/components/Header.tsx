@@ -5,6 +5,7 @@ import LighthouseMark from "./LighthouseMark";
 import { scrollIfAlreadyHere } from "./navigation";
 import AuthModal from "./AuthModal";
 import { openAuthModal } from "./authModalStore";
+import { useAuthUser, logoutUser } from "./authUserStore";
 
 const cutCorner =
   "[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]";
@@ -19,7 +20,9 @@ const navLinkInactive = "text-white after:scale-x-0";
 export default function Header() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const href = useLocation({ select: (location) => location.href });
-  const isQuiz = pathname.endsWith("-quiz");
+  // const isQuiz = pathname.endsWith("-quiz");
+  const isQuiz = pathname === '/quizzes' || pathname.endsWith('-quiz')
+  const authUser = useAuthUser();
 
   // The menu remembers the location it was opened at, so any navigation,
   // including the browser's back and forward buttons, closes it.
@@ -98,9 +101,9 @@ export default function Header() {
             </li>
             <li>
               <Link
-                to="/IALA-quiz"
+                to="/quizzes"
                 className={`${navLinkBase} ${isQuiz ? navLinkActive : navLinkInactive}`}
-                onClick={navigateTo("/IALA-quiz")}
+                onClick={navigateTo("/quizzes")}
               >
                 Tietovisat
               </Link>
@@ -119,17 +122,36 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => openAuthModal("sign-in")}
-            className={`${cutCorner} hidden bg-[#1D90F4] p-0.5 transition hover:bg-[#3BA0F6] sm:inline-block`}
-          >
-            <span
-              className={`${cutCornerInner} block bg-[#182130] px-6 py-2 text-lg font-medium text-white`}
+          {authUser ? (
+            <div className="hidden items-center gap-3 sm:flex">
+              <span className="text-sm font-medium text-[#A0AEC0]">
+                {authUser.username}
+              </span>
+              <button
+                type="button"
+                onClick={logoutUser}
+                className={`${cutCorner} bg-[#2A3548] p-0.5 transition hover:bg-[#3A4A5E]`}
+              >
+                <span
+                  className={`${cutCornerInner} block bg-[#182130] px-6 py-2 text-lg font-medium text-white`}
+                >
+                  Kirjaudu ulos
+                </span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openAuthModal("sign-in")}
+              className={`${cutCorner} hidden bg-[#1D90F4] p-0.5 transition hover:bg-[#3BA0F6] sm:inline-block`}
             >
-              Kirjaudu
-            </span>
-          </button>
+              <span
+                className={`${cutCornerInner} block bg-[#182130] px-6 py-2 text-lg font-medium text-white`}
+              >
+                Kirjaudu
+              </span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -199,8 +221,8 @@ export default function Header() {
             </li>
             <li>
               <Link
-                to="/IALA-quiz"
-                onClick={navigateTo("/IALA-quiz")}
+                to="/quizzes"
+                onClick={navigateTo("/quizzes")}
                 className={`block py-2 text-lg hover:text-[#1D90F4] ${
                   isQuiz ? "text-[#1D90F4] font-medium" : "text-white"
                 }`}
@@ -219,16 +241,29 @@ export default function Header() {
               </Link>
             </li>
             <li className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  closeMenu();
-                  openAuthModal("sign-in");
-                }}
-                className="block py-2 text-lg font-medium text-[#1D90F4]"
-              >
-                Kirjaudu
-              </button>
+              {authUser ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    logoutUser();
+                  }}
+                  className="block py-2 text-lg font-medium text-red-400"
+                >
+                  Kirjaudu ulos ({authUser.username})
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    openAuthModal("sign-in");
+                  }}
+                  className="block py-2 text-lg font-medium text-[#1D90F4]"
+                >
+                  Kirjaudu
+                </button>
+              )}
             </li>
           </ul>
         </nav>

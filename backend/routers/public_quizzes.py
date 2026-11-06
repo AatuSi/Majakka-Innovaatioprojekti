@@ -84,7 +84,23 @@ def check_public_answer(
     if option is None:
         raise HTTPException(status_code=400, detail="Option does not belong to the question")
 
+    correct_option = (
+        db.query(models.QuizQuestionOption)
+        .filter(
+            models.QuizQuestionOption.question_id == question.id,
+            models.QuizQuestionOption.is_correct.is_(True),
+        )
+        .first()
+    )
+
+    if correct_option is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Question has no correct option",
+    )
+
     return schemas.PublicAnswerCheckResponse(
         correct=option.is_correct,
+        correct_option_id=correct_option.id,
         explanation=question.explanation,
     )

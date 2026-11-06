@@ -265,4 +265,5 @@ class PublicAnswerCheckRequest(BaseModel):
 
 class PublicAnswerCheckResponse(BaseModel):
     correct: bool
+    correct_option_id: UUID
     explanation: Optional[str] = None

@@ -189,6 +189,10 @@ export type PublicAnswerCheckResponse = {
      */
     correct: boolean;
     /**
+     * Correct Option Id
+     */
+    correct_option_id: string;
+    /**
      * Explanation
      */
     explanation?: string | null;

@@ -2068,6 +2068,11 @@
             "type": "boolean",
             "title": "Correct"
           },
+          "correct_option_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Correct Option Id"
+          },
           "explanation": {
             "anyOf": [
               {
@@ -2082,7 +2087,8 @@
         },
         "type": "object",
         "required": [
-          "correct"
+          "correct",
+          "correct_option_id"
         ],
         "title": "PublicAnswerCheckResponse"
       },
