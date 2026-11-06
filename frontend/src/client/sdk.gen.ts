@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateAttemptData, CreateAttemptErrors, CreateAttemptResponses, CreateContactMessageData, CreateContactMessageErrors, CreateContactMessageResponses, CreateIalaLightData, CreateIalaLightErrors, CreateIalaLightResponses, CreateOptionData, CreateOptionErrors, CreateOptionResponses, CreateQuestionData, CreateQuestionErrors, CreateQuestionResponses, CreateQuizData, CreateQuizErrors, CreateQuizResponses, CreateResponseData, CreateResponseErrors, CreateResponseResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAttemptData, DeleteAttemptErrors, DeleteAttemptResponses, DeleteIalaLightData, DeleteIalaLightErrors, DeleteIalaLightResponses, DeleteOptionData, DeleteOptionErrors, DeleteOptionResponses, DeleteQuestionData, DeleteQuestionErrors, DeleteQuestionResponses, DeleteQuizData, DeleteQuizErrors, DeleteQuizResponses, DeleteResponseData, DeleteResponseErrors, DeleteResponseResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAttemptData, GetAttemptErrors, GetAttemptResponses, GetIalaLightData, GetIalaLightErrors, GetIalaLightResponses, GetOptionData, GetOptionErrors, GetOptionResponses, GetQuestionData, GetQuestionErrors, GetQuestionResponses, GetQuizData, GetQuizErrors, GetQuizResponses, GetResponseData, GetResponseErrors, GetResponseResponses, GetUserData, GetUserErrors, GetUserResponses, HealthCheckData, HealthCheckErrors, HealthCheckResponses, ListAttemptsData, ListAttemptsResponses, ListIalaLightsData, ListIalaLightsErrors, ListIalaLightsResponses, ListOptionsData, ListOptionsErrors, ListOptionsResponses, ListQuestionsData, ListQuestionsErrors, ListQuestionsResponses, ListQuizzesData, ListQuizzesResponses, ListResponsesData, ListResponsesErrors, ListResponsesResponses, ListUsersData, ListUsersResponses, LoginData, LoginErrors, LoginResponses, UpdateIalaLightData, UpdateIalaLightErrors, UpdateIalaLightResponses, UpdateOptionData, UpdateOptionErrors, UpdateOptionResponses, UpdateQuestionData, UpdateQuestionErrors, UpdateQuestionResponses, UpdateQuizData, UpdateQuizErrors, UpdateQuizResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
+import type { CheckPublicAnswerData, CheckPublicAnswerErrors, CheckPublicAnswerResponses, CreateAttemptData, CreateAttemptErrors, CreateAttemptResponses, CreateContactMessageData, CreateContactMessageErrors, CreateContactMessageResponses, CreateIalaLightData, CreateIalaLightErrors, CreateIalaLightResponses, CreateOptionData, CreateOptionErrors, CreateOptionResponses, CreateQuestionData, CreateQuestionErrors, CreateQuestionResponses, CreateQuizData, CreateQuizErrors, CreateQuizResponses, CreateResponseData, CreateResponseErrors, CreateResponseResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAttemptData, DeleteAttemptErrors, DeleteAttemptResponses, DeleteIalaLightData, DeleteIalaLightErrors, DeleteIalaLightResponses, DeleteOptionData, DeleteOptionErrors, DeleteOptionResponses, DeleteQuestionData, DeleteQuestionErrors, DeleteQuestionResponses, DeleteQuizData, DeleteQuizErrors, DeleteQuizResponses, DeleteResponseData, DeleteResponseErrors, DeleteResponseResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAttemptData, GetAttemptErrors, GetAttemptResponses, GetIalaLightData, GetIalaLightErrors, GetIalaLightResponses, GetOptionData, GetOptionErrors, GetOptionResponses, GetPublicQuizData, GetPublicQuizErrors, GetPublicQuizResponses, GetQuestionData, GetQuestionErrors, GetQuestionResponses, GetQuizData, GetQuizErrors, GetQuizResponses, GetResponseData, GetResponseErrors, GetResponseResponses, GetUserData, GetUserErrors, GetUserResponses, HealthCheckData, HealthCheckErrors, HealthCheckResponses, ListAttemptsData, ListAttemptsResponses, ListIalaLightsData, ListIalaLightsErrors, ListIalaLightsResponses, ListOptionsData, ListOptionsErrors, ListOptionsResponses, ListPublicQuizzesData, ListPublicQuizzesResponses, ListQuestionsData, ListQuestionsErrors, ListQuestionsResponses, ListQuizzesData, ListQuizzesResponses, ListResponsesData, ListResponsesErrors, ListResponsesResponses, ListUsersData, ListUsersResponses, LoginData, LoginErrors, LoginResponses, UpdateIalaLightData, UpdateIalaLightErrors, UpdateIalaLightResponses, UpdateOptionData, UpdateOptionErrors, UpdateOptionResponses, UpdateQuestionData, UpdateQuestionErrors, UpdateQuestionResponses, UpdateQuizData, UpdateQuizErrors, UpdateQuizResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -80,6 +80,28 @@ export const getUser = <ThrowOnError extends boolean = false>(options: Options<G
 export const updateUser = <ThrowOnError extends boolean = false>(options: Options<UpdateUserData, ThrowOnError>): RequestResult<UpdateUserResponses, UpdateUserErrors, ThrowOnError> => (options.client ?? client).put<UpdateUserResponses, UpdateUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/users/{user_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Public Quizzes
+ */
+export const listPublicQuizzes = <ThrowOnError extends boolean = false>(options?: Options<ListPublicQuizzesData, ThrowOnError>): RequestResult<ListPublicQuizzesResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListPublicQuizzesResponses, unknown, ThrowOnError>({ url: '/public/quizzes', ...options });
+
+/**
+ * Get Public Quiz
+ */
+export const getPublicQuiz = <ThrowOnError extends boolean = false>(options: Options<GetPublicQuizData, ThrowOnError>): RequestResult<GetPublicQuizResponses, GetPublicQuizErrors, ThrowOnError> => (options.client ?? client).get<GetPublicQuizResponses, GetPublicQuizErrors, ThrowOnError>({ url: '/public/quizzes/{quiz_id}', ...options });
+
+/**
+ * Check Public Answer
+ */
+export const checkPublicAnswer = <ThrowOnError extends boolean = false>(options: Options<CheckPublicAnswerData, ThrowOnError>): RequestResult<CheckPublicAnswerResponses, CheckPublicAnswerErrors, ThrowOnError> => (options.client ?? client).post<CheckPublicAnswerResponses, CheckPublicAnswerErrors, ThrowOnError>({
+    url: '/public/quizzes/{quiz_id}/answers/check',
     ...options,
     headers: {
         'Content-Type': 'application/json',

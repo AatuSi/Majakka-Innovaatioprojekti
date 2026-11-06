@@ -167,6 +167,124 @@ export type LoginRequest = {
 };
 
 /**
+ * PublicAnswerCheckRequest
+ */
+export type PublicAnswerCheckRequest = {
+    /**
+     * Question Id
+     */
+    question_id: string;
+    /**
+     * Selected Option Id
+     */
+    selected_option_id: string;
+};
+
+/**
+ * PublicAnswerCheckResponse
+ */
+export type PublicAnswerCheckResponse = {
+    /**
+     * Correct
+     */
+    correct: boolean;
+    /**
+     * Explanation
+     */
+    explanation?: string | null;
+};
+
+/**
+ * PublicQuizQuestionOptionResponse
+ */
+export type PublicQuizQuestionOptionResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Question Id
+     */
+    question_id: string;
+    /**
+     * Option Text
+     */
+    option_text?: string | null;
+    /**
+     * Iala Light Id
+     */
+    iala_light_id?: string | null;
+    /**
+     * Position
+     */
+    position?: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * PublicQuizQuestionResponse
+ */
+export type PublicQuizQuestionResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+    /**
+     * Question Text
+     */
+    question_text?: string | null;
+    /**
+     * Hint
+     */
+    hint?: string | null;
+    /**
+     * Iala Light Id
+     */
+    iala_light_id?: string | null;
+    /**
+     * Position
+     */
+    position?: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Options
+     */
+    options?: Array<PublicQuizQuestionOptionResponse>;
+};
+
+/**
+ * PublicQuizResponse
+ */
+export type PublicQuizResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Questions
+     */
+    questions?: Array<PublicQuizQuestionResponse>;
+};
+
+/**
  * QuizAttemptCreate
  */
 export type QuizAttemptCreate = {
@@ -232,6 +350,14 @@ export type QuizQuestionCreate = {
      * Question Text
      */
     question_text?: string | null;
+    /**
+     * Explanation
+     */
+    explanation?: string | null;
+    /**
+     * Hint
+     */
+    hint?: string | null;
     /**
      * Iala Light Id
      */
@@ -333,6 +459,14 @@ export type QuizQuestionResponse = {
      */
     question_text?: string | null;
     /**
+     * Explanation
+     */
+    explanation?: string | null;
+    /**
+     * Hint
+     */
+    hint?: string | null;
+    /**
      * Iala Light Id
      */
     iala_light_id?: string | null;
@@ -366,6 +500,14 @@ export type QuizQuestionUpdate = {
      * Question Text
      */
     question_text?: string | null;
+    /**
+     * Explanation
+     */
+    explanation?: string | null;
+    /**
+     * Hint
+     */
+    hint?: string | null;
     /**
      * Iala Light Id
      */
@@ -460,6 +602,7 @@ export type TokenResponse = {
      * Token Type
      */
     token_type?: string;
+    user: UserResponse;
 };
 
 /**
@@ -726,6 +869,84 @@ export type UpdateUserResponses = {
 };
 
 export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
+
+export type ListPublicQuizzesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/public/quizzes';
+};
+
+export type ListPublicQuizzesResponses = {
+    /**
+     * Response List Public Quizzes
+     *
+     * Successful Response
+     */
+    200: Array<PublicQuizResponse>;
+};
+
+export type ListPublicQuizzesResponse = ListPublicQuizzesResponses[keyof ListPublicQuizzesResponses];
+
+export type GetPublicQuizData = {
+    body?: never;
+    path: {
+        /**
+         * Quiz Id
+         */
+        quiz_id: string;
+    };
+    query?: never;
+    url: '/public/quizzes/{quiz_id}';
+};
+
+export type GetPublicQuizErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPublicQuizError = GetPublicQuizErrors[keyof GetPublicQuizErrors];
+
+export type GetPublicQuizResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicQuizResponse;
+};
+
+export type GetPublicQuizResponse = GetPublicQuizResponses[keyof GetPublicQuizResponses];
+
+export type CheckPublicAnswerData = {
+    body: PublicAnswerCheckRequest;
+    path: {
+        /**
+         * Quiz Id
+         */
+        quiz_id: string;
+    };
+    query?: never;
+    url: '/public/quizzes/{quiz_id}/answers/check';
+};
+
+export type CheckPublicAnswerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CheckPublicAnswerError = CheckPublicAnswerErrors[keyof CheckPublicAnswerErrors];
+
+export type CheckPublicAnswerResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublicAnswerCheckResponse;
+};
+
+export type CheckPublicAnswerResponse = CheckPublicAnswerResponses[keyof CheckPublicAnswerResponses];
 
 export type ListQuizzesData = {
     body?: never;
