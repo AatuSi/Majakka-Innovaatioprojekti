@@ -43,9 +43,10 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const isLoginRoute = useRouterState({
-    select: (state) => state.location.pathname === "/login",
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
   });
+  const isLoginRoute = pathname === "/login";
 
   return (
     <html lang="fi">
