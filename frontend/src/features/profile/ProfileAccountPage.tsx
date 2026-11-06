@@ -6,14 +6,28 @@ import {
   faClock,
   faTrophy,
   faClipboardList,
-  faIdCard,
   faXmark,
   faGraduationCap,
   faUpload,
+  faPen,
 } from '@fortawesome/free-solid-svg-icons'
 import Toast from '../../components/Toast'
 import { selectAvatarIcon, selectUploadedAvatar, uploadAvatar, useAvatar } from './avatarStore'
 import ProfileAvatar from './ProfileAvatar'
+import {
+  card,
+  eyebrow,
+  iconBadge,
+  input,
+  insetPanel,
+  label,
+  modalBackdrop,
+  modalPanel,
+  primaryButton,
+  secondaryButton,
+  sectionIntro,
+  sectionTitle,
+} from './profileStyles'
 
 const mockQuizHistoryData = [
   { id: '1', score: 10, totalQuestions: 10, duration: 270 },
@@ -61,101 +75,82 @@ export default function ProfileAccountPage() {
   }
 
   return (
-    <main className="relative mx-auto grid w-full max-w-[1350px] grid-cols-1 gap-6 p-8 lg:grid-cols-[1fr_340px] overflow-hidden">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
       <Toast show={profileSaved} message="Tiedot tallennettu onnistuneesti!" />
+
+      {/* avatar and overview */}
+      <section className={`${card} flex flex-col items-center self-start p-8 text-center`}>
+        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-[#2A3548] bg-[#0F1724] text-4xl text-[#38bdf8] shadow-[0_0_35px_rgba(29,144,244,0.25)]">
+          <ProfileAvatar />
+        </div>
+
+        <h2 className="mt-5 text-xl font-light text-white">Firstname Lastname</h2>
+        <span className="mt-2 rounded-full border border-[#1D90F4]/30 bg-[#1D90F4]/10 px-3 py-0.5 text-[11px] uppercase tracking-widest text-[#38bdf8]">
+          Opiskelija
+        </span>
+        <p className="mt-3 text-sm font-light text-[#9fb0c7]">
+          Metropolia AMK • Liittynyt Syyskuu 2026
+        </p>
+
+        <button
+          type="button"
+          onClick={() => setShowAvatarModal(true)}
+          className={`${secondaryButton} mt-6 w-full`}
+        >
+          <FontAwesomeIcon icon={faPen} className="text-xs" />
+          Muokkaa kuvaketta
+        </button>
+      </section>
+
       <div className="flex flex-col gap-6">
-        <section className="flex flex-col overflow-hidden rounded-[14px] border border-[#2A374B] bg-[#1E2839] shadow-2xl">
-          <div className="h-[120px] w-full border-b border-[#2A374B] bg-[#101927]" />
-          <div className="px-6 pb-6">
-            <div className="mb-4 flex items-end justify-between">
-              <div className="-mt-[38px] flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full border-[3px] border-[#1E2839] bg-[#131B27] text-2xl text-[#38bdf8] shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-                <ProfileAvatar />
+        {/* stats */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {statsData.map((stat) => (
+            <div
+              key={stat.label}
+              className={`${card} flex items-center gap-4 p-5 transition hover:border-[#1D90F4]/50`}
+            >
+              <div className={iconBadge}>
+                <FontAwesomeIcon icon={stat.icon} fixedWidth />
               </div>
-              <button
-                type="button"
-                onClick={() => setShowAvatarModal(true)}
-                className="mt-3 inline-flex items-center gap-2 rounded-md border border-[#1d90f4] bg-[#1d90f4] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#3ba0f6] cursor-pointer"
-              >
-                <span>Muokkaa kuvaketta</span>
-              </button>
+              <div>
+                <div className="text-2xl font-light text-white">{stat.value}</div>
+                <div className="text-xs text-[#9fb0c7]">{stat.label}</div>
+              </div>
             </div>
-            <div>
-              <h2 className="m-0 flex items-center gap-2 text-xl font-bold text-white">
-                Firstname Lastname
-                <span className="rounded border border-[#38bdf8]/30 bg-[#38bdf8]/15 px-1.5 py-0.5 text-[10px] text-[#38bdf8]">
-                  OPISKELIJA
-                </span>
-              </h2>
-              <p className="mt-1 text-xs text-[#718096]">
-                Metropolia AMK • Liittynyt Syyskuu 2026
-              </p>
-            </div>
-            <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-              {statsData.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="flex items-center gap-3 rounded-xl border border-[#2A374B] bg-[#131B27] p-3.5"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1d90f4]/15 text-[#38bdf8]">
-                    <FontAwesomeIcon icon={stat.icon} fixedWidth />
-                  </div>
-                  <div>
-                    <div className="text-lg font-bold text-white">{stat.value}</div>
-                    <div className="text-[11px] text-[#718096]">{stat.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section className="rounded-[14px] border border-[#2A374B] bg-[#1E2839] p-6 shadow-2xl">
+          ))}
+        </div>
+
+        {/* personal details */}
+        <section className={`${card} p-6 sm:p-8`}>
           <form onSubmit={handleProfileSubmit} className="flex flex-col">
-            <div className="flex items-center gap-2.5 border-b border-[#2A374B] pb-3 mb-5">
-              <FontAwesomeIcon icon={faIdCard} className="text-[#38bdf8] text-sm" />
-              <h3 className="m-0 text-base font-semibold text-white">
-                Henkilötiedot
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
+            <span className={eyebrow}>Tili</span>
+            <h3 className={`mt-1 ${sectionTitle}`}>Henkilötiedot</h3>
+            <p className={sectionIntro}>Nimesi ja sähköpostiosoitteesi näkyvät profiilissasi.</p>
+
+            <div className={`${insetPanel} mt-6 grid grid-cols-1 gap-5 p-5 sm:grid-cols-2`}>
+              <div className="space-y-2">
+                <label htmlFor="profile-firstName" className={label}>
                   Etunimi
                 </label>
-                <input
-                  type="text"
-                  defaultValue="Firstname"
-                  required
-                  className="rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#1d90f4]"
-                />
+                <input id="profile-firstName" type="text" defaultValue="Firstname" required className={input} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
+              <div className="space-y-2">
+                <label htmlFor="profile-lastName" className={label}>
                   Sukunimi
                 </label>
-                <input
-                  type="text"
-                  defaultValue="Lastname"
-                  required
-                  className="rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#1d90f4]"
-                />
+                <input id="profile-lastName" type="text" defaultValue="Lastname" required className={input} />
               </div>
-              <div className="flex flex-col gap-1.5 sm:col-span-2">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
+              <div className="space-y-2 sm:col-span-2">
+                <label htmlFor="profile-email" className={label}>
                   Sähköpostiosoite
                 </label>
-                <input
-                  type="email"
-                  defaultValue="email@osoite.fi"
-                  required
-                  className="rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#1d90f4]"
-                />
+                <input id="profile-email" type="email" defaultValue="email@osoite.fi" required className={input} />
               </div>
             </div>
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
-                type="submit"
-                className={`bg-[#1d90f4] px-5 py-2.5 text-xs font-semibold text-white rounded-sm transition hover:bg-[#3ba0f6] active:scale-95 cursor-pointer`}
-              >
+
+            <div className="mt-6 flex justify-end">
+              <button type="submit" className={primaryButton}>
                 Tallenna henkilötiedot
               </button>
             </div>
@@ -164,19 +159,26 @@ export default function ProfileAccountPage() {
       </div>
 
       {showAvatarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-[#2A374B] bg-[#1E2839] p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#2A374B] pb-3 mb-4">
-              <h3 className="text-base font-bold text-white">Valitse profiilikuvake</h3>
+        <div className={modalBackdrop}>
+          <div className={modalPanel} role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className={eyebrow}>Profiilikuva</span>
+                <h3 id="avatar-modal-title" className="mt-1 text-2xl font-light text-white">
+                  Valitse kuvake
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowAvatarModal(false)}
-                className="text-[#718096] hover:text-white cursor-pointer"
+                className="text-[#718096] transition hover:text-white cursor-pointer"
+                aria-label="Sulje"
               >
                 <FontAwesomeIcon icon={faXmark} className="text-lg" />
               </button>
             </div>
-            <div className="grid grid-cols-5 gap-3 mb-4">
+
+            <div className="mt-6 flex flex-wrap gap-3">
               {availableIcons.map((icon, index) => (
                 <button
                   key={index}
@@ -185,10 +187,10 @@ export default function ProfileAccountPage() {
                     selectAvatarIcon(icon)
                     setShowAvatarModal(false)
                   }}
-                  className={`flex h-14 w-14 items-center justify-center rounded-xl border transition cursor-pointer ${
+                  className={`flex h-16 w-16 items-center justify-center rounded-full border-2 transition cursor-pointer ${
                     selectedIcon === icon
-                      ? 'border-[#1d90f4] bg-[#1d90f4]/20 text-[#38bdf8]'
-                      : 'border-[#2A374B] bg-[#131B27] text-slate-300 hover:border-slate-500'
+                      ? 'border-[#1D90F4] bg-[#1D90F4]/15 text-[#38bdf8] shadow-[0_0_20px_rgba(29,144,244,0.35)]'
+                      : 'border-[#2A3548] bg-[#182130] text-[#c3cddb] hover:border-[#1D90F4]/60'
                   }`}
                 >
                   <FontAwesomeIcon icon={icon} className="text-xl" />
@@ -202,16 +204,17 @@ export default function ProfileAccountPage() {
                     setShowAvatarModal(false)
                   }}
                   aria-label="Käytä omaa kuvaa"
-                  className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border transition cursor-pointer ${
+                  className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 transition cursor-pointer ${
                     selectedIcon === null
-                      ? 'border-[#1d90f4]'
-                      : 'border-[#2A374B] hover:border-slate-500'
+                      ? 'border-[#1D90F4] shadow-[0_0_20px_rgba(29,144,244,0.35)]'
+                      : 'border-[#2A3548] hover:border-[#1D90F4]/60'
                   }`}
                 >
                   <img src={uploadedImage} alt="" className="h-full w-full object-cover" />
                 </button>
               )}
             </div>
+
             <input
               ref={fileInputRef}
               type="file"
@@ -222,7 +225,7 @@ export default function ProfileAccountPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2A374B] bg-[#131B27] px-4 py-2.5 text-xs font-semibold text-white transition hover:border-[#1d90f4] hover:bg-[#1d90f4]/10 cursor-pointer"
+              className={`${secondaryButton} mt-6 w-full`}
             >
               <FontAwesomeIcon icon={faUpload} />
               <span>Lataa oma kuva</span>
@@ -230,6 +233,6 @@ export default function ProfileAccountPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   )
 }

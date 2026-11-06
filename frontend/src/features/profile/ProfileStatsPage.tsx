@@ -8,6 +8,7 @@ import {
   faRotateRight,
   faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons'
+import { card, eyebrow, input, insetPanel, secondaryButton, sectionIntro, sectionTitle } from './profileStyles'
 
 const mockQuizHistoryData = [
   {
@@ -90,148 +91,153 @@ export default function ProfileStatsPage() {
 
   const displayedHistory = filteredHistory.slice(0, visibleCount)
 
+
+  const summaryCards = [
+    {
+      icon: faBookOpen,
+      tag: 'Suoritukset',
+      title: 'Loistotehtäviä suoritettu',
+      value: `${totalCompleted}`,
+      hint: 'Yhteensä tallennettuja loistotestejä',
+    },
+    {
+      icon: faAward,
+      tag: 'Pisteet',
+      title: 'Keskimääräinen pisteytys',
+      value: `${avgScore}%`,
+      hint: 'Keskiarvo kaikista vastauksista',
+    },
+    {
+      icon: faCheck,
+      tag: 'Läpäisy',
+      title: 'Läpäisyprosentti',
+      value: `${passRate}%`,
+      hint: 'Läpäisyvaatimus ≥ 70%',
+    },
+    {
+      icon: faClock,
+      tag: 'Aika',
+      title: 'Harjoitteluaika',
+      value: `${totalMinutes} min`,
+      hint: 'Loistotestien kokonaisaika',
+    },
+  ]
+
   return (
-    <main className="mx-auto w-full max-w-[1350px] p-8">
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-xl font-bold text-white">Tilastot</h1>
-          <p className="mt-1 text-xs text-[#718096]">
-            Seuraa loistotestien tuloksia, oppimisen etenemistä sekä aihealueita.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="flex flex-col justify-between rounded-xl border border-[#2A374B] bg-[#1E2839] p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-base font-semibold text-[#8B9BB4]">Loistotehtäviä suoritettu</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1d90f4]/20 bg-[#1d90f4]/10 text-[#38bdf8]">
-                <FontAwesomeIcon icon={faBookOpen} className="text-xs" />
-              </div>
+    <div className="flex flex-col gap-8">
+      <div>
+        <span className={eyebrow}>Edistyminen</span>
+        <h2 className={`mt-1 ${sectionTitle}`}>Tilastot</h2>
+        <p className={sectionIntro}>Seuraa loistotestien tuloksia, oppimisen etenemistä sekä aihealueita.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {summaryCards.map((item) => (
+          <div
+            key={item.title}
+            className={`${card} flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-[#1D90F4]/60`}
+          >
+            <div className="relative flex h-24 items-center justify-center border-b border-[#2A3548]/40 bg-[#0F1724]">
+              <span className="absolute top-3 left-3 text-[10px] uppercase text-[#718096]">{item.tag}</span>
+              <span className="text-4xl font-light text-white">{item.value}</span>
             </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold tracking-tight text-white">{totalCompleted}</div>
-              <div className="mt-1 text-[11px] text-[#718096]">Yhteensä tallennettuja loistotestejä</div>
+            <div className="flex flex-1 items-start gap-3 p-5">
+              <FontAwesomeIcon icon={item.icon} className="mt-1 text-sm text-[#38bdf8]" fixedWidth />
+              <div>
+                <h3 className="text-base font-light text-[#1D90F4]">{item.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#9fb0c7]">{item.hint}</p>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col justify-between rounded-xl border border-[#2A374B] bg-[#1E2839] p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-base font-semibold text-[#8B9BB4]">Keskimääräinen pisteytys</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1d90f4]/20 bg-[#1d90f4]/10 text-[#38bdf8]">
-                <FontAwesomeIcon icon={faAward} className="text-xs" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold tracking-tight text-white">{avgScore}%</div>
-              <div className="mt-1 text-[11px] text-[#718096]">Keskiarvo kaikista vastauksista</div>
-            </div>
+        ))}
+      </div>
+
+      <section className={`${card} p-6 sm:p-8`}>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-light text-white">Kaikki suoritukset</h3>
+            <span className="rounded-full border border-[#2A3548] bg-[#0F1724] px-2.5 py-0.5 text-xs text-[#9fb0c7]">
+              {filteredHistory.length}
+            </span>
           </div>
-          <div className="flex flex-col justify-between rounded-xl border border-[#2A374B] bg-[#1E2839] p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-base font-semibold text-[#8B9BB4]">Läpäisyprosentti</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1d90f4]/20 bg-[#1d90f4]/10 text-[#38bdf8]">
-                <FontAwesomeIcon icon={faCheck} className="text-xs" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold tracking-tight text-white">{passRate}%</div>
-              <div className="mt-1 text-[11px] text-[#718096]">Läpäisyvaatimus ≥ 70%</div>
-            </div>
-          </div>
-          <div className="flex flex-col justify-between rounded-xl border border-[#2A374B] bg-[#1E2839] p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-base font-semibold text-[#8B9BB4]">Harjoitteluaika</span>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1d90f4]/20 bg-[#1d90f4]/10 text-[#38bdf8]">
-                <FontAwesomeIcon icon={faClock} className="text-xs" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold tracking-tight text-white">{totalMinutes} min</div>
-              <div className="mt-1 text-[11px] text-[#718096]">Loistotestien kokonaisaika</div>
-            </div>
+          <div className="relative w-full sm:w-72">
+            <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm text-[#718096]">
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
+            </span>
+            <input
+              type="text"
+              placeholder="Etsi testin nimellä..."
+              aria-label="Etsi testin nimellä"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`${input} pl-11`}
+            />
           </div>
         </div>
-        <section className="rounded-[14px] border border-[#2A374B] bg-[#1E2839] p-6 shadow-2xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#2A374B] pb-4 mb-4">
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-base font-semibold text-white">Kaikki suoritukset</h2>
-              <span className="flex items-center rounded-full bg-[#131B27] px-2.5 py-0.5 text-[10px] font-semibold text-[#8B9BB4] border border-[#2A374B]">
-                {filteredHistory.length}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="relative w-64">
-                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-xs text-[#718096]">
-                  <FontAwesomeIcon icon={faMagnifyingGlass} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Etsi testin nimellä..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-md border border-[#2A374B] bg-[#131B27] py-2 pr-3.5 pl-9 text-xs text-white outline-none transition focus:border-[#1d90f4]"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-[#e2e8f0]">
-              <thead className="border-b border-[#2A374B] text-[10px] font-semibold uppercase tracking-wider text-[#718096]">
+
+        <div className={`${insetPanel} overflow-x-auto`}>
+          <table className="w-full text-left text-sm text-[#c3cddb]">
+            <thead className="border-b border-[#2A3548] text-[11px] uppercase tracking-widest text-[#718096]">
+              <tr>
+                <th className="px-5 py-3 font-normal">Testit</th>
+                <th className="px-5 py-3 font-normal">Ajankohta</th>
+                <th className="px-5 py-3 font-normal">Tulos</th>
+                <th className="px-5 py-3 font-normal">Kesto</th>
+                <th className="px-5 py-3 text-right font-normal">Toiminto</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#2A3548]/50">
+              {displayedHistory.length === 0 ? (
                 <tr>
-                  <th className="pb-2.5">Testit</th>
-                  <th className="pb-2.5">Ajankohta</th>
-                  <th className="pb-2.5">Tulos</th>
-                  <th className="pb-2.5">Kesto</th>
-                  <th className="pb-2.5 text-right">Toiminto</th>
+                  <td colSpan={5} className="px-5 py-10 text-center font-light text-[#9fb0c7]">
+                    Ei hakuehtoja vastaavia suorituksia.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-[#2A374B]/50">
-                {displayedHistory.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-xs text-[#718096]">
-                      Ei hakuehtoja vastaavia suorituksia.
+              ) : (
+                displayedHistory.map((quiz) => (
+                  <tr key={quiz.id} className="transition-colors hover:bg-[#1D90F4]/5">
+                    <td className="px-5 py-4 font-medium text-white">{quiz.title}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-light">{quiz.date}</td>
+                    <td className="whitespace-nowrap px-5 py-4">
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                          quiz.score / quiz.totalQuestions >= 0.7
+                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                            : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                        }`}
+                      >
+                        {quiz.score}/{quiz.totalQuestions}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-4 font-light">{formatDuration(quiz.duration)}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D90F4] underline-offset-4 transition hover:underline cursor-pointer"
+                      >
+                        <FontAwesomeIcon icon={faRotateRight} className="text-[10px]" />
+                        <span>Kertaa</span>
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  displayedHistory.map((quiz) => (
-                    <tr key={quiz.id} className="transition-colors hover:bg-white/[0.02]">
-                      <td className="py-3.5">
-                        <div className="font-semibold text-white">{quiz.title}</div>
-                      </td>
-                      <td className="py-3.5 text-[#8B9BB4] whitespace-nowrap">{quiz.date}</td>
-                      <td className="py-3.5 whitespace-nowrap font-semibold text-white">
-                        {quiz.score}/{quiz.totalQuestions}
-                      </td>
-                      <td className="py-3.5 text-[#8B9BB4] whitespace-nowrap">
-                        {formatDuration(quiz.duration)}
-                      </td>
-                      <td className="py-3.5 text-right whitespace-nowrap">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-sm border border-[#2A374B] bg-[#131B27] px-2.5 py-1 text-[11px] font-medium text-slate-300 transition hover:border-[#1d90f4] hover:text-white cursor-pointer"
-                        >
-                          <FontAwesomeIcon icon={faRotateRight} className="text-[10px] text-[#718096]" />
-                          <span>Kertaa</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          {visibleCount < filteredHistory.length && (
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setVisibleCount((prev) => prev + 5)}
-                className="rounded-sm border border-[#2A374B] bg-[#131B27] px-5 py-2 text-xs font-semibold text-white transition hover:border-[#1d90f4] hover:bg-[#1d90f4]/10 cursor-pointer"
-              >
-                Näytä lisää
-              </button>
-            </div>
-          )}
-        </section>
-      </div>
-    </main>
+        {visibleCount < filteredHistory.length && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + 5)}
+              className={secondaryButton}
+            >
+              Näytä lisää
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
   )
 }

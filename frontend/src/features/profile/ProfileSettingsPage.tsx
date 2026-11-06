@@ -10,6 +10,20 @@ import {
   faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import Toast from '../../components/Toast'
+import {
+  card,
+  dangerButton,
+  eyebrow,
+  iconBadge,
+  input,
+  insetPanel,
+  label,
+  modalBackdrop,
+  primaryButton,
+  secondaryButton,
+  sectionIntro,
+  sectionTitle,
+} from './profileStyles'
 
 export default function ProfileSettingsPage() {
   const navigate = useNavigate()
@@ -38,224 +52,225 @@ export default function ProfileSettingsPage() {
     }
   }
 
+
+  const toggles = [
+    {
+      id: 'push',
+      title: 'Ilmoitus 1',
+      description: 'Kuvaus',
+      checked: pushNotifications,
+      onToggle: () => setPushNotifications(!pushNotifications),
+      ariaLabel: 'Kytke push-ilmoitukset',
+    },
+    {
+      id: 'email',
+      title: 'Ilmoitus 2',
+      description: 'Kuvaus',
+      checked: emailNotifications,
+      onToggle: () => setEmailNotifications(!emailNotifications),
+      ariaLabel: 'Kytke sähköposti-ilmoitukset',
+    },
+  ]
+
   return (
-    <main className="relative mx-auto w-full max-w-[1350px] p-8 overflow-hidden">
+    <div className="flex flex-col gap-8">
       <Toast show={passwordSaved} message="Salasana vaihdettu onnistuneesti!" />
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-white">Asetukset</h1>
-          <p className="mt-1 text-xs text-[#718096]">
-            Hallinnoi tilisi kirjautumistietoja, ilmoituskanavia ja tilin tilaa.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <section className="flex flex-col rounded-xl border border-[#2A374B] bg-[#1E2839] p-6 shadow-xl">
-            <div className="flex items-center gap-2.5 border-b border-[#2A374B] pb-3 mb-5">
-              <div className="flex h-8 w-8 items-center justify-center text-[#38bdf8]">
-                <FontAwesomeIcon icon={faKey} className="text-base" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold tracking-wider text-white">
-                  Vaihda salasana
-                </h2>
-                <p className="text-xs text-[#718096]">
-                  Valitse vahva ja turvallinen salasana.
-                </p>
-              </div>
+      <div>
+        <span className={eyebrow}>Tili</span>
+        <h2 className={`mt-1 ${sectionTitle}`}>Asetukset</h2>
+        <p className={sectionIntro}>Hallinnoi tilisi kirjautumistietoja, ilmoituskanavia ja tilin tilaa.</p>
+      </div>
+
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        {/* password */}
+        <section className={`${card} p-6 sm:p-8`}>
+          <div className="flex items-center gap-4">
+            <div className={iconBadge}>
+              <FontAwesomeIcon icon={faKey} />
             </div>
-            <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
-                  Nykyinen salasana
-                </label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Syötä nykyinen salasana"
-                    className="w-full rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 pr-10 text-sm text-white outline-none transition focus:border-[#1d90f4]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#718096] hover:text-white cursor-pointer"
-                  >
-                    <FontAwesomeIcon icon={showCurrentPassword ? faEyeSlash : faEye} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
-                  Uusi salasana
-                </label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Kirjoita uusi salasana"
-                    className="w-full rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 pr-10 text-sm text-white outline-none transition focus:border-[#1d90f4]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#718096] hover:text-white cursor-pointer"
-                  >
-                    <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
-                  Vahvista uusi salasana
-                </label>
+            <div>
+              <h3 className="text-xl font-light text-white">Vaihda salasana</h3>
+              <p className="text-sm font-light text-[#9fb0c7]">Valitse vahva ja turvallinen salasana.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handlePasswordSubmit} className={`${insetPanel} mt-6 flex flex-col gap-5 p-5`}>
+            <div className="space-y-2">
+              <label htmlFor="settings-current-password" className={label}>
+                Nykyinen salasana
+              </label>
+              <div className="relative">
                 <input
-                  type="password"
+                  id="settings-current-password"
+                  type={showCurrentPassword ? 'text' : 'password'}
                   required
-                  placeholder="Kirjoita uusi salasana uudelleen"
-                  className="w-full rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-[#1d90f4]"
+                  placeholder="Syötä nykyinen salasana"
+                  className={`${input} pr-11`}
                 />
-              </div>
-              <div className="mt-3 flex items-center justify-end pt-4">
-                <button
-                  type="submit"
-                  className="rounded-sm bg-[#1d90f4] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#3ba0f6] active:scale-95 cursor-pointer"
-                >
-                  Päivitä salasana
-                </button>
-              </div>
-            </form>
-          </section>
-          <div className="flex flex-col gap-6">
-            <section className="flex flex-col rounded-xl border border-[#2A374B] bg-[#1E2839] p-6 shadow-xl">
-              <div className="flex items-center gap-2.5 border-b border-[#2A374B] pb-3 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center text-[#38bdf8]">
-                  <FontAwesomeIcon icon={faBell} className="text-base" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold tracking-wider text-white">
-                    Ilmoitukset
-                  </h2>
-                  <p className="text-xs text-[#718096]">
-                    Valitse miten ja milloin haluat ilmoituksia
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col divide-y divide-[#2A374B]/50">
-                <div className="flex items-center justify-between gap-4 py-3">
-                  <div>
-                    <div className="text-xs font-semibold text-white">Ilmoitus 1</div>
-                    <div className="text-xs text-[#718096]">
-                      Kuvaus
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPushNotifications(!pushNotifications)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 ease-in-out ${
-                      pushNotifications
-                        ? 'border-[#1d90f4] bg-[#1d90f4]'
-                        : 'border-[#2A374B] bg-[#131B27]'
-                    }`}
-                    aria-label="Kytke push-ilmoitukset"
-                  >
-                    <span
-                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
-                        pushNotifications ? 'translate-x-4' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between gap-4 py-3">
-                  <div>
-                    <div className="text-xs font-semibold text-white">Ilmoitus 2</div>
-                    <div className="text-xs text-[#718096]">
-                      Kuvaus
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEmailNotifications(!emailNotifications)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 ease-in-out ${
-                      emailNotifications
-                        ? 'border-[#1d90f4] bg-[#1d90f4]'
-                        : 'border-[#2A374B] bg-[#131B27]'
-                    }`}
-                    aria-label="Kytke sähköposti-ilmoitukset"
-                  >
-                    <span
-                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
-                        emailNotifications ? 'translate-x-4' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </section>
-            <section className="flex flex-col rounded-xl border border-rose-500/30 bg-[#1E2839] p-6 shadow-xl">
-              <div className="flex items-center gap-2.5 border-b border-rose-500/20 pb-3 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center text-rose-400">
-                  <FontAwesomeIcon icon={faTriangleExclamation} className="text-md" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold tracking-wider text-rose-400">
-                    Tilin poistaminen
-                  </h2>
-                  <p className="text-xs text-[#718096]">
-                    Pysyvät toimenpiteet käyttäjätilillesi
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs font-semibold text-white">Poista tili pysyvästi</div>
-                  <div className="text-xs text-[#718096]">
-                    Kaikki loistotestin tulokset ja suoritustiedot poistetaan.
-                  </div>
-                </div>
                 <button
                   type="button"
-                  onClick={() => setShowDeleteModal(true)}
-                  className="inline-flex items-center gap-2 rounded-sm bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-md transition hover:bg-rose-500 cursor-pointer shrink-0"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute top-1/2 right-4 -translate-y-1/2 text-sm text-[#718096] transition hover:text-white cursor-pointer"
+                  aria-label={showCurrentPassword ? 'Piilota salasana' : 'Näytä salasana'}
                 >
-                  <FontAwesomeIcon icon={faTrashCan} className="text-xs" />
-                  <span>Poista tili</span>
+                  <FontAwesomeIcon icon={showCurrentPassword ? faEyeSlash : faEye} />
                 </button>
               </div>
-            </section>
-          </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="settings-new-password" className={label}>
+                Uusi salasana
+              </label>
+              <div className="relative">
+                <input
+                  id="settings-new-password"
+                  type={showNewPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Kirjoita uusi salasana"
+                  className={`${input} pr-11`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute top-1/2 right-4 -translate-y-1/2 text-sm text-[#718096] transition hover:text-white cursor-pointer"
+                  aria-label={showNewPassword ? 'Piilota salasana' : 'Näytä salasana'}
+                >
+                  <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="settings-confirm-password" className={label}>
+                Vahvista uusi salasana
+              </label>
+              <input
+                id="settings-confirm-password"
+                type="password"
+                required
+                placeholder="Kirjoita uusi salasana uudelleen"
+                className={input}
+              />
+            </div>
+            <div className="flex justify-end pt-2">
+              <button type="submit" className={primaryButton}>
+                Päivitä salasana
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <div className="flex flex-col gap-6">
+          {/* notification toggles */}
+          <section className={`${card} p-6 sm:p-8`}>
+            <div className="flex items-center gap-4">
+              <div className={iconBadge}>
+                <FontAwesomeIcon icon={faBell} />
+              </div>
+              <div>
+                <h3 className="text-xl font-light text-white">Ilmoitukset</h3>
+                <p className="text-sm font-light text-[#9fb0c7]">Valitse miten ja milloin haluat ilmoituksia</p>
+              </div>
+            </div>
+            <div className="mt-6 space-y-3">
+              {toggles.map((toggle) => (
+                <div
+                  key={toggle.id}
+                  className={`${insetPanel} flex items-center justify-between gap-4 p-4 transition hover:border-[#1D90F4]/50`}
+                >
+                  <div>
+                    <div className="text-sm font-medium text-white">{toggle.title}</div>
+                    <div className="text-sm font-light text-[#9fb0c7]">{toggle.description}</div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={toggle.checked}
+                    onClick={toggle.onToggle}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 ease-in-out ${
+                      toggle.checked
+                        ? 'border-[#1D90F4] bg-[#1D90F4] shadow-[0_0_12px_rgba(29,144,244,0.45)]'
+                        : 'border-[#2A3548] bg-[#0F1724]'
+                    }`}
+                    aria-label={toggle.ariaLabel}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                        toggle.checked ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* danger zone */}
+          <section className="rounded-xl border border-rose-500/30 bg-[#1E2839]/80 p-6 shadow-2xl backdrop-blur-md sm:p-8">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400">
+                <FontAwesomeIcon icon={faTriangleExclamation} />
+              </div>
+              <div>
+                <h3 className="text-xl font-light text-rose-400">Tilin poistaminen</h3>
+                <p className="text-sm font-light text-[#9fb0c7]">Pysyvät toimenpiteet käyttäjätilillesi</p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col gap-4 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-medium text-white">Poista tili pysyvästi</div>
+                <div className="text-sm font-light text-[#9fb0c7]">
+                  Kaikki loistotestin tulokset ja suoritustiedot poistetaan.
+                </div>
+              </div>
+              <button type="button" onClick={() => setShowDeleteModal(true)} className={`${dangerButton} shrink-0`}>
+                <FontAwesomeIcon icon={faTrashCan} className="text-xs" />
+                <span>Poista tili</span>
+              </button>
+            </div>
+          </section>
         </div>
       </div>
 
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl border border-rose-500/40 bg-[#1E2839] p-6 shadow-2xl">
-            <div className="flex items-center gap-3 text-rose-400 mb-3">
-              <FontAwesomeIcon icon={faTriangleExclamation} className="text-xl" />
-              <h3 className="text-base font-bold text-white">Haluatko varmasti poistaa tilisi?</h3>
+        <div className={modalBackdrop}>
+          <div
+            className="w-full max-w-md rounded-2xl border border-rose-500/40 bg-[#0F1724]/95 p-6 shadow-2xl backdrop-blur-xl sm:p-8"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-modal-title"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400">
+                <FontAwesomeIcon icon={faTriangleExclamation} />
+              </div>
+              <h3 id="delete-modal-title" className="text-xl font-light text-white">
+                Haluatko varmasti poistaa tilisi?
+              </h3>
             </div>
-            <p className="text-xs text-[#8B9BB4] leading-relaxed mb-4">
+            <p className="mt-4 text-sm font-light leading-relaxed text-[#c3cddb]">
               Tätä toimintoa ei voi peruuttaa. Kaikki oppimistietosi ja loistotestien suorituksesi poistetaan lopullisesti.
             </p>
-            <div className="mb-5">
-              <label className="block text-xs text-[#8B9BB4] mb-1.5">
+            <div className="mt-5 space-y-2">
+              <label htmlFor="delete-confirm" className="block text-sm text-[#9fb0c7]">
                 Kirjoita <strong className="text-white">POISTA</strong> vahvistaaksesi poiston:
               </label>
               <input
+                id="delete-confirm"
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 placeholder="POISTA"
-                className="w-full rounded-md border border-[#2A374B] bg-[#131B27] px-3.5 py-2.5 text-sm text-white outline-none focus:border-rose-500"
+                className="w-full rounded-lg border border-[#2A3548] bg-[#0F1724] px-4 py-3 text-sm text-white placeholder:text-[#718096] outline-none transition focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
               />
             </div>
-            <div className="flex items-center justify-end gap-3">
+            <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setShowDeleteModal(false)
                   setDeleteConfirmText('')
                 }}
-                className="rounded-sm border border-[#2A374B] bg-[#131B27] px-4 py-2 text-xs font-medium text-slate-300 transition hover:bg-[#253347] cursor-pointer"
+                className={secondaryButton}
               >
                 Peruuta
               </button>
@@ -263,7 +278,7 @@ export default function ProfileSettingsPage() {
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={deleteConfirmText.toLowerCase() !== 'poista'}
-                className="rounded-sm bg-rose-600 px-5 py-2 text-xs font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-rose-600 cursor-pointer"
+                className={dangerButton}
               >
                 Vahvista poisto
               </button>
@@ -271,6 +286,6 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   )
 }

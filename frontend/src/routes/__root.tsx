@@ -48,8 +48,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   });
   const isLoginRoute = pathname === "/login";
 
-  const isProfileRoute = pathname === "/profile" || pathname.startsWith("/profile/");
-
   return (
     <html lang="fi">
       <head>
@@ -58,13 +56,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body
         className={`bg-navy-950 font-sans text-white ${isLoginRoute ? "" : "flex min-h-dvh flex-col"}`}
       >
-        {!isLoginRoute && !isProfileRoute && <Header />}
+        {!isLoginRoute && <Header />}
         {isLoginRoute ? (
           children
         ) : (
           <main className="flex flex-1 flex-col">{children}</main>
         )}
-        {!isLoginRoute && !isProfileRoute && <Footer />}
+        {!isLoginRoute && <Footer />}
         <TanStackDevtools
           config={{
             position: "bottom-right",
