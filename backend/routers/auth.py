@@ -24,4 +24,8 @@ def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return schemas.TokenResponse(access_token=create_access_token(user.id))
+    return schemas.TokenResponse(
+        access_token=create_access_token(user.id),
+        token_type="bearer",
+        user=user,
+    )

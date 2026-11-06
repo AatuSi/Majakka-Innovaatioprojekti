@@ -53,6 +53,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    user:UserResponse
 
 
 # --- HEALTH SCHEMAS ---
@@ -220,3 +221,48 @@ class ContactMessageResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- PUBLIC QUIZ SCHEMAS ---
+
+
+class PublicQuizQuestionOptionResponse(BaseModel):
+    id: UUID
+    question_id: UUID
+    option_text: Optional[str] = None
+    iala_light_id: Optional[UUID] = None
+    position: Position = 0
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicQuizQuestionResponse(BaseModel):
+    id: UUID
+    quiz_id: UUID
+    question_text: Optional[str] = None
+    hint: Optional[str] = None
+    iala_light_id: Optional[UUID] = None
+    position: Position = 0
+    created_at: datetime
+    options: List[PublicQuizQuestionOptionResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicQuizResponse(BaseModel):
+    id: UUID
+    name: Optional[Name] = None
+    created_at: datetime
+    questions: List[PublicQuizQuestionResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+class PublicAnswerCheckRequest(BaseModel):
+    question_id: UUID
+    selected_option_id: UUID
+
+
+class PublicAnswerCheckResponse(BaseModel):
+    correct: bool
+    explanation: Optional[str] = None
