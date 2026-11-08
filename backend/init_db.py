@@ -12,15 +12,20 @@ def init_db():
 
     conn_url = db_url.replace("postgresql+psycopg://", "postgresql://")
     schema_path = Path(__file__).with_name("schema.sql")
+    seed_path = Path(__file__).with_name("seed.sql")
 
     with open(schema_path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
+
+    with open(seed_path, "r", encoding="utf-8") as f:
+        seed_sql = f.read()
 
     print(f"Connecting to database and executing {schema_path.name}...")
     with psycopg.connect(conn_url) as conn:
         with conn.cursor() as cur:
             cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
             cur.execute(schema_sql)
+            cur.execute(seed_sql)
         conn.commit()
     print("Database initialized successfully!")
 

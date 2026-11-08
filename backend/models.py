@@ -58,6 +58,8 @@ class QuizQuestion(Base):
     quiz_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     iala_light_id = Column(UUID(as_uuid=True), ForeignKey("iala_lights.id", ondelete="SET NULL"), nullable=True, index=True)
     question_text = Column(Text, nullable=True)
+    explanation = Column(Text, nullable=True)
+    hint = Column(Text, nullable=True)
     position = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
