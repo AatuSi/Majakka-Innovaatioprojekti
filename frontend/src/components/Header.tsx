@@ -20,7 +20,8 @@ const navLinkInactive = "text-white after:scale-x-0";
 export default function Header() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const href = useLocation({ select: (location) => location.href });
-  const isQuiz = pathname.endsWith("-quiz");
+  // const isQuiz = pathname.endsWith("-quiz");
+  const isQuiz = pathname === '/quizzes' || pathname.endsWith('-quiz')
   const authUser = useAuthUser();
 
   // The menu remembers the location it was opened at, so any navigation,
@@ -100,9 +101,9 @@ export default function Header() {
             </li>
             <li>
               <Link
-                to="/IALA-quiz"
+                to="/quizzes"
                 className={`${navLinkBase} ${isQuiz ? navLinkActive : navLinkInactive}`}
-                onClick={navigateTo("/IALA-quiz")}
+                onClick={navigateTo("/quizzes")}
               >
                 Tietovisat
               </Link>
@@ -220,8 +221,8 @@ export default function Header() {
             </li>
             <li>
               <Link
-                to="/IALA-quiz"
-                onClick={navigateTo("/IALA-quiz")}
+                to="/quizzes"
+                onClick={navigateTo("/quizzes")}
                 className={`block py-2 text-lg hover:text-[#1D90F4] ${
                   isQuiz ? "text-[#1D90F4] font-medium" : "text-white"
                 }`}
