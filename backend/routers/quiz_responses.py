@@ -64,7 +64,11 @@ def create_response(
         raise HTTPException(status_code=404, detail="Attempt not found")
 
     authorize_owner(current_user, attempt.user_id)
-    validation.require_answer_is_consistent(
+
+    if attempt.completed_at is not None:
+        raise HTTPException(status_code=409, detail="This attempt is already completed")
+
+    option = validation.require_answer_is_consistent(
         db,
         attempt.quiz_id,
         response.question_id,
@@ -75,6 +79,8 @@ def create_response(
         attempt_id=attempt_id,
         question_id=response.question_id,
         selected_option_id=response.selected_option_id,
+        is_correct=option.is_correct,
+        time_spent_ms=response.time_spent_ms,
     )
     db.add(db_response)
 

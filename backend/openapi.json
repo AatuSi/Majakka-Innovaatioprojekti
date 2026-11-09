@@ -91,7 +91,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/UserResponse"
+                    "$ref": "#/components/schemas/UserSummary"
                   },
                   "type": "array",
                   "title": "Response List Users"
@@ -272,6 +272,57 @@
             }
           }
         ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user_id}/password": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Change Password",
+        "operationId": "change_password",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          }
+        },
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -1203,6 +1254,84 @@
         ]
       }
     },
+    "/quiz-attempts/history": {
+      "get": {
+        "tags": [
+          "quiz_attempts"
+        ],
+        "summary": "Get Attempt History",
+        "operationId": "get_attempt_history",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuizAttemptHistoryItem"
+                  },
+                  "type": "array",
+                  "title": "Response Get Attempt History"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/quiz-attempts/{attempt_id}/complete": {
+      "post": {
+        "tags": [
+          "quiz_attempts"
+        ],
+        "summary": "Complete Attempt",
+        "operationId": "complete_attempt",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizAttemptResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/quiz-attempts/{attempt_id}": {
       "get": {
         "tags": [
@@ -2042,6 +2171,25 @@
         ],
         "title": "LoginRequest"
       },
+      "PasswordChange": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 1,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChange"
+      },
       "PublicAnswerCheckRequest": {
         "properties": {
           "question_id": {
@@ -2291,6 +2439,70 @@
         ],
         "title": "QuizAttemptCreate"
       },
+      "QuizAttemptHistoryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "quiz_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Quiz Id"
+          },
+          "quiz_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiz Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Completed At"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "total_questions": {
+            "type": "integer",
+            "title": "Total Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quiz_id",
+          "created_at",
+          "completed_at",
+          "score",
+          "total_questions"
+        ],
+        "title": "QuizAttemptHistoryItem"
+      },
       "QuizAttemptResponse": {
         "properties": {
           "id": {
@@ -2312,6 +2524,29 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
           },
           "responses": {
             "items": {
@@ -2391,6 +2626,18 @@
               }
             ],
             "title": "Hint"
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
           },
           "iala_light_id": {
             "anyOf": [
@@ -2613,6 +2860,18 @@
             ],
             "title": "Hint"
           },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          },
           "iala_light_id": {
             "anyOf": [
               {
@@ -2699,6 +2958,18 @@
             ],
             "title": "Hint"
           },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          },
           "iala_light_id": {
             "anyOf": [
               {
@@ -2779,6 +3050,19 @@
             "type": "string",
             "format": "uuid",
             "title": "Selected Option Id"
+          },
+          "time_spent_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Spent Ms"
           }
         },
         "type": "object",
@@ -2810,6 +3094,21 @@
             "format": "uuid",
             "title": "Selected Option Id"
           },
+          "is_correct": {
+            "type": "boolean",
+            "title": "Is Correct"
+          },
+          "time_spent_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Spent Ms"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -2822,6 +3121,7 @@
           "attempt_id",
           "question_id",
           "selected_option_id",
+          "is_correct",
           "created_at"
         ],
         "title": "QuizResponseItemSchema"
@@ -2872,6 +3172,7 @@
             "type": "string",
             "maxLength": 255,
             "minLength": 1,
+            "pattern": "^[^@]*$",
             "title": "Username"
           },
           "password": {
@@ -2889,6 +3190,45 @@
               }
             ],
             "default": "user"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 320,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           }
         },
         "type": "object",
@@ -2917,6 +3257,54 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "avatar_icon": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "graduation-cap"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Icon"
           }
         },
         "type": "object",
@@ -2936,6 +3324,36 @@
         ],
         "title": "UserRole"
       },
+      "UserSummary": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Username"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "id",
+          "role",
+          "created_at"
+        ],
+        "title": "UserSummary"
+      },
       "UserUpdate": {
         "properties": {
           "username": {
@@ -2943,25 +3361,14 @@
               {
                 "type": "string",
                 "maxLength": 255,
-                "minLength": 1
+                "minLength": 1,
+                "pattern": "^[^@]*$"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Username"
-          },
-          "password": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Password"
           },
           "role": {
             "anyOf": [
@@ -2972,6 +3379,60 @@
                 "type": "null"
               }
             ]
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 320,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "avatar_icon": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "graduation-cap"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Icon"
           }
         },
         "type": "object",

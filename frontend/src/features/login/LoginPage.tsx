@@ -41,6 +41,9 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [username, setUsername] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successState, setSuccessState] = useState<{
@@ -77,7 +80,13 @@ export default function LoginPage() {
     try {
       if (!isSignIn) {
         await createUser({
-          body: { username, password },
+          body: {
+            username,
+            password,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            email: email.trim(),
+          },
           throwOnError: true,
         })
       }
@@ -94,7 +103,7 @@ export default function LoginPage() {
       setSuccessState({
         isOpen: true,
         mode,
-        username,
+        username: response.data.user.username,
       })
     } catch (error) {
       const detail =
@@ -107,10 +116,12 @@ export default function LoginPage() {
 
       setErrorMessage(
         detail === 'Invalid credentials'
-          ? 'Käyttäjätunnus tai salasana on väärä.'
+          ? 'Käyttäjätunnus, sähköposti tai salasana on väärä.'
           : detail === 'Username already exists'
             ? 'Käyttäjätunnus on jo käytössä.'
-            : 'Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.',
+            : detail === 'Email already exists'
+              ? 'Sähköpostiosoite on jo käytössä.'
+              : 'Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.',
       )
     } finally {
       setIsSubmitting(false)
@@ -209,15 +220,25 @@ export default function LoginPage() {
                     htmlFor="username"
                     className="mb-2 block text-base font-medium text-white"
                   >
-                    Käyttäjätunnus
+                    {isSignIn ? 'Käyttäjätunnus tai sähköposti' : 'Käyttäjätunnus'}
                   </label>
                   <input
                     id="username"
                     name="username"
                     type="text"
                     autoComplete="username"
-                    placeholder="Kirjoita käyttäjätunnus"
+                    placeholder={
+                      isSignIn
+                        ? 'Kirjoita käyttäjätunnus tai sähköposti'
+                        : 'Kirjoita käyttäjätunnus'
+                    }
                     required
+                    pattern={isSignIn ? undefined : '[^@]+'}
+                    title={
+                      isSignIn
+                        ? undefined
+                        : 'Käyttäjätunnus ei voi sisältää @-merkkiä'
+                    }
                     value={username}
                     onChange={(event) => {
                       setUsername(event.target.value)
@@ -226,6 +247,78 @@ export default function LoginPage() {
                     className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
                   />
                 </div>
+
+                {!isSignIn && (
+                  <>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                      <div>
+                        <label
+                          htmlFor="first-name"
+                          className="mb-2 block text-base font-medium text-white"
+                        >
+                          Etunimi
+                        </label>
+                        <input
+                          id="first-name"
+                          name="first-name"
+                          type="text"
+                          autoComplete="given-name"
+                          placeholder="Kirjoita etunimi"
+                          required
+                          pattern=".*\S.*"
+                          title="Kirjoita etunimi"
+                          maxLength={100}
+                          value={firstName}
+                          onChange={(event) => setFirstName(event.target.value)}
+                          className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="last-name"
+                          className="mb-2 block text-base font-medium text-white"
+                        >
+                          Sukunimi
+                        </label>
+                        <input
+                          id="last-name"
+                          name="last-name"
+                          type="text"
+                          autoComplete="family-name"
+                          placeholder="Kirjoita sukunimi"
+                          required
+                          pattern=".*\S.*"
+                          title="Kirjoita sukunimi"
+                          maxLength={100}
+                          value={lastName}
+                          onChange={(event) => setLastName(event.target.value)}
+                          className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="mb-2 block text-base font-medium text-white"
+                      >
+                        Sähköpostiosoite
+                      </label>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="Kirjoita sähköpostiosoite"
+                        required
+                        maxLength={320}
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        className="h-[55px] w-full rounded-md border border-transparent bg-[#323645] px-3 text-base text-white outline-none placeholder:text-[#718096] focus:border-[#1d90f4] focus:ring-2 focus:ring-[#1d90f4]/25"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label
