@@ -12,9 +12,17 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=schemas.TokenResponse)
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
+    # Usernames can't contain "@", so it tells the two apart.
+    identifier = credentials.username
+    column = models.User.username
+
+    if "@" in identifier:
+        identifier = identifier.strip()
+        column = models.User.email
+
     user = (
         db.query(models.User)
-        .filter(func.lower(models.User.username) == func.lower(credentials.username))
+        .filter(func.lower(column) == func.lower(identifier))
         .first()
     )
 

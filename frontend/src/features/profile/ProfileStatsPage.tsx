@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
+  faArrowTrendUp,
   faAward,
   faCheck,
   faClock,
@@ -8,60 +10,16 @@ import {
   faRotateRight,
   faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons'
+import { PASS_RATIO, scoreRatio, summarizeAttempts, useAttemptHistory } from './attemptHistory'
 import { card, eyebrow, input, insetPanel, secondaryButton, sectionIntro, sectionTitle } from './profileStyles'
 
-const mockQuizHistoryData = [
-  {
-    id: '1',
-    title: 'Testi 1',
-    date: '22.10.2026, 14:00',
-    score: 10,
-    totalQuestions: 10,
-    duration: 270,
-  },
-  {
-    id: '2',
-    title: 'Testi 2',
-    date: '22.10.2026, 14:00',
-    score: 10,
-    totalQuestions: 10,
-    duration: 315,
-  },
-  {
-    id: '3',
-    title: 'Testi 3',
-    date: '22.10.2026, 14:00',
-    score: 10,
-    totalQuestions: 10,
-    duration: 180,
-  },
-  {
-    id: '4',
-    title: 'Testi 4',
-    date: '22.10.2026, 14:00',
-    score: 10,
-    totalQuestions: 10,
-    duration: 360,
-  },
-  {
-    id: '5',
-    title: 'Testi 5',
-    date: '22.10.2026, 14:00',
-    score: 10,
-    totalQuestions: 10,
-    duration: 245,
-  },
-  {
-    id: '6',
-    title: 'Testi 6',
-    date: '22.10.2026, 14:00',
-    score: 10,
-    totalQuestions: 10,
-    duration: 125,
-  },
-]
+const quizTitle = (name?: string | null) => name ?? 'Nimetön testi'
 
-const formatDuration = (totalSeconds: number) => {
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleString('fi-FI', { dateStyle: 'short', timeStyle: 'short' })
+
+const formatDuration = (totalSeconds?: number | null) => {
+  if (totalSeconds === null || totalSeconds === undefined) return '–'
   const mins = Math.floor(totalSeconds / 60)
   const secs = totalSeconds % 60
 
@@ -74,20 +32,22 @@ export default function ProfileStatsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [visibleCount, setVisibleCount] = useState(5)
 
-  const totalCompleted = mockQuizHistoryData.length
+  const { history, loading, error } = useAttemptHistory()
+  const summary = summarizeAttempts(history)
+  const statValue = (value: string) => (loading || error ? '–' : value)
 
-  const totalScore = mockQuizHistoryData.reduce((acc, curr) => acc + curr.score, 0)
-  const totalPossible = mockQuizHistoryData.reduce((acc, curr) => acc + curr.totalQuestions, 0)
-  const avgScore = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0
+  const improvementValue =
+    summary.improvement === null
+      ? '–'
+      : `${summary.improvement > 0 ? '+' : ''}${summary.improvement}%`
 
-  const passRate = Math.round((mockQuizHistoryData.filter((item) => item.score / item.totalQuestions >= 0.7).length / totalCompleted) * 100)
-
-  const totalSeconds = mockQuizHistoryData.reduce((acc, curr) => acc + curr.duration, 0)
-  const totalMinutes = Math.round(totalSeconds / 60)
-
-  const filteredHistory = mockQuizHistoryData.filter((item) => {
-    return item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredHistory = history.filter((item) => {
+    return quizTitle(item.quiz_name).toLowerCase().includes(searchTerm.toLowerCase())
   })
+
+  const emptyMessage = loading
+    ? 'Ladataan suorituksia...'
+    : (error ?? (history.length === 0 ? 'Ei vielä suorituksia.' : 'Ei hakuehtoja vastaavia suorituksia.'))
 
   const displayedHistory = filteredHistory.slice(0, visibleCount)
 
@@ -97,29 +57,36 @@ export default function ProfileStatsPage() {
       icon: faBookOpen,
       tag: 'Suoritukset',
       title: 'Loistotehtäviä suoritettu',
-      value: `${totalCompleted}`,
-      hint: 'Yhteensä tallennettuja loistotestejä',
+      value: statValue(`${summary.completed}`),
+      hint: 'Kaikki suoritukset, uusintakerrat mukaan lukien',
     },
     {
       icon: faAward,
       tag: 'Pisteet',
       title: 'Keskimääräinen pisteytys',
-      value: `${avgScore}%`,
+      value: statValue(`${summary.accuracy}%`),
       hint: 'Keskiarvo kaikista vastauksista',
     },
     {
       icon: faCheck,
       tag: 'Läpäisy',
       title: 'Läpäisyprosentti',
-      value: `${passRate}%`,
+      value: statValue(`${summary.passRate}%`),
       hint: 'Läpäisyvaatimus ≥ 70%',
     },
     {
       icon: faClock,
       tag: 'Aika',
       title: 'Harjoitteluaika',
-      value: `${totalMinutes} min`,
+      value: statValue(`${Math.round(summary.totalSeconds / 60)} min`),
       hint: 'Loistotestien kokonaisaika',
+    },
+    {
+      icon: faArrowTrendUp,
+      tag: 'Kehitys',
+      title: 'Kehitys',
+      value: statValue(improvementValue),
+      hint: 'Ensimmäisestä suorituksesta viimeisimpään, uusituissa testeissä',
     },
   ]
 
@@ -131,7 +98,7 @@ export default function ProfileStatsPage() {
         <p className={sectionIntro}>Seuraa loistotestien tuloksia, oppimisen etenemistä sekä aihealueita.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {summaryCards.map((item) => (
           <div
             key={item.title}
@@ -190,34 +157,34 @@ export default function ProfileStatsPage() {
               {displayedHistory.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-10 text-center font-light text-[#9fb0c7]">
-                    Ei hakuehtoja vastaavia suorituksia.
+                    {emptyMessage}
                   </td>
                 </tr>
               ) : (
                 displayedHistory.map((quiz) => (
                   <tr key={quiz.id} className="transition-colors hover:bg-[#1D90F4]/5">
-                    <td className="px-5 py-4 font-medium text-white">{quiz.title}</td>
-                    <td className="whitespace-nowrap px-5 py-4 font-light">{quiz.date}</td>
+                    <td className="px-5 py-4 font-medium text-white">{quizTitle(quiz.quiz_name)}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-light">{formatDate(quiz.completed_at)}</td>
                     <td className="whitespace-nowrap px-5 py-4">
                       <span
                         className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                          quiz.score / quiz.totalQuestions >= 0.7
+                          scoreRatio(quiz) >= PASS_RATIO
                             ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
                             : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
                         }`}
                       >
-                        {quiz.score}/{quiz.totalQuestions}
+                        {quiz.score}/{quiz.total_questions}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-5 py-4 font-light">{formatDuration(quiz.duration)}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-light">{formatDuration(quiz.duration_seconds)}</td>
                     <td className="whitespace-nowrap px-5 py-4 text-right">
-                      <button
-                        type="button"
+                      <Link
+                        to={quiz.quiz_name === 'IALA-tietovisa' ? '/IALA-quiz' : '/COLREG-quiz'}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D90F4] underline-offset-4 transition hover:underline cursor-pointer"
                       >
                         <FontAwesomeIcon icon={faRotateRight} className="text-[10px]" />
                         <span>Kertaa</span>
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))

@@ -10,6 +10,9 @@ import {
   faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import Toast from '../../components/Toast'
+import { logoutUser, useAuthUser } from '../../components/authUserStore'
+import { getApiErrorMessage } from '../../api/errors'
+import { changePassword, deleteUser } from '../../client'
 import {
   card,
   dangerButton,
@@ -36,20 +39,69 @@ export default function ProfileSettingsPage() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const handlePasswordSubmit = (e: SubmitEvent<HTMLFormElement>) => {
+  const authUser = useAuthUser()
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  const handlePasswordSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!authUser || changingPassword) return
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Uudet salasanat eivät täsmää.')
+      return
+    }
+
+    setChangingPassword(true)
+    setPasswordError(null)
+
+    const result = await changePassword({
+      path: { user_id: authUser.id },
+      body: { current_password: currentPassword, new_password: newPassword },
+    })
+
+    setChangingPassword(false)
+
+    if (result.error) {
+      setPasswordError(
+        getApiErrorMessage(result, {
+          byDetail: { 'Current password is incorrect': 'Nykyinen salasana on väärin.' },
+        }),
+      )
+      return
+    }
+
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
     setPasswordSaved(true)
-    e.currentTarget.reset()
     setTimeout(() => setPasswordSaved(false), 3000)
   }
 
-  const handleDeleteAccount = () => {
-    if (deleteConfirmText.toLowerCase() === 'poista') {
-      setShowDeleteModal(false)
-      alert('Tili poistettu onnistuneesti.')
-      navigate({ to: '/' })
+  const handleDeleteAccount = async () => {
+    if (!authUser || deleting || deleteConfirmText.toLowerCase() !== 'poista') return
+
+    setDeleting(true)
+    setDeleteError(null)
+
+    const result = await deleteUser({ path: { user_id: authUser.id } })
+
+    if (result.error) {
+      setDeleting(false)
+      setDeleteError(getApiErrorMessage(result))
+      return
     }
+
+    // Leave the profile first, so its logged-out view doesn't flash by.
+    await navigate({ to: '/' })
+    logoutUser()
+    alert('Tili poistettu onnistuneesti.')
   }
 
 
@@ -104,6 +156,9 @@ export default function ProfileSettingsPage() {
                   id="settings-current-password"
                   type={showCurrentPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Syötä nykyinen salasana"
                   className={`${input} pr-11`}
                 />
@@ -126,6 +181,9 @@ export default function ProfileSettingsPage() {
                   id="settings-new-password"
                   type={showNewPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Kirjoita uusi salasana"
                   className={`${input} pr-11`}
                 />
@@ -147,13 +205,21 @@ export default function ProfileSettingsPage() {
                 id="settings-confirm-password"
                 type="password"
                 required
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Kirjoita uusi salasana uudelleen"
                 className={input}
               />
             </div>
+            {passwordError && (
+              <p role="alert" className="text-sm text-rose-300">
+                {passwordError}
+              </p>
+            )}
             <div className="flex justify-end pt-2">
-              <button type="submit" className={primaryButton}>
-                Päivitä salasana
+              <button type="submit" disabled={changingPassword} className={primaryButton}>
+                {changingPassword ? 'Päivitetään...' : 'Päivitä salasana'}
               </button>
             </div>
           </form>
@@ -263,12 +329,18 @@ export default function ProfileSettingsPage() {
                 className="w-full rounded-lg border border-[#2A3548] bg-[#0F1724] px-4 py-3 text-sm text-white placeholder:text-[#718096] outline-none transition focus:border-rose-500 focus:ring-1 focus:ring-rose-500/40"
               />
             </div>
+            {deleteError && (
+              <p role="alert" className="mt-4 text-sm text-rose-300">
+                {deleteError}
+              </p>
+            )}
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setShowDeleteModal(false)
                   setDeleteConfirmText('')
+                  setDeleteError(null)
                 }}
                 className={secondaryButton}
               >
@@ -277,7 +349,7 @@ export default function ProfileSettingsPage() {
               <button
                 type="button"
                 onClick={handleDeleteAccount}
-                disabled={deleteConfirmText.toLowerCase() !== 'poista'}
+                disabled={deleting || deleteConfirmText.toLowerCase() !== 'poista'}
                 className={dangerButton}
               >
                 Vahvista poisto

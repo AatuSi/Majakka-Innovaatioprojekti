@@ -9,8 +9,13 @@ Name = Annotated[str, Field(max_length=255)]
 Label = Annotated[str, Field(max_length=100)]
 Position = Annotated[int, Field(ge=-2**31, le=2**31 - 1)]
 
-Username = Annotated[Name, Field(min_length=1)]
+# No "@": that is how login tells a username from an email address.
+Username = Annotated[Name, Field(min_length=1, pattern=r"^[^@]*$")]
 Password = Annotated[str, Field(min_length=1)]
+PersonName = Annotated[str, Field(min_length=1, max_length=100)]
+Email = Annotated[str, Field(min_length=3, max_length=320)]
+AvatarIcon = Literal["user", "graduation-cap"]
+TimeSpentMs = Annotated[int, Field(ge=0, le=2**31 - 1)]
 
 
 class UserRole(str, Enum):
@@ -28,21 +33,43 @@ class UserCreate(UserBase):
     username: Username
     password: Password
     role: Optional[UserRole] = UserRole.USER
+    first_name: Optional[PersonName] = None
+    last_name: Optional[PersonName] = None
+    email: Optional[Email] = None
 
 
-# Fields left out keep their current value.
+# Fields left out keep their current value; an explicit null clears a personal
+# detail. Passwords change through POST /users/{id}/password, which checks the
+# current one first.
 class UserUpdate(BaseModel):
     username: Optional[Username] = None
-    password: Optional[Password] = None
     role: Optional[UserRole] = None
+    first_name: Optional[PersonName] = None
+    last_name: Optional[PersonName] = None
+    email: Optional[Email] = None
+    avatar_icon: Optional[AvatarIcon] = None
 
 
-class UserResponse(UserBase):
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: Password
+
+
+# What every logged-in user may see of other users: no personal details.
+class UserSummary(UserBase):
     id: UUID
     role: UserRole
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# The full account, only ever returned to its owner or an admin.
+class UserResponse(UserSummary):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    avatar_icon: Optional[AvatarIcon] = None
 
 
 class LoginRequest(BaseModel):
@@ -100,6 +127,7 @@ class QuizQuestionBase(BaseModel):
     question_text: Optional[str] = None
     explanation: Optional[str] = None
     hint: Optional[str] = None
+    topic: Optional[Label] = None
     iala_light_id: Optional[UUID] = None
     position: Position = 0
 
@@ -114,6 +142,7 @@ class QuizQuestionUpdate(BaseModel):
     question_text: Optional[str] = None
     explanation: Optional[str] = None
     hint: Optional[str] = None
+    topic: Optional[Label] = None
     iala_light_id: Optional[UUID] = None
     position: Optional[Position] = None
 
@@ -157,6 +186,7 @@ class QuizResponse(QuizBase):
 class QuizResponseCreate(BaseModel):
     question_id: UUID
     selected_option_id: UUID
+    time_spent_ms: Optional[TimeSpentMs] = None
 
 
 class QuizResponseItemSchema(BaseModel):
@@ -164,6 +194,8 @@ class QuizResponseItemSchema(BaseModel):
     attempt_id: UUID
     question_id: UUID
     selected_option_id: UUID
+    is_correct: bool
+    time_spent_ms: Optional[int] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -182,9 +214,22 @@ class QuizAttemptResponse(BaseModel):
     user_id: UUID
     quiz_id: UUID
     created_at: datetime
+    completed_at: Optional[datetime] = None
+    duration_seconds: Optional[int] = None
     responses: List[QuizResponseItemSchema] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class QuizAttemptHistoryItem(BaseModel):
+    id: UUID
+    quiz_id: UUID
+    quiz_name: Optional[str] = None
+    created_at: datetime
+    completed_at: datetime
+    duration_seconds: Optional[int] = None
+    score: int
+    total_questions: int
 
 
 class IalaLightBase(BaseModel):

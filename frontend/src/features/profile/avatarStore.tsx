@@ -1,6 +1,10 @@
 import { useSyncExternalStore } from 'react'
-import { faUser } from '@fortawesome/free-solid-svg-icons'
+import { faGraduationCap, faUser } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons'
+
+// The keys are what the backend stores in users.avatar_icon.
+export const avatarIcons = { user: faUser, 'graduation-cap': faGraduationCap } as const
+export type AvatarIconName = keyof typeof avatarIcons
 
 interface AvatarState {
   // null means the uploaded picture is the active avatar.
@@ -8,9 +12,10 @@ interface AvatarState {
   uploadedImage: string | null
 }
 
-// Preview only for now: the picture is not saved to the backend yet, so it
-// lasts until the page is reloaded.
+// Icons are saved on the account. An uploaded picture is a preview only for
+// now: it is not saved to the backend, so it lasts until the page is reloaded.
 let state: AvatarState = { selectedIcon: faUser, uploadedImage: null }
+let savedIconName: AvatarIconName | null = null
 const listeners = new Set<() => void>()
 
 function setState(next: AvatarState) {
@@ -23,6 +28,20 @@ function subscribe(listener: () => void) {
   return () => {
     listeners.delete(listener)
   }
+}
+
+/** Applies the account's saved icon, only when it actually changed. */
+export function syncSavedAvatarIcon(name: AvatarIconName | null) {
+  if (name === savedIconName) return
+  savedIconName = name
+  setState({ ...state, selectedIcon: avatarIcons[name ?? 'user'] })
+}
+
+/** Forgets the avatar on logout, so the next account doesn't see the picture. */
+export function resetAvatar() {
+  if (state.uploadedImage) URL.revokeObjectURL(state.uploadedImage)
+  savedIconName = null
+  setState({ selectedIcon: faUser, uploadedImage: null })
 }
 
 export function selectAvatarIcon(icon: IconDefinition) {

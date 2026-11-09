@@ -2,7 +2,12 @@ import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { QuizAnswer, QuizDefinition } from './types'
 import './quiz.css'
-import { checkPublicAnswer, createAttempt } from '../../client'
+import {
+  checkPublicAnswer,
+  completeAttempt,
+  createAttempt,
+  createResponse,
+} from '../../client'
 import { useAuthUser } from '../authUserStore'
 
 type Phase = 'intro' | 'active' | 'result'
@@ -72,7 +77,74 @@ export default function QuizRunner({
   const [saveError, setSaveError] = useState<string | null>(null)
   const authUser = useAuthUser()
 
+  // The attempt is stored when the quiz starts and each answer as it is given,
+  // so quizzes left unfinished show up in the statistics too.
+  const attemptRef = useRef<Promise<string | null> | null>(null)
+  const savedAnswersRef = useRef<Array<Promise<boolean>>>([])
+  const questionShownAtRef = useRef(0)
+  const checkingRef = useRef(false)
+
+  function beginAttempt() {
+    attemptRef.current = null
+    savedAnswersRef.current = []
+    setSaveError(null)
+    if (!authUser) return
+
+    attemptRef.current = createAttempt({
+      body: { user_id: authUser.id, quiz_id: quiz.id },
+    }).then((result) => result.data?.id ?? null)
+  }
+
+  function recordAnswer(
+    questionId: string,
+    optionId: string,
+    timeSpentMs: number,
+  ) {
+    const attempt = attemptRef.current
+    if (!attempt) return
+
+    savedAnswersRef.current.push(
+      attempt.then(async (attemptId) => {
+        if (!attemptId) return false
+        const result = await createResponse({
+          path: { attempt_id: attemptId },
+          body: {
+            question_id: questionId,
+            selected_option_id: optionId,
+            time_spent_ms: timeSpentMs,
+          },
+        })
+        return !result.error
+      }),
+    )
+  }
+
+  // Waits for every answer first: an attempt with a missing answer would show
+  // the wrong score, so it stays unfinished instead.
+  async function finishAttempt() {
+    const attempt = attemptRef.current
+    if (!attempt) return
+
+    setSavingAttempt(true)
+
+    const [attemptId, savedAnswers] = await Promise.all([
+      attempt,
+      Promise.all(savedAnswersRef.current),
+    ])
+    const completed =
+      attemptId !== null &&
+      savedAnswers.every(Boolean) &&
+      !(await completeAttempt({ path: { attempt_id: attemptId } })).error
+
+    if (!completed) {
+      setSaveError('Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.')
+    }
+    setSavingAttempt(false)
+  }
+
   function start() {
+    beginAttempt()
+    questionShownAtRef.current = Date.now()
     setPhase('active')
     setIndex(0)
     setSelectedOptionId(null)
@@ -83,38 +155,15 @@ export default function QuizRunner({
     setElapsedMs(0)
   }
 
-  async function saveAttempt(completedAnswers: QuizAnswer[]) {
-    if (!authUser) return
-
-    setSavingAttempt(true)
-    setSaveError(null)
-
-    try {
-      await createAttempt({
-        body: {
-          user_id: authUser.id,
-          quiz_id: quiz.id,
-          responses: completedAnswers.map((answer) => ({
-            question_id: answer.questionId,
-            selected_option_id: answer.selectedOptionId,
-          })),
-        },
-        throwOnError: true,
-      })
-    } catch {
-      setSaveError(
-        'Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.',
-      )
-    } finally {
-      setSavingAttempt(false)
-    }
-  }
-
   async function checkAnswer() {
     if (selectedOptionId === null) {
       setShowValidation(true)
       return
     }
+
+    if (checkingRef.current) return
+    checkingRef.current = true
+    const timeSpentMs = Date.now() - questionShownAtRef.current
 
     try {
       const result = await checkPublicAnswer({
@@ -126,6 +175,7 @@ export default function QuizRunner({
         throwOnError: true,
       })
 
+      recordAnswer(question.id, selectedOptionId, timeSpentMs)
       setRevealed(true)
       setAnswers((previous) => [
         ...previous,
@@ -139,6 +189,8 @@ export default function QuizRunner({
       ])
     } catch {
       setShowValidation(true)
+    } finally {
+      checkingRef.current = false
     }
   }
 
@@ -146,17 +198,15 @@ export default function QuizRunner({
     (answer) => answer.questionId === question.id,
   )
 
-  async function goToNext() {
+  function goToNext() {
     if (index + 1 >= total) {
       setElapsedMs(startedAt === null ? 0 : Date.now() - startedAt)
-
-      if (authUser) {
-        await saveAttempt(answers)
-      }
       setPhase('result')
+      void finishAttempt()
       return
     }
 
+    questionShownAtRef.current = Date.now()
     setIndex(index + 1)
     setSelectedOptionId(null)
     setRevealed(false)

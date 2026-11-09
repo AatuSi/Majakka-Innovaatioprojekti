@@ -59,6 +59,7 @@ def create_question(quiz_id: UUID, question: schemas.QuizQuestionCreate, db: Ses
         question_text=question.question_text,
         explanation=question.explanation,
         hint=question.hint,
+        topic=question.topic,
         iala_light_id=question.iala_light_id,
         position=question.position,
     )
@@ -100,6 +101,9 @@ def update_question(question_id: UUID, question: schemas.QuizQuestionUpdate, db:
 
     if "explanation" in fields:
         db_question.explanation = fields["explanation"]
+
+    if "topic" in fields:
+        db_question.topic = fields["topic"]
 
     # position is NOT NULL, so an explicit null means "leave it alone".
     if fields.get("position") is not None:

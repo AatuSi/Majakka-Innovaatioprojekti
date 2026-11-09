@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -6,12 +6,14 @@ import {
   faGear,
   faRightFromBracket,
   faSquarePollVertical,
-  faBell,
   faEnvelope,
 } from '@fortawesome/free-solid-svg-icons'
-import { useNotificationStore } from './notificationStore'
+import { getAccessToken } from '#/api/config'
+import { openAuthModal } from '#/components/authModalStore'
+import { getFullName, logoutUser, updateAuthUser, useAuthUser } from '#/components/authUserStore'
+import { getUser } from '#/client'
 import ProfileAvatar from './ProfileAvatar'
-import { eyebrow, gridStyle } from './profileStyles'
+import { eyebrow, gridStyle, primaryButton } from './profileStyles'
 
 const navLinks = [
   { label: 'Profiili', icon: faUser, to: '/profile' },
@@ -27,35 +29,68 @@ const tabActive = 'text-[#1D90F4] after:scale-x-100'
 const tabInactive = 'text-[#c3cddb] after:scale-x-0'
 
 export default function ProfileLayout() {
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const { notifications, setNotifications } = useNotificationStore()
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
 
-  const unreadCount = notifications.filter((n) => !n.read).length
-
-  const markAllAsRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })))
+  // Leave the profile first, so its logged-out view doesn't flash by.
+  const handleLogout = async () => {
+    await navigate({ to: '/' })
+    logoutUser()
   }
 
-  const handleNotificationClick = (id: string) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    )
-    setNotificationsOpen(false)
-    navigate({ to: '/profile/notification', search: { id } })
-  }
+  // The login state only exists in the browser, so the server render (and
+  // the first browser render, which must match it) cannot know it yet. Wait
+  // until then, so logged-in users don't see the logged-out view flash by.
+  const authUser = useAuthUser()
+  const [hydrated, setHydrated] = useState(false)
 
+  // Opening the profile while logged out brings up the login modal. Once the
+  // login succeeds, authUser is set and the profile shows itself.
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setNotificationsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    setHydrated(true)
+    if (!getAccessToken()) openAuthModal('sign-in')
   }, [])
+
+  // Checks the stored session against the backend when the profile opens and
+  // picks up changes to the account. An expired token logs out by itself
+  // through the 401 handling in authUserStore.
+  const userId = authUser?.id
+  useEffect(() => {
+    if (!userId) return
+    void getUser({ path: { user_id: userId } }).then((result) => {
+      if (result.data) updateAuthUser(result.data)
+    })
+  }, [userId])
+
+  if (!hydrated) {
+    return <div className="flex-1 bg-[#182130]" style={gridStyle} />
+  }
+
+  if (!authUser) {
+    return (
+      <div
+        className="relative flex flex-1 items-center justify-center bg-[#182130] px-6 py-24 font-['Inter',sans-serif] text-[#E3E3E3]"
+        style={gridStyle}
+      >
+        <div className="max-w-md text-center">
+          <span className={eyebrow}>Oma profiili</span>
+          <h1 className="mt-2 text-3xl font-light text-white">Kirjaudu sisään</h1>
+          <p className="mt-3 font-light text-[#9fb0c7]">
+            Kirjaudu sisään nähdäksesi profiilisi, tilastosi ja asetuksesi.
+          </p>
+          <button
+            type="button"
+            onClick={() => openAuthModal('sign-in')}
+            className={`${primaryButton} mt-8`}
+          >
+            Kirjaudu
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const fullName = getFullName(authUser)
 
   return (
     <div
@@ -72,88 +107,18 @@ export default function ProfileLayout() {
               </div>
               <div>
                 <span className={eyebrow}>Oma profiili</span>
-                <h1 className="mt-1 text-3xl font-light text-white sm:text-4xl">
-                  Firstname Lastname
-                </h1>
+                {fullName && (
+                  <h1 className="mt-1 text-3xl font-light text-white sm:text-4xl">
+                    {fullName}
+                  </h1>
+                )}
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-[#2A3548] bg-[#0F1724] text-[#c3cddb] transition hover:border-[#1D90F4]/60 hover:text-white cursor-pointer"
-                  aria-label="Ilmoitukset"
-                  aria-expanded={notificationsOpen}
-                >
-                  <FontAwesomeIcon icon={faBell} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1D90F4] px-1 text-[11px] font-bold text-white shadow-md shadow-[#1D90F4]/40">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {notificationsOpen && (
-                  <div className="absolute right-0 z-40 mt-3 w-80 overflow-hidden rounded-xl border border-[#2A3548] bg-[#0F1724]/95 shadow-2xl backdrop-blur-xl">
-                    <div className="flex items-center justify-between border-b border-[#2A3548] px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white">Ilmoitukset</span>
-                        {unreadCount > 0 && (
-                          <span className="rounded-full border border-[#1D90F4]/30 bg-[#1D90F4]/15 px-2 py-0.5 text-[11px] font-semibold text-[#38bdf8]">
-                            {unreadCount} uutta
-                          </span>
-                        )}
-                      </div>
-                      {unreadCount > 0 && (
-                        <button
-                          type="button"
-                          onClick={markAllAsRead}
-                          className="text-xs font-medium text-[#1D90F4] underline-offset-4 hover:underline cursor-pointer"
-                        >
-                          Merkitse luetuksi
-                        </button>
-                      )}
-                    </div>
-                    <div className="max-h-80 divide-y divide-[#2A3548]/60 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="px-4 py-8 text-center text-sm font-light text-[#9fb0c7]">
-                          Ei ilmoituksia.
-                        </div>
-                      ) : (
-                        notifications.map((item) => (
-                          <button
-                            type="button"
-                            key={item.id}
-                            onClick={() => handleNotificationClick(item.id)}
-                            className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[#1D90F4]/5 cursor-pointer"
-                          >
-                            <span
-                              aria-hidden="true"
-                              className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                                item.read ? 'bg-[#2A3548]' : 'bg-[#1D90F4] shadow-[0_0_8px_2px_rgba(29,144,244,0.6)]'
-                              }`}
-                            />
-                            <span className="flex-1">
-                              <span className={`block text-sm ${item.read ? 'text-[#c3cddb]' : 'font-medium text-white'}`}>
-                                {item.title}
-                              </span>
-                              <span className="mt-0.5 block text-xs font-light leading-relaxed text-[#9fb0c7]">
-                                {item.description}
-                              </span>
-                              <time className="mt-1 block text-[11px] text-[#718096]">{item.time}</time>
-                            </span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               <button
                 type="button"
+                onClick={() => void handleLogout()}
                 className="inline-flex h-11 items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20 cursor-pointer"
               >
                 <FontAwesomeIcon icon={faRightFromBracket} />

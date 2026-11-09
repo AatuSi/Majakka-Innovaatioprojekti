@@ -8,12 +8,14 @@ import {
   faEnvelopeOpen,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
+import { getDisplayName, useAuthUser } from '../../components/authUserStore'
 import { useNotificationStore } from './notificationStore'
 import ProfileAvatar from './ProfileAvatar'
 import { card, eyebrow, sectionIntro, sectionTitle } from './profileStyles'
 
 export default function ProfileNotificationPage() {
   const { notifications, setNotifications } = useNotificationStore()
+  const authUser = useAuthUser()
   const [selectedTab, setSelectedTab] = useState<'all' | 'favorite'>('all')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null,
@@ -257,7 +259,7 @@ export default function ProfileNotificationPage() {
                   <ProfileAvatar />
                 </div>
                 <div className="text-sm font-medium text-white">
-                  Firstname Lastname {/* tähän tulee myöhemmin käyttäjän etunimi ja sukunimi, aluks se on vaa mockkina */}
+                  {getDisplayName(authUser)}
                 </div>
               </div>
               <p className="font-light leading-7 text-[#c3cddb]">{selectedMessage.description}</p>

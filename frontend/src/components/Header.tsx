@@ -5,7 +5,10 @@ import LighthouseMark from "./LighthouseMark";
 import { scrollIfAlreadyHere } from "./navigation";
 import AuthModal from "./AuthModal";
 import { openAuthModal } from "./authModalStore";
-import { useAuthUser, logoutUser } from "./authUserStore";
+import { useAuthUser } from "./authUserStore";
+import { resetAvatar, syncSavedAvatarIcon } from "../features/profile/avatarStore";
+import NotificationBell from "../features/profile/NotificationBell";
+import ProfileAvatar from "../features/profile/ProfileAvatar";
 
 const cutCorner =
   "[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]";
@@ -23,6 +26,14 @@ export default function Header() {
   // const isQuiz = pathname.endsWith("-quiz");
   const isQuiz = pathname === '/quizzes' || pathname.endsWith('-quiz')
   const authUser = useAuthUser();
+
+  // The header is on every page, so the avatar is kept up to date from here.
+  const userId = authUser?.id;
+  const savedAvatarIcon = authUser?.avatar_icon ?? null;
+  useEffect(() => {
+    if (userId) syncSavedAvatarIcon(savedAvatarIcon);
+    else resetAvatar();
+  }, [userId, savedAvatarIcon]);
 
   // The menu remembers the location it was opened at, so any navigation,
   // including the browser's back and forward buttons, closes it.
@@ -123,21 +134,21 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           {authUser ? (
-            <div className="hidden items-center gap-3 sm:flex">
-              <span className="text-sm font-medium text-[#A0AEC0]">
-                {authUser.username}
-              </span>
-              <button
-                type="button"
-                onClick={logoutUser}
-                className={`${cutCorner} bg-[#2A3548] p-0.5 transition hover:bg-[#3A4A5E]`}
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <Link
+                to="/profile"
+                aria-label={`Oma profiili: ${authUser.username}`}
+                className="group flex items-center gap-2"
+                onClick={navigateTo("/profile")}
               >
-                <span
-                  className={`${cutCornerInner} block bg-[#182130] px-6 py-2 text-lg font-medium text-white`}
-                >
-                  Kirjaudu ulos
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1D90F4] bg-[#0F1724] text-base text-[#38bdf8] transition group-hover:border-[#3BA0F6]">
+                  <ProfileAvatar />
                 </span>
-              </button>
+                <span className="hidden max-w-40 truncate text-sm font-medium text-[#A0AEC0] transition-colors group-hover:text-white sm:block">
+                  {authUser.username}
+                </span>
+              </Link>
             </div>
           ) : (
             <button
@@ -240,19 +251,8 @@ export default function Header() {
                 Hankkeesta
               </Link>
             </li>
-            <li className="pt-2">
-              {authUser ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    logoutUser();
-                  }}
-                  className="block py-2 text-lg font-medium text-red-400"
-                >
-                  Kirjaudu ulos ({authUser.username})
-                </button>
-              ) : (
+            {!authUser && (
+              <li className="pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -263,8 +263,8 @@ export default function Header() {
                 >
                   Kirjaudu
                 </button>
-              )}
-            </li>
+              </li>
+            )}
           </ul>
         </nav>
       )}
