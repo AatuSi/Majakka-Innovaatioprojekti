@@ -585,6 +585,46 @@ export type QuizResponseItemSchema = {
 };
 
 /**
+ * QuizTopicResult
+ *
+ * Aggregated results for one quiz. Each quiz is one topic (e.g. IALA, COLREG).
+ */
+export type QuizTopicResult = {
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+    /**
+     * Quiz Name
+     */
+    quiz_name?: string | null;
+    /**
+     * Question Count
+     */
+    question_count: number;
+    /**
+     * Attempt Count
+     */
+    attempt_count: number;
+    /**
+     * Answer Count
+     */
+    answer_count: number;
+    /**
+     * Correct Count
+     */
+    correct_count: number;
+    /**
+     * Accuracy
+     */
+    accuracy?: number | null;
+    /**
+     * Last Attempt At
+     */
+    last_attempt_at?: string | null;
+};
+
+/**
  * QuizUpdate
  */
 export type QuizUpdate = {
@@ -1613,6 +1653,38 @@ export type GetResponseResponses = {
 };
 
 export type GetResponseResponse = GetResponseResponses[keyof GetResponseResponses];
+
+export type ListQuizResultsByTopicData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * User Id
+         */
+        user_id?: string | null;
+    };
+    url: '/quiz-results/by-topic';
+};
+
+export type ListQuizResultsByTopicErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListQuizResultsByTopicError = ListQuizResultsByTopicErrors[keyof ListQuizResultsByTopicErrors];
+
+export type ListQuizResultsByTopicResponses = {
+    /**
+     * Response List Quiz Results By Topic
+     *
+     * Successful Response
+     */
+    200: Array<QuizTopicResult>;
+};
+
+export type ListQuizResultsByTopicResponse = ListQuizResultsByTopicResponses[keyof ListQuizResultsByTopicResponses];
 
 export type ListIalaLightsData = {
     body?: never;
