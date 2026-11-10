@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CheckPublicAnswerData, CheckPublicAnswerErrors, CheckPublicAnswerResponses, CreateAttemptData, CreateAttemptErrors, CreateAttemptResponses, CreateContactMessageData, CreateContactMessageErrors, CreateContactMessageResponses, CreateIalaLightData, CreateIalaLightErrors, CreateIalaLightResponses, CreateOptionData, CreateOptionErrors, CreateOptionResponses, CreateQuestionData, CreateQuestionErrors, CreateQuestionResponses, CreateQuizData, CreateQuizErrors, CreateQuizResponses, CreateResponseData, CreateResponseErrors, CreateResponseResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAttemptData, DeleteAttemptErrors, DeleteAttemptResponses, DeleteIalaLightData, DeleteIalaLightErrors, DeleteIalaLightResponses, DeleteOptionData, DeleteOptionErrors, DeleteOptionResponses, DeleteQuestionData, DeleteQuestionErrors, DeleteQuestionResponses, DeleteQuizData, DeleteQuizErrors, DeleteQuizResponses, DeleteResponseData, DeleteResponseErrors, DeleteResponseResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAttemptData, GetAttemptErrors, GetAttemptResponses, GetIalaLightData, GetIalaLightErrors, GetIalaLightResponses, GetOptionData, GetOptionErrors, GetOptionResponses, GetPublicQuizData, GetPublicQuizErrors, GetPublicQuizResponses, GetQuestionData, GetQuestionErrors, GetQuestionResponses, GetQuizData, GetQuizErrors, GetQuizResponses, GetResponseData, GetResponseErrors, GetResponseResponses, GetUserData, GetUserErrors, GetUserResponses, HealthCheckData, HealthCheckErrors, HealthCheckResponses, ListAttemptsData, ListAttemptsResponses, ListIalaLightsData, ListIalaLightsErrors, ListIalaLightsResponses, ListOptionsData, ListOptionsErrors, ListOptionsResponses, ListPublicQuizzesData, ListPublicQuizzesResponses, ListQuestionsData, ListQuestionsErrors, ListQuestionsResponses, ListQuizzesData, ListQuizzesResponses, ListResponsesData, ListResponsesErrors, ListResponsesResponses, ListUsersData, ListUsersResponses, LoginData, LoginErrors, LoginResponses, UpdateIalaLightData, UpdateIalaLightErrors, UpdateIalaLightResponses, UpdateOptionData, UpdateOptionErrors, UpdateOptionResponses, UpdateQuestionData, UpdateQuestionErrors, UpdateQuestionResponses, UpdateQuizData, UpdateQuizErrors, UpdateQuizResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
+import type { CheckPublicAnswerData, CheckPublicAnswerErrors, CheckPublicAnswerResponses, CreateAttemptData, CreateAttemptErrors, CreateAttemptResponses, CreateContactMessageData, CreateContactMessageErrors, CreateContactMessageResponses, CreateIalaLightData, CreateIalaLightErrors, CreateIalaLightResponses, CreateOptionData, CreateOptionErrors, CreateOptionResponses, CreateQuestionData, CreateQuestionErrors, CreateQuestionResponses, CreateQuizData, CreateQuizErrors, CreateQuizResponses, CreateResponseData, CreateResponseErrors, CreateResponseResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DeleteAttemptData, DeleteAttemptErrors, DeleteAttemptResponses, DeleteContactMessageData, DeleteContactMessageErrors, DeleteContactMessageResponses, DeleteIalaLightData, DeleteIalaLightErrors, DeleteIalaLightResponses, DeleteOptionData, DeleteOptionErrors, DeleteOptionResponses, DeleteQuestionData, DeleteQuestionErrors, DeleteQuestionResponses, DeleteQuizData, DeleteQuizErrors, DeleteQuizResponses, DeleteResponseData, DeleteResponseErrors, DeleteResponseResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAttemptData, GetAttemptErrors, GetAttemptResponses, GetContactMessageData, GetContactMessageErrors, GetContactMessageResponses, GetIalaLightData, GetIalaLightErrors, GetIalaLightResponses, GetOptionData, GetOptionErrors, GetOptionResponses, GetPublicQuizData, GetPublicQuizErrors, GetPublicQuizResponses, GetQuestionData, GetQuestionErrors, GetQuestionResponses, GetQuizData, GetQuizErrors, GetQuizResponses, GetResponseData, GetResponseErrors, GetResponseResponses, GetUserData, GetUserErrors, GetUserResponses, HealthCheckData, HealthCheckErrors, HealthCheckResponses, ListAttemptsData, ListAttemptsResponses, ListContactMessagesData, ListContactMessagesErrors, ListContactMessagesResponses, ListIalaLightsData, ListIalaLightsErrors, ListIalaLightsResponses, ListOptionsData, ListOptionsErrors, ListOptionsResponses, ListPublicQuizzesData, ListPublicQuizzesResponses, ListQuestionsData, ListQuestionsErrors, ListQuestionsResponses, ListQuizzesData, ListQuizzesResponses, ListResponsesData, ListResponsesErrors, ListResponsesResponses, ListUsersData, ListUsersResponses, LoginData, LoginErrors, LoginResponses, UpdateIalaLightData, UpdateIalaLightErrors, UpdateIalaLightResponses, UpdateOptionData, UpdateOptionErrors, UpdateOptionResponses, UpdateQuestionData, UpdateQuestionErrors, UpdateQuestionResponses, UpdateQuizData, UpdateQuizErrors, UpdateQuizResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -412,6 +412,17 @@ export const updateIalaLight = <ThrowOnError extends boolean = false>(options: O
 });
 
 /**
+ * List Contact Messages
+ *
+ * Lists sent contact messages, newest first. topic filters by exact topic.
+ */
+export const listContactMessages = <ThrowOnError extends boolean = false>(options?: Options<ListContactMessagesData, ThrowOnError>): RequestResult<ListContactMessagesResponses, ListContactMessagesErrors, ThrowOnError> => (options?.client ?? client).get<ListContactMessagesResponses, ListContactMessagesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/contact',
+    ...options
+});
+
+/**
  * Create Contact Message
  */
 export const createContactMessage = <ThrowOnError extends boolean = false>(options: Options<CreateContactMessageData, ThrowOnError>): RequestResult<CreateContactMessageResponses, CreateContactMessageErrors, ThrowOnError> => (options.client ?? client).post<CreateContactMessageResponses, CreateContactMessageErrors, ThrowOnError>({
@@ -421,4 +432,26 @@ export const createContactMessage = <ThrowOnError extends boolean = false>(optio
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Delete Contact Message
+ *
+ * Deletes a sent contact message permanently, e.g. once it has been handled.
+ */
+export const deleteContactMessage = <ThrowOnError extends boolean = false>(options: Options<DeleteContactMessageData, ThrowOnError>): RequestResult<DeleteContactMessageResponses, DeleteContactMessageErrors, ThrowOnError> => (options.client ?? client).delete<DeleteContactMessageResponses, DeleteContactMessageErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/contact/{message_id}',
+    ...options
+});
+
+/**
+ * Get Contact Message
+ *
+ * Returns one sent contact message.
+ */
+export const getContactMessage = <ThrowOnError extends boolean = false>(options: Options<GetContactMessageData, ThrowOnError>): RequestResult<GetContactMessageResponses, GetContactMessageErrors, ThrowOnError> => (options.client ?? client).get<GetContactMessageResponses, GetContactMessageErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/contact/{message_id}',
+    ...options
 });

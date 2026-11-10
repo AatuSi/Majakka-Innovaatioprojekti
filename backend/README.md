@@ -16,6 +16,18 @@ python -m uvicorn main:app --env-file .env --reload --host 127.0.0.1 --port 8000
 
 `GET /health` needs no login. It answers `{"status": "ok", "database": "ok"}`, or status 503 with `"database": "unavailable"` when the database cannot be reached.
 
+## Contact messages and quiz results
+
+`POST /contact` is public and stores a message from the contact form. Reading and deleting the stored messages is for admins only: `GET /contact` lists them newest first (`?topic=` filters by topic), `GET /contact/{message_id}` returns one and `DELETE /contact/{message_id}` deletes it. The frontend shows them at `/messages`.
+
+Registering always creates a `user`. To make someone an admin, set the role in the database by hand:
+
+```sql
+UPDATE users SET role = 'admin' WHERE lower(username) = lower('name');
+```
+
+The full API with every route is listed at `/docs` while the backend is running.
+
 ## Deployment notes
 
 The backend reads its settings from environment variables, see `.env-template`. `DATABASE_URL` and `JWT_SECRET` must be set. If `DATABASE_URL` is missing, the backend does not fail but falls back to a local database at `localhost:5432`. `CORS_ORIGINS` must include the address of the deployed frontend, otherwise the browser blocks the API calls. The frontend finds the API through `VITE_API_URL`, which is set when the frontend is built.

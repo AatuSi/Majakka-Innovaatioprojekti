@@ -124,6 +124,18 @@ export default function Header() {
         <div className="flex items-center gap-3">
           {authUser ? (
             <div className="hidden items-center gap-3 sm:flex">
+              {/* Messages link for admins only */}
+              {authUser.role === "admin" && (
+                <Link
+                  to="/messages"
+                  className={navLinkBase}
+                  activeProps={{ className: navLinkActive }}
+                  inactiveProps={{ className: navLinkInactive }}
+                  onClick={navigateTo("/messages")}
+                >
+                  Viestit
+                </Link>
+              )}
               <span className="text-sm font-medium text-[#A0AEC0]">
                 {authUser.username}
               </span>
@@ -240,6 +252,18 @@ export default function Header() {
                 Hankkeesta
               </Link>
             </li>
+            {authUser?.role === "admin" && (
+              <li>
+                <Link
+                  to="/messages"
+                  onClick={navigateTo("/messages")}
+                  className="block py-2 text-lg text-white hover:text-[#1D90F4]"
+                  activeProps={{ className: "text-[#1D90F4] font-medium" }}
+                >
+                  Viestit
+                </Link>
+              </li>
+            )}
             <li className="pt-2">
               {authUser ? (
                 <button

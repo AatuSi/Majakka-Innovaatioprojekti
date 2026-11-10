@@ -1769,6 +1769,38 @@ export type UpdateIalaLightResponses = {
 
 export type UpdateIalaLightResponse = UpdateIalaLightResponses[keyof UpdateIalaLightResponses];
 
+export type ListContactMessagesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Topic
+         */
+        topic?: string | null;
+    };
+    url: '/contact';
+};
+
+export type ListContactMessagesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListContactMessagesError = ListContactMessagesErrors[keyof ListContactMessagesErrors];
+
+export type ListContactMessagesResponses = {
+    /**
+     * Response List Contact Messages
+     *
+     * Successful Response
+     */
+    200: Array<ContactMessageResponse>;
+};
+
+export type ListContactMessagesResponse = ListContactMessagesResponses[keyof ListContactMessagesResponses];
+
 export type CreateContactMessageData = {
     body: ContactMessageCreate;
     path?: never;
@@ -1793,3 +1825,63 @@ export type CreateContactMessageResponses = {
 };
 
 export type CreateContactMessageResponse = CreateContactMessageResponses[keyof CreateContactMessageResponses];
+
+export type DeleteContactMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/contact/{message_id}';
+};
+
+export type DeleteContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteContactMessageError = DeleteContactMessageErrors[keyof DeleteContactMessageErrors];
+
+export type DeleteContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteContactMessageResponse = DeleteContactMessageResponses[keyof DeleteContactMessageResponses];
+
+export type GetContactMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/contact/{message_id}';
+};
+
+export type GetContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetContactMessageError = GetContactMessageErrors[keyof GetContactMessageErrors];
+
+export type GetContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    200: ContactMessageResponse;
+};
+
+export type GetContactMessageResponse = GetContactMessageResponses[keyof GetContactMessageResponses];
