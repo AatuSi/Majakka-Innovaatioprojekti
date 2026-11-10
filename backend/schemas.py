@@ -267,3 +267,25 @@ class PublicAnswerCheckResponse(BaseModel):
     correct: bool
     correct_option_id: UUID
     explanation: Optional[str] = None
+
+
+# --- QUIZ RESULTS BY TOPIC ---
+
+
+class QuizTopicResult(BaseModel):
+    """Aggregated results for one quiz. Each quiz is one topic (e.g. IALA, COLREG)."""
+
+    quiz_id: UUID
+    quiz_name: Optional[str] = None
+    # Questions the quiz currently has, so the client can show progress against it.
+    question_count: int
+    # Attempts made, including ones saved without answers.
+    attempt_count: int
+    # Answers given across all counted attempts.
+    answer_count: int
+    # Answers whose selected option is marked correct.
+    correct_count: int
+    # correct_count / answer_count, between 0 and 1; None when nothing was answered.
+    accuracy: Optional[float] = None
+    # Time of the most recent counted attempt; None when there are no attempts.
+    last_attempt_at: Optional[datetime] = None

@@ -1485,6 +1485,66 @@
         }
       }
     },
+    "/quiz-results/by-topic": {
+      "get": {
+        "tags": [
+          "quiz_results"
+        ],
+        "summary": "List Quiz Results By Topic",
+        "description": "Returns one row per quiz with attempt, answer and correct-answer counts.\n\n- A regular user always gets their own results. Asking for another\n  user's results returns 403.\n- An admin gets every user's results combined, or one user's results\n  when user_id is given.\n\nEvery quiz is listed, also those without attempts, so the client can show\ntopics that have not been tried yet.",
+        "operationId": "list_quiz_results_by_topic",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuizTopicResult"
+                  },
+                  "title": "Response List Quiz Results By Topic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/iala-lights": {
       "get": {
         "tags": [
@@ -2971,6 +3031,75 @@
           "created_at"
         ],
         "title": "QuizResponseItemSchema"
+      },
+      "QuizTopicResult": {
+        "properties": {
+          "quiz_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Quiz Id"
+          },
+          "quiz_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiz Name"
+          },
+          "question_count": {
+            "type": "integer",
+            "title": "Question Count"
+          },
+          "attempt_count": {
+            "type": "integer",
+            "title": "Attempt Count"
+          },
+          "answer_count": {
+            "type": "integer",
+            "title": "Answer Count"
+          },
+          "correct_count": {
+            "type": "integer",
+            "title": "Correct Count"
+          },
+          "accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy"
+          },
+          "last_attempt_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Attempt At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quiz_id",
+          "question_count",
+          "attempt_count",
+          "answer_count",
+          "correct_count"
+        ],
+        "title": "QuizTopicResult",
+        "description": "Aggregated results for one quiz. Each quiz is one topic (e.g. IALA, COLREG)."
       },
       "QuizUpdate": {
         "properties": {

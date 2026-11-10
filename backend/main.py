@@ -17,7 +17,8 @@ from routers import (
     quiz_responses,
     iala_lights_router,
     contact,
-    public_quizzes
+    public_quizzes,
+    quiz_results,
 )
 from security import get_current_user
 
@@ -45,6 +46,7 @@ app.include_router(quiz_questions.router, dependencies=protected)
 app.include_router(quiz_question_options.router, dependencies=protected)
 app.include_router(quiz_attempts.router, dependencies=protected)
 app.include_router(quiz_responses.router, dependencies=protected)
+app.include_router(quiz_results.router, dependencies=protected)
 app.include_router(iala_lights_router.router, prefix="/iala-lights", dependencies=protected)
 app.include_router(contact.router)
 

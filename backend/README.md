@@ -20,6 +20,8 @@ python -m uvicorn main:app --env-file .env --reload --host 127.0.0.1 --port 8000
 
 `POST /contact` is public and stores a message from the contact form. Reading and deleting the stored messages is for admins only: `GET /contact` lists them newest first (`?topic=` filters by topic), `GET /contact/{message_id}` returns one and `DELETE /contact/{message_id}` deletes it. The frontend shows them at `/messages`.
 
+`GET /quiz-results/by-topic` returns one row per quiz with the number of attempts, answers and correct answers. A regular user gets their own results. An admin gets everyone's results combined, or one user's with `?user_id=`. The frontend shows them at `/results`.
+
 Registering always creates a `user`. To make someone an admin, set the role in the database by hand:
 
 ```sql
