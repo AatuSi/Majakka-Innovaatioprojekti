@@ -47,6 +47,7 @@ CREATE TABLE quiz_questions (
     quiz_id       UUID        NOT NULL,
     iala_light_id UUID,
     question_text TEXT,
+    answer_image_url TEXT,
     explanation   TEXT,
     hint          TEXT,
     position      INT         NOT NULL DEFAULT 0,

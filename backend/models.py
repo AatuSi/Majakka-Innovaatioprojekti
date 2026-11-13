@@ -2,9 +2,21 @@
 
 import enum
 import uuid
-from sqlalchemy import Column, String, Text, Boolean, Integer, DateTime, ForeignKey, Enum as SQLEnum, func
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
+
 from database import Base
 
 
@@ -57,6 +69,7 @@ class QuizQuestion(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     quiz_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     iala_light_id = Column(UUID(as_uuid=True), ForeignKey("iala_lights.id", ondelete="SET NULL"), nullable=True, index=True)
+    answer_image_url = Column(Text, nullable=True)
     question_text = Column(Text, nullable=True)
     explanation = Column(Text, nullable=True)
     hint = Column(Text, nullable=True)
