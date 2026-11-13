@@ -131,13 +131,14 @@ BEGIN
     VALUES ('IALA-tietovisa')
     RETURNING id INTO iala_quiz_id;
 
-    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position, answer_image_url)
     VALUES (
-        iala_quiz_id, 
-        'Mitä väriä on paapuurin lateraalimerkki IALA-A-alueella, johon Suomi kuuluu?', 
+        iala_quiz_id,
+        'Mitä väriä on paapuurin lateraalimerkki IALA-A-alueella, johon Suomi kuuluu?',
         'IALA-A-alueella paapuurin (vasemman puolen) merkki on punainen tynnyripoiju punaisella valolla. Muistisääntö on ''punainen paapuuriin, vihreä styyrpuuriin''. IALA-B-alueella, esimerkiksi Amerikoissa ja Japanissa, värit ovat päinvastoin.',
         'Lateraalimerkit',
-        1
+        1,
+        'https://t0.geograph.org.uk/stamp.php?id=5080759&title=on&gravity=SouthEast&hash=db2be7aa'
     )
     RETURNING id INTO question_id;
 

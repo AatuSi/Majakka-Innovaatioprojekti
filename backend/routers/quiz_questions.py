@@ -61,6 +61,7 @@ def create_question(quiz_id: UUID, question: schemas.QuizQuestionCreate, db: Ses
         hint=question.hint,
         iala_light_id=question.iala_light_id,
         position=question.position,
+        answer_image_url=question.answer_image_url
     )
 
     for option in question.options:
@@ -100,6 +101,9 @@ def update_question(question_id: UUID, question: schemas.QuizQuestionUpdate, db:
 
     if "explanation" in fields:
         db_question.explanation = fields["explanation"]
+
+    if "answer_image_url" in fields:
+        db_question.answer_image_url = fields["answer_image_url"]
 
     # position is NOT NULL, so an explicit null means "leave it alone".
     if fields.get("position") is not None:
