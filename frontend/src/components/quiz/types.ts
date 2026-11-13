@@ -8,6 +8,7 @@ export interface QuizQuestion {
   prompt: string
   /** Short context shown above the prompt, e.g. the light pattern being asked about. */
   hint?: string
+  answerImageUrl?: string | null
   options: QuizOption[]
 }
 

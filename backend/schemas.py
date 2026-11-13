@@ -1,7 +1,8 @@
-from enum import Enum
-from typing import Annotated, List, Literal, Optional, Any, Dict
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from typing import Annotated, Any, Dict, List, Literal, Optional
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 # Column bounds, so oversized input fails validation instead of the insert.
@@ -102,6 +103,7 @@ class QuizQuestionBase(BaseModel):
     hint: Optional[str] = None
     iala_light_id: Optional[UUID] = None
     position: Position = 0
+    answer_image_url: Optional[str] = None
 
 
 class QuizQuestionCreate(QuizQuestionBase):
@@ -116,6 +118,7 @@ class QuizQuestionUpdate(BaseModel):
     hint: Optional[str] = None
     iala_light_id: Optional[UUID] = None
     position: Optional[Position] = None
+    answer_image_url: Optional[str] = None
 
 
 class QuizQuestionResponse(QuizQuestionBase):
@@ -243,6 +246,7 @@ class PublicQuizQuestionResponse(BaseModel):
     question_text: Optional[str] = None
     hint: Optional[str] = None
     iala_light_id: Optional[UUID] = None
+    answer_image_url: Optional[str] = None
     position: Position = 0
     created_at: datetime
     options: List[PublicQuizQuestionOptionResponse] = []

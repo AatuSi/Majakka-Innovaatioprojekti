@@ -7,3 +7,4 @@ pyjwt
 pytest
 pytest-env
 httpx2
+dotenv
