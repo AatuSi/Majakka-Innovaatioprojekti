@@ -128,7 +128,7 @@ DECLARE
     question_id UUID;
 BEGIN
     INSERT INTO quizzes (name)
-    VALUES ('IALA-tietovisa')
+    VALUES ('IALA-tietovisa 1')
     RETURNING id INTO iala_quiz_id;
 
     INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
@@ -475,6 +475,366 @@ BEGIN
         (question_id, 'Näet aluksen perävalon eli alus menee poispäin', TRUE, 2),
         (question_id, 'Alus on ohjailukyvytön', FALSE, 3),
         (question_id, 'Alus risteää vasemmalta oikealle', FALSE, 4);
+
+END $$;
+COMMIT;
+
+
+
+DO $$
+DECLARE
+    iala_quiz_id UUID;
+    colreg_quiz_id UUID;
+    question_id UUID;
+BEGIN
+    INSERT INTO quizzes (name)
+    VALUES ('IALA-tietovisa 2')
+    RETURNING id INTO iala_quiz_id;
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Mitä väriä on styyrpuurin lateraalimerkki IALA-A-alueella, johon Suomi kuuluu?', 
+        'IALA-A-alueella styyrpuuriin (oikean puolen) merkki on vihreä poiju ylöspäin osoittavalla kartiolla ja vihreällä valolla. Muistisääntö on ''punainen paapuuriin, vihreä styyrpuuriin''. IALA-B-alueella, esimerkiksi Amerikoissa ja Japanissa, värit ovat päinvastoin.',
+        'Lateraalimerkit',
+        1
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options
+        (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Punainen', FALSE, 1),
+        (question_id, 'Vihreä', TRUE, 2),
+        (question_id, 'Keltainen', FALSE, 3),
+        (question_id, 'Musta-keltainen', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Poijussa on merkkeinä kaksi kartiota, jotka osoittavat toisiinsa, muodostaen tiimalasikuvion. Poijun päät ovat keltaisia, ja keskus musta. Miltä puolelta merkki ohitetaan?', 
+        'Poiju, jonka päät ovat keltaiset ja keskus musta, ja jossa on kaksi toisiinsa osoittavaa kartiota merkitsee länsikardinaalia: kulje merkin länsipuolelta.',
+        'Kardinaalimerkit',
+        2
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Eteläpuolelta', FALSE, 1),
+        (question_id, 'Pohjoispuolelta', FALSE, 2),
+        (question_id, 'Itäpuolelta', FALSE, 3),
+        (question_id, 'Länsipuolelta', TRUE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Mitä lyhenne ''VQ'' tarkoittaa loiston tunnuksessa?', 
+        'Lyhenne ''VQ'' tulee sanoista Very Quick. Loiste on nopea pikavilkku (80-159 välähdystä/minuutti), tyypillisesti rytmiltään 100 tai 120 välähdystä minuuutissa.',
+        'Loistojen rytmit',
+        3
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Nopea vilkku, 50–60 välähdystä minuutissa', FALSE, 1),
+        (question_id, 'Kiinteä, katkeamaton valo', FALSE, 2),
+        (question_id, 'Nopea pikavilkku, 80-150 välähdystä minuutissa', TRUE, 3),
+        (question_id, 'Pimennetty, jossa valo palaa pimeyttä kauemmin', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Länsikardinaalin loistotunnus on VQ (9) 10 s. Minkä takia välähdyksiä on 9 kappaletta?', 
+        'Kardinaalimerkkien välähdysmäärät noudattavat kellotaulua: kolme idässä (kello 3), kuusi etelässä (kello 6) ja yhdeksän lännessä (kello 9).',
+        'Kardinaalimerkit',
+        4
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Ei ole loogista syytä, loisterytmejä valitessa valittiin mahdollisimman paljon erilaisia loisteita', FALSE, 1),
+        (question_id, 'Yhdeksän välähdystä toimii muistutuksena pitää vähintään 9 jalan turvaväli poijuun', FALSE, 2),
+        (question_id, 'Yhdeksän solmua on suositeltu maksiminopeus ohitettaessa poijuja läheltä', FALSE, 3),
+        (question_id, 'Kello yhdeksän on kellotaulun vasemmassa reunassa eli lännessä', TRUE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Punavalkoinen pystyraidallinen pallopoiju, jonka valo on Mo(A). Mitä se tarkoittaa?', 
+        'Turvavesimerkki osoittaa, että sen ympärillä on turvallista kulkuvettä joka suuntaan. Se merkitsee usein väylän keskilinjan tai maatumiskohdan. Valo on Morse A, pitkä välkky tai isofaasi, aina valkoinen.',
+        'Turvavesimerkki',
+        5
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Turvallista kulkuvettä joka suuntaan', TRUE, 1),
+        (question_id, 'Eristetty vaara, jonka ympäri kuljetaan', FALSE, 2),
+        (question_id, 'Erikoisalue, esimerkiksi kaapeli tai putkisto', FALSE, 3),
+        (question_id, 'Väylän styyrpuurin puoli', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Näet yöllä loisteen, jonka loistorytmi on Fl (2) 10 s. Miten kannattaa toimia', 
+        'Fl (2) 10 s, eli kaksi välähdystä 10 sekunnin aikana on karimerkin loisto. Merkin kohdalla on karille ajamisen riski.',
+        'Eristetty vaaramerkki',
+        6
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Kyseessä on yleisesti käytetty hätämerkki, ja aluksen kuljettajan on autettava hädässä olevaa alusta', FALSE, 1),
+        (question_id, 'Loiste viittaa kariin. Loisteen ympärillä on turvallista vettä.', TRUE, 2),
+        (question_id, 'Kierrä loiste pohjoispuolelta', FALSE, 3),
+        (question_id, 'Kierrä loiste itäpuolelta', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Minkä värinen on erikoismerkin runko ja valo?', 
+        'Erikoismerkki on keltainen ja sen valo on keltainen. Huippumerkkinä on keltainen X. Se merkitsee merikortissa mainittua erityisaluetta, kuten kaapelia, putkistoa, vesiviljelyä tai harjoitusaluetta.',
+        'Erikoismerkit',
+        7
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Musta runko ja valkoinen valo', FALSE, 1),
+        (question_id, 'Vihreä runko ja vihreä valo', FALSE, 2),
+        (question_id, 'Keltainen runko ja keltainen valo', TRUE, 3),
+        (question_id, 'Punavalkoinen runko ja valkoinen valo', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Loiston tunnus on ''Fl(2+1)''. Mitä se kertoo valon rytmistä?', 
+        'Suluissa oleva luku kertoo ryhmän välähdysten määrän ja niiden rytmin. Fl tarkoittaa vilkkuvaloa, ja (2+1) kertoo siitä, että ensiksi tulee kaksi välähdystä, ja pienen tauon jälkeen vielä yksi välähdys. Näitä seuraa pidempi tauko, ja rytmi toistuu.', 
+        'Loistojen rytmit',
+        8
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Valo palaa kaksi sekuntia, jota seuraa yhden sekunnin pimeys', FALSE, 1),
+        (question_id, 'Poijussa on kolme valoa, joista kaksi vilkkuu eri rytmillä kuin kolmas', FALSE, 2),
+        (question_id, 'Valo välkkyy kolmen välähdyksen rytmissä. Kaksi ensimmäistä ovat pidempiä välähdyksiä, ja viimeinen välähdys on lyhyempi', FALSE, 3),
+        (question_id, 'Kaksi välähdystä, pieni tauko ja yksi välähdys. Näitä seuraa pidempi tauko', TRUE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Kuuluuko Ahvenanmaa IALA-A vai IALA-B-alueeseen', 
+        'IALA-B-alueeseen kuuluu molemmat Amerikat, Japani, Korea, Taiwan ja Filippiinit, kaikki muut kuuluvat IALA-A-alueeseen',
+        'IALA-alueet',
+        9
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'IALA-A', TRUE, 1),
+        (question_id, 'IALA-B', FALSE, 2),
+        (question_id, 'IALA-A, mutta Ahvenanmaalla noudatetaan poikkeavia karimerkkien loisteita', FALSE, 3),
+        (question_id, 'Ahvenanmaalla noudatetaan omia paikallisia merimerkkisääntöjä, tunnetaan myös IALA-C-alueena', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        iala_quiz_id, 
+        'Mikä on tasarytmivalon lyhenne (Tasarytmivalossa valo ja pimeä vuorottelevat yhtä pitkissä jaksoissa)?', 
+        'Lyhenne tulee englannin kielisestä termistä ''Isophase light''', 
+        'Loistojen rytmit',
+        10
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'F', FALSE, 1),
+        (question_id, 'Iso', TRUE, 2),
+        (question_id, 'Oc', FALSE, 3),
+        (question_id, 'LFI', FALSE, 4);
+
+    INSERT INTO quizzes (name)
+    VALUES ('COLREG-tietovisa 2')
+    RETURNING id INTO colreg_quiz_id;
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Alus näyttää kolme ympärinäkyvää valoa pystysuorassa linjassa: ylin ja alin ovat punaisia, keskimmäinen valkoinen. Mikä alus on kyseessä?', 
+        'Punainen-valkoinen-punainen pystysuorassa linjassa on ohjailukyvyltään rajoitetun aluksen tunnus (esimerkiksi ruoppaaja, kaapelinlaskija tai poijutöitä tekevä alus). Syväyksensä vuoksi rajoittunut alus puolestaan näyttää kolme punaista valoa päällekkäin.',
+        'Kulkuvalot',
+        1
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Ohjailukyvytön alus', FALSE, 1),
+        (question_id, 'Ohjailukyvyltään rajoitettu alus', TRUE, 2),
+        (question_id, 'Syväyksensä vuoksi rajoittunut alus', FALSE, 3),
+        (question_id, 'Karilla oleva alus', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Kaksi purjealusta lähestyy toisiaan eri halsseilla siten, että yhteentörmäämisen vaara on olemassa. Kumpi väistää sääntö 12:n mukaan?', 
+        'Sääntö 12 määrää, että kun purjealuksilla on tuuli eri puolilta, vasemmalta puolelta tuulta saava alus (paapuurin halssilla kulkeva) väistää oikealta puolelta tuulta saavaa (styyrpuurin halssilla kulkevaa) alusta.', 
+        'Väistämissäännöt',
+        2
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Se, jolla on tuuli oikealta puolelta', FALSE, 1),
+        (question_id, 'Tuulen yläpuolella oleva alus', FALSE, 2),
+        (question_id, 'Se, jolla on tuuli vasemmalta puolelta', TRUE, 3),
+        (question_id, 'Suurempi purjealus', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Alus näyttää valkoisen ympärinäkyvän valon punaisen ympärinäkyvän valon yläpuolella. Mikä alus on kyseessä?', 
+        'Valkoinen valo punaisen yläpuolella on luotsialuksen tunnus sen ollessa luotsaustehtävässä (muistisääntö: valkoinen lakki, punainen nenä). Muu kuin troolaava kalastusalus näyttää päinvastoin punaisen valkoisen yläpuolella.', 
+        'Kulkuvalot',
+        3
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Muu kuin troolaava kalastusalus', FALSE, 1),
+        (question_id, 'Luotsialus luotsaustehtävässä', TRUE, 2),
+        (question_id, 'Hinaava alus', FALSE, 3),
+        (question_id, 'Miinanraivaaja', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Kuinka laajalla sektorilla konealuksen valkoinen mastovalo näkyy?', 
+        'Mastovalo näkyy 225° sektorilla suoraan eteenpäin ja molemmille sivuille 22,5° poikkisuunnan taakse. Tämä vastaa täsmälleen molempien sivuvalojen yhteenlaskettua sektoria (112,5° + 112,5°).', 
+        'Valosektorit',
+        4
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, '112,5° suoraan eteenpäin', FALSE, 1),
+        (question_id, '135° taaksepäin', FALSE, 2),
+        (question_id, '360° eli ympärinäkyvästi', FALSE, 3),
+        (question_id, '225° keulasta 22,5° poikkisuunnan taakse kummallekin puolelle', TRUE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Konealus ja purjealus ovat risteävillä kursseilla avovedellä siten, että yhteentörmäämisen vaara on olemassa. Kumpi väistää sääntö 18:n mukaan?', 
+        'Sääntö 18:n vastuujärjestyksen mukaan kulussa oleva konealus väistää purjealusta, ellei purjealus ole ohittamassa konealusta tai kyseessä ole kapea kulkuväylä, jossa purjealus ei saa estää vain väylässä kulkemaan pystyvän aluksen kulkua.', 
+        'Väistämissäännöt',
+        5
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Konealus väistää purjealusta', TRUE, 1),
+        (question_id, 'Purjealus väistää konealusta', FALSE, 2),
+        (question_id, 'Se, jolla toinen on oikealla puolella', FALSE, 3),
+        (question_id, 'Hitaampi alus väistää', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Konealus näyttää kahta valkoista mastovaloa päällekkäin sekä sivuvaloja ja perävaloa. Mitä kaksi mastovaloa päällekkäin kertoo?', 
+        'Kaksi mastovaloa päällekkäin (yhdistettynä sivuvaloihin ja perävaloon) tarkoittaa hinaavaa alusta, kun hinauksen pituus hinaajan perästä hinattavan perään on enintään 200 metriä. Yli 200 metrin hinauksessa mastovaloja on kolme päällekkäin.',
+        'Kulkuvalot',
+        6
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Alus on yli 50 metriä pitkä', FALSE, 1),
+        (question_id, 'Alus hinaa toista alusta ja hinauksen pituus on enintään 200 metriä', TRUE, 2),
+        (question_id, 'Alus on karilla', FALSE, 3),
+        (question_id, 'Alus on luotsialus', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Kaksi purjealusta lähestyy toisiaan samalla halssilla (tuuli samalta puolelta) siten, että yhteentörmäämisen vaara syntyy. Kumpi väistää?', 
+        'Kun molemmilla purjealuksilla on tuuli samalta puolelta, tuulen yläpuolella (tuulen puolella) oleva alus väistää suojan puolella (tuulen alapuolella) olevaa alusta.', 
+        'Väistämissäännöt',
+        7
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Suojan puolella eli tuulen alapuolella oleva alus', FALSE, 1),
+        (question_id, 'Takana oleva alus kaikissa tilanteissa', FALSE, 2),
+        (question_id, 'Tuulen puolella eli tuulen yläpuolella oleva alus', TRUE, 3),
+        (question_id, 'Kevyempi purjealus', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Purjealus kulkee sekä purjeet ylhäällä että koneen voimalla. Mitä merkkikuviota sen on näytettävä päiväsaikaan?', 
+        'Purjeilla kulkeva alus, joka käyttää samanaikaisesti konetta, katsotaan konealukseksi. Päiväsaikaan sen on näytettävä keulassa yhtä kartiota kärki alaspäin paikassa, jossa se parhaiten näkyy.', 
+        'Päivämerkit',
+        8
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Kahta palloa päällekkäin', FALSE, 1),
+        (question_id, 'Yhtä palloa keulassa', FALSE, 2),
+        (question_id, 'Lieriötä', FALSE, 3),
+        (question_id, 'Kartiota kärki alaspäin', TRUE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Alus antaa näköpiirissä ollessaan yhden lyhyen äänimerkin. Mitä se tarkoittaa?', 
+        'Sääntö 34:n mukaan alusten ollessa toistensa näköpiirissä yksi lyhyt äänimerkki tarkoittaa ”muutan kurssiani oikealle”, kaksi lyhyttä ”muutan kurssiani vasemmalle” ja kolme lyhyttä ”koneeni käy taaksepäin”.', 
+        'Äänimerkit',
+        9
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, 'Muutan kurssiani oikealle', TRUE, 1),
+        (question_id, 'Muutan kurssiani vasemmalle', FALSE, 2),
+        (question_id, 'Koneeni käy taaksepäin', FALSE, 3),
+        (question_id, 'Aion ohittaa teidät vasemmalta puolelta', FALSE, 4);
+
+    INSERT INTO quiz_questions (quiz_id, question_text, explanation, hint, position)
+    VALUES (
+        colreg_quiz_id, 
+        'Kuinka laajalla sektorilla valkoinen perävalo näkyy?', 
+        'Perävalo on valkoinen valo, joka on sijoitettu mahdollisimman lähelle perää ja näkyy katkeamattomana 135° sektorilla — eli 67,5° suoraan perästä kummallekin puolelle.', 
+        'Valosektorit',
+        10
+    )
+    RETURNING id INTO question_id;
+
+    INSERT INTO quiz_question_options (question_id, option_text, is_correct, position)
+    VALUES
+        (question_id, '112,5° suoraan taaksepäin', FALSE, 1),
+        (question_id, '135° eli 67,5° suoraan perästä kummallekin puolelle', TRUE, 2),
+        (question_id, '225° suoraan taaksepäin', FALSE, 3),
+        (question_id, '360° eli ympärinäkyvästi', FALSE, 4);
 
 END $$;
 COMMIT;
