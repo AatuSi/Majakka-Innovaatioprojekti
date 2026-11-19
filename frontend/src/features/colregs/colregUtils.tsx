@@ -927,6 +927,8 @@ function renderLight(light: ProjectedLight, litLights: readonly ProjectedLight[]
       (other) => other.id === oppositeId && samePosition(other.position, light.position),
     );
 
+  const glowFilter = `url(#glow-${light.color})`;
+
   if (isCombined) {
     const sweep = light.id === "port" ? 1 : 0;
     return (
@@ -935,25 +937,189 @@ function renderLight(light: ProjectedLight, litLights: readonly ProjectedLight[]
         transform={`translate(${light.x} ${light.y})`}
         d={`M 0 -1.6 A 1.6 1.6 0 0 ${sweep} 0 1.6 Z`}
         fill={COLORS[light.color]}
+        filter={glowFilter}
       >
         <title>{light.id}</title>
       </path>
     );
   }
   return (
-    <circle key={light.id} cx={light.x} cy={light.y} r="1.6" fill={COLORS[light.color]}>
+    <circle key={light.id} cx={light.x} cy={light.y} r="1.6" fill={COLORS[light.color]} filter={glowFilter}>
       <title>{light.id}</title>
     </circle>
   );
 }
 
+/** SVG glow filter: two‑layer Gaussian blur for a soft halo around each light. */
+function GlowFilter({ id, color }: { id: string; color: string }): ReactElement {
+  return (
+    <filter id={id} x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur2" />
+      <feFlood floodColor={color} floodOpacity="0.6" result="color1" />
+      <feFlood floodColor={color} floodOpacity="0.3" result="color2" />
+      <feComposite in="color1" in2="blur1" operator="in" result="glow1" />
+      <feComposite in="color2" in2="blur2" operator="in" result="glow2" />
+      <feMerge>
+        <feMergeNode in="glow2" />
+        <feMergeNode in="glow1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  );
+}
+
+/** 3D model of a generic ship hull and wheelhouse, projected to 2D SVG elements. */
+function renderShipSilhouette(bearingDeg: number): ReactElement {
+  const rad = (bearingDeg * Math.PI) / 180;
+  const proj = ([x, y, z]: Vec3): [number, number] => [
+    +(-x * Math.cos(rad) + y * Math.sin(rad)).toFixed(1),
+    +(-z).toFixed(1),
+  ];
+  const toPoints = (pts: Vec3[]) => pts.map(proj).map(([x, y]) => `${x},${y}`).join(" ");
+
+  // Stations along the hull (starboard side; port is mirrored at -x)
+  const stations: Array<{ d: Vec3; w: Vec3 }> = [
+    { d: [0, 36, 5], w: [0, 33, 0] },     // bow stem
+    { d: [5, 26, 5], w: [4, 25, 0] },     // forward shoulder
+    { d: [8, 12, 5], w: [7, 12, 0] },     // midships fwd
+    { d: [8, -12, 5], w: [7, -12, 0] },   // midships aft
+    { d: [6, -26, 5], w: [5, -26, 0] },   // aft quarter
+    { d: [4, -38, 5], w: [3, -37, 0] },   // transom corner
+  ];
+
+  // Hull side quads
+  const hullFaces: Vec3[][] = [];
+  for (let i = 0; i < stations.length - 1; i++) {
+    // Starboard
+    hullFaces.push([stations[i].d, stations[i + 1].d, stations[i + 1].w, stations[i].w]);
+    // Port
+    hullFaces.push([
+      [-stations[i].d[0], stations[i].d[1], stations[i].d[2]],
+      [-stations[i + 1].d[0], stations[i + 1].d[1], stations[i + 1].d[2]],
+      [-stations[i + 1].w[0], stations[i + 1].w[1], stations[i + 1].w[2]],
+      [-stations[i].w[0], stations[i].w[1], stations[i].w[2]],
+    ]);
+  }
+  // Transom (stern face)
+  const stern = stations[stations.length - 1];
+  hullFaces.push([
+    stern.d,
+    [-stern.d[0], stern.d[1], stern.d[2]],
+    [-stern.w[0], stern.w[1], stern.w[2]],
+    stern.w,
+  ]);
+
+  // Deck surface polygon
+  const deckPoints: Vec3[] = [
+    ...stations.map((s) => s.d),
+    ...stations.slice(1).reverse().map((s) => [-s.d[0], s.d[1], s.d[2]] as Vec3),
+  ];
+
+  // Superstructure / wheelhouse box
+  const cabinFaces: Vec3[][] = [
+    // front
+    [[-4.5, 8, 5], [4.5, 8, 5], [4.5, 8, 13], [-4.5, 8, 13]],
+    // back
+    [[4.5, -12, 5], [-4.5, -12, 5], [-4.5, -12, 13], [4.5, -12, 13]],
+    // starboard
+    [[4.5, 8, 5], [4.5, -12, 5], [4.5, -12, 13], [4.5, 8, 13]],
+    // port
+    [[-4.5, -12, 5], [-4.5, 8, 5], [-4.5, 8, 13], [-4.5, -12, 13]],
+    // roof
+    [[-4.5, 8, 13], [4.5, 8, 13], [4.5, -12, 13], [-4.5, -12, 13]],
+  ];
+
+  // Masts: fore mast and main/wheelhouse mast
+  const foreMastBottom = proj([0, 20, 5]);
+  const foreMastTop = proj([0, 20, 30]);
+  const mainMastBottom = proj([0, -2, 13]);
+  const mainMastTop = proj([0, -2, 36]);
+
+  return (
+    <g className="ship-silhouette" pointerEvents="none">
+      {/* Hull sides */}
+      {hullFaces.map((face, index) => (
+        <polygon
+          key={`hull-${index}`}
+          points={toPoints(face)}
+          fill="#0c192c"
+          stroke="#1e3555"
+          strokeWidth="0.4"
+          strokeLinejoin="round"
+        />
+      ))}
+      {/* Deck */}
+      <polygon
+        points={toPoints(deckPoints)}
+        fill="#0d1b30"
+        stroke="#1e3555"
+        strokeWidth="0.4"
+        strokeLinejoin="round"
+      />
+      {/* Cabin */}
+      {cabinFaces.map((face, index) => (
+        <polygon
+          key={`cabin-${index}`}
+          points={toPoints(face)}
+          fill="#102038"
+          stroke="#223d63"
+          strokeWidth="0.4"
+          strokeLinejoin="round"
+        />
+      ))}
+      {/* Masts */}
+      <line
+        x1={foreMastBottom[0]}
+        y1={foreMastBottom[1]}
+        x2={foreMastTop[0]}
+        y2={foreMastTop[1]}
+        stroke="#1e3555"
+        strokeWidth="0.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1={mainMastBottom[0]}
+        y1={mainMastBottom[1]}
+        x2={mainMastTop[0]}
+        y2={mainMastTop[1]}
+        stroke="#223d63"
+        strokeWidth="0.5"
+        strokeLinecap="round"
+      />
+    </g>
+  );
+}
+
 /** React SVG elements; wrap the result in an <svg> with an appropriate viewBox. */
-export function renderSvg(scenario: Scenario, bearingDeg: number, timeMs = 0): ReactElement {
+export function renderSvg(
+  scenario: Scenario,
+  bearingDeg: number,
+  timeMs = 0,
+  showSilhouette = true,
+): ReactElement {
   const view = projectDisplay(buildDisplay(scenario), bearingDeg, timeMs);
   const litLights = view.lights.filter((light) => light.on);
   return (
     <>
-      <rect x="-60" y="-65" width="120" height="80" fill="#080f1d" />
+      <defs>
+        <GlowFilter id="glow-white" color={COLORS.white} />
+        <GlowFilter id="glow-red" color={COLORS.red} />
+        <GlowFilter id="glow-green" color={COLORS.green} />
+        <GlowFilter id="glow-yellow" color={COLORS.yellow} />
+        <linearGradient id="water-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#09182d" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#020617" stopOpacity="0.05" />
+        </linearGradient>
+      </defs>
+      {/* Night background */}
+      <rect x="-60" y="-65" width="120" height="80" fill="#020617" />
+      {/* Waterline & subtle sea surface */}
+      <rect x="-60" y="0" width="120" height="15" fill="url(#water-grad)" />
+      <line x1="-58" y1="0" x2="58" y2="0" stroke="#1b3452" strokeWidth="0.4" strokeOpacity="0.8" />
+      {/* Ship silhouette */}
+      {showSilhouette && renderShipSilhouette(bearingDeg)}
+      {/* Navigation lights */}
       {litLights.map((light) => renderLight(light, litLights))}
     </>
   );

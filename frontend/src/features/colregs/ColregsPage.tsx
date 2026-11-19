@@ -26,7 +26,15 @@ const options = EXAMPLES.map((scenario, index) => ({
 }));
 
 export default function ColregsPage() {
-  const { view, scenario, bearingDeg, setScenario, setBearingDeg } = useColreg();
+  const {
+    view,
+    scenario,
+    bearingDeg,
+    showSilhouette,
+    setScenario,
+    setBearingDeg,
+    setShowSilhouette,
+  } = useColreg();
 
   const [selectedOption, setSelectedOption] = useState("");
 
@@ -118,9 +126,35 @@ export default function ColregsPage() {
                 );
               })}
             </div>
+
+            <div className="flex items-center justify-between border-t border-white/10 pt-4">
+              <span className="text-sm font-semibold uppercase tracking-wide text-amber-300">
+                Aluksen siluetti
+              </span>
+              <button
+                type="button"
+                aria-pressed={showSilhouette}
+                className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                  showSilhouette
+                    ? "border-amber-300 bg-amber-300 text-navy-950"
+                    : "border-white/20 text-slate-300 hover:border-white/40 hover:text-white"
+                }`}
+                onClick={() => setShowSilhouette(!showSilhouette)}
+              >
+                {showSilhouette ? "Päällä" : "Pois"}
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-white/10">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#020617] shadow-xl">
+            <button
+              type="button"
+              aria-label="Vaihda aluksen siluetin näkyvyyttä"
+              className="absolute right-3 top-3 z-10 cursor-pointer rounded-lg border border-white/15 bg-navy-950/80 px-2.5 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm transition hover:border-amber-300/50 hover:text-amber-300"
+              onClick={() => setShowSilhouette(!showSilhouette)}
+            >
+              {showSilhouette ? "Piilota siluetti" : "Näytä siluetti"}
+            </button>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="-60 -65 120 80"
