@@ -135,6 +135,29 @@ export default function Header() {
         <div className="flex items-center gap-3">
           {authUser ? (
             <div className="flex items-center gap-3">
+              <div className="hidden items-center gap-3 sm:flex">
+                {/* Results for every logged-in user, messages for admins only */}
+                <Link
+                  to="/results"
+                  className={navLinkBase}
+                  activeProps={{ className: navLinkActive }}
+                  inactiveProps={{ className: navLinkInactive }}
+                  onClick={navigateTo("/results")}
+                >
+                  Tulokset
+                </Link>
+                {authUser.role === "admin" && (
+                  <Link
+                    to="/messages"
+                    className={navLinkBase}
+                    activeProps={{ className: navLinkActive }}
+                    inactiveProps={{ className: navLinkInactive }}
+                    onClick={navigateTo("/messages")}
+                  >
+                    Viestit
+                  </Link>
+                )}
+              </div>
               <NotificationBell />
               <Link
                 to="/profile"
@@ -251,6 +274,30 @@ export default function Header() {
                 Hankkeesta
               </Link>
             </li>
+            {authUser && (
+              <li>
+                <Link
+                  to="/results"
+                  onClick={navigateTo("/results")}
+                  className="block py-2 text-lg text-white hover:text-[#1D90F4]"
+                  activeProps={{ className: "text-[#1D90F4] font-medium" }}
+                >
+                  Tulokset
+                </Link>
+              </li>
+            )}
+            {authUser?.role === "admin" && (
+              <li>
+                <Link
+                  to="/messages"
+                  onClick={navigateTo("/messages")}
+                  className="block py-2 text-lg text-white hover:text-[#1D90F4]"
+                  activeProps={{ className: "text-[#1D90F4] font-medium" }}
+                >
+                  Viestit
+                </Link>
+              </li>
+            )}
             {!authUser && (
               <li className="pt-2">
                 <button

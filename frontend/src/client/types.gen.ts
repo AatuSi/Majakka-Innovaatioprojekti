@@ -669,6 +669,46 @@ export type QuizResponseItemSchema = {
 };
 
 /**
+ * QuizTopicResult
+ *
+ * Aggregated results for one quiz. Each quiz is one topic (e.g. IALA, COLREG).
+ */
+export type QuizTopicResult = {
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+    /**
+     * Quiz Name
+     */
+    quiz_name?: string | null;
+    /**
+     * Question Count
+     */
+    question_count: number;
+    /**
+     * Attempt Count
+     */
+    attempt_count: number;
+    /**
+     * Answer Count
+     */
+    answer_count: number;
+    /**
+     * Correct Count
+     */
+    correct_count: number;
+    /**
+     * Accuracy
+     */
+    accuracy?: number | null;
+    /**
+     * Last Attempt At
+     */
+    last_attempt_at?: string | null;
+};
+
+/**
  * QuizUpdate
  */
 export type QuizUpdate = {
@@ -1835,6 +1875,38 @@ export type GetResponseResponses = {
 
 export type GetResponseResponse = GetResponseResponses[keyof GetResponseResponses];
 
+export type ListQuizResultsByTopicData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * User Id
+         */
+        user_id?: string | null;
+    };
+    url: '/quiz-results/by-topic';
+};
+
+export type ListQuizResultsByTopicErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListQuizResultsByTopicError = ListQuizResultsByTopicErrors[keyof ListQuizResultsByTopicErrors];
+
+export type ListQuizResultsByTopicResponses = {
+    /**
+     * Response List Quiz Results By Topic
+     *
+     * Successful Response
+     */
+    200: Array<QuizTopicResult>;
+};
+
+export type ListQuizResultsByTopicResponse = ListQuizResultsByTopicResponses[keyof ListQuizResultsByTopicResponses];
+
 export type ListIalaLightsData = {
     body?: never;
     path?: never;
@@ -1990,6 +2062,38 @@ export type UpdateIalaLightResponses = {
 
 export type UpdateIalaLightResponse = UpdateIalaLightResponses[keyof UpdateIalaLightResponses];
 
+export type ListContactMessagesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Topic
+         */
+        topic?: string | null;
+    };
+    url: '/contact';
+};
+
+export type ListContactMessagesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListContactMessagesError = ListContactMessagesErrors[keyof ListContactMessagesErrors];
+
+export type ListContactMessagesResponses = {
+    /**
+     * Response List Contact Messages
+     *
+     * Successful Response
+     */
+    200: Array<ContactMessageResponse>;
+};
+
+export type ListContactMessagesResponse = ListContactMessagesResponses[keyof ListContactMessagesResponses];
+
 export type CreateContactMessageData = {
     body: ContactMessageCreate;
     path?: never;
@@ -2014,3 +2118,63 @@ export type CreateContactMessageResponses = {
 };
 
 export type CreateContactMessageResponse = CreateContactMessageResponses[keyof CreateContactMessageResponses];
+
+export type DeleteContactMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/contact/{message_id}';
+};
+
+export type DeleteContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteContactMessageError = DeleteContactMessageErrors[keyof DeleteContactMessageErrors];
+
+export type DeleteContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteContactMessageResponse = DeleteContactMessageResponses[keyof DeleteContactMessageResponses];
+
+export type GetContactMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/contact/{message_id}';
+};
+
+export type GetContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetContactMessageError = GetContactMessageErrors[keyof GetContactMessageErrors];
+
+export type GetContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    200: ContactMessageResponse;
+};
+
+export type GetContactMessageResponse = GetContactMessageResponses[keyof GetContactMessageResponses];
