@@ -1073,11 +1073,11 @@ function renderShipSilhouette(bearingDeg: number): ReactElement {
     forceVisible: true,
   });
 
-  // Wheelhouse / Cabin positioned aft of midships (y from -16 to 4, width ±4.2, height 5 to 13)
+  // Wheelhouse / Cabin positioned aft of midships (y from -16 to 4, width ±4.2, height 4.8 to 13)
   const cWidth = 4.2;
   const cFwd = 4.0;
   const cAft = -16.0;
-  const cBottom = 5.0;
+  const cBottom = 4.8;
   const cTop = 13.0;
   const winZMin = 9.2;
   const winZMax = 12.0;
@@ -1270,20 +1270,54 @@ function renderShipSilhouette(bearingDeg: number): ReactElement {
     stroke: string;
     strokeWidth: number;
   }
-  const lines3D: Array<{ id: string; p1: Vec3; p2: Vec3; stroke?: string; strokeWidth?: number }> = [
-    // Bow jackstaff at prow
-    { id: "jackstaff", p1: [0, 36, 7.5], p2: [0, 36, 12.5], stroke: "#2a4d79", strokeWidth: 0.5 },
-    // Stern flagstaff
-    { id: "flagstaff", p1: [0, -38, 4.5], p2: [0, -38, 9.5], stroke: "#1f3a5d", strokeWidth: 0.5 },
-    // Fore mast (on foredeck at y=20)
-    { id: "fore-mast", p1: [0, 20, 5.8], p2: [0, 20, 32], stroke: "#254773", strokeWidth: 0.6 },
-    // Fore mast yardarm
-    { id: "fore-yardarm", p1: [-3.2, 20, 24], p2: [3.2, 20, 24], stroke: "#254773", strokeWidth: 0.5 },
-    // Main / Radar mast (on wheelhouse roof at y=-6)
-    { id: "main-mast", p1: [0, -6, 13], p2: [0, -6, 38], stroke: "#2b5282", strokeWidth: 0.6 },
-    // Main mast yardarm / radar bar
-    { id: "main-yardarm", p1: [-4.2, -6, 28], p2: [4.2, -6, 28], stroke: "#2b5282", strokeWidth: 0.5 },
+
+  // Line-of-sight occlusion calculations:
+  const cosBearing = Math.cos(rad);
+
+  // Cabin horizontal footprint in 2D projection
+  const cabinCorners3D: Vec3[] = [
+    [-cWidth, cFwd, cBottom],
+    [cWidth, cFwd, cBottom],
+    [cWidth, cAft, cBottom],
+    [-cWidth, cAft, cBottom],
+    [-cWidth, cFwd, cTop],
+    [cWidth, cFwd, cTop],
+    [cWidth, cAft, cTop],
+    [-cWidth, cAft, cTop],
   ];
+  const cabinProj = cabinCorners3D.map(proj);
+  const minCabinX = Math.min(...cabinProj.map((p) => p.x));
+  const maxCabinX = Math.max(...cabinProj.map((p) => p.x));
+
+  const foreMastX = proj([0, 20, 5.8]).x;
+  // Lower section of fore mast (deck to cabin roof) is occluded when looking from astern and behind cabin body
+  const foreLowerOccluded =
+    cosBearing < 0 && foreMastX >= minCabinX - 0.2 && foreMastX <= maxCabinX + 0.2;
+
+  const lines3D: Array<{ id: string; p1: Vec3; p2: Vec3; stroke?: string; strokeWidth?: number }> = [];
+
+  // Bow jackstaff at prow (naturally occluded by hull/superstructure via depth sorting)
+  lines3D.push({ id: "jackstaff", p1: [0, 36, 7.5], p2: [0, 36, 10.0], stroke: "#2a4d79", strokeWidth: 0.5 });
+
+  // Stern flagstaff at transom (naturally occluded by hull/superstructure via depth sorting)
+  lines3D.push({ id: "flagstaff", p1: [0, -38, 4.5], p2: [0, -38, 7.0], stroke: "#1f3a5d", strokeWidth: 0.5 });
+
+  // Fore mast lower section (from deck z=5.8 to cabin roof z=13.0; hidden when occluded by cabin)
+  if (!foreLowerOccluded) {
+    lines3D.push({ id: "fore-mast-lower", p1: [0, 20, 5.8], p2: [0, 20, 13.0], stroke: "#254773", strokeWidth: 0.6 });
+  }
+
+  // Fore mast upper section (from cabin roof z=13.0 to top z=32.0; always visible above cabin roof)
+  lines3D.push({ id: "fore-mast-upper", p1: [0, 20, 13.0], p2: [0, 20, 32], stroke: "#254773", strokeWidth: 0.6 });
+
+  // Fore mast yardarm
+  lines3D.push({ id: "fore-yardarm", p1: [-3.2, 20, 24], p2: [3.2, 20, 24], stroke: "#254773", strokeWidth: 0.5 });
+
+  // Main / Radar mast (on wheelhouse roof at y=-6)
+  lines3D.push({ id: "main-mast", p1: [0, -6, 13], p2: [0, -6, 38], stroke: "#2b5282", strokeWidth: 0.6 });
+
+  // Main mast yardarm / radar bar
+  lines3D.push({ id: "main-yardarm", p1: [-4.2, -6, 28], p2: [4.2, -6, 28], stroke: "#2b5282", strokeWidth: 0.5 });
 
   const visibleLines: ProjectedLine[] = lines3D.map((l) => {
     const a = proj(l.p1);
@@ -1305,7 +1339,7 @@ function renderShipSilhouette(bearingDeg: number): ReactElement {
 
   const sceneItems: SceneItem[] = [
     ...visibleFaces.map((f) => ({ kind: "face" as const, face: f, depth: f.avgDepth })),
-    ...visibleLines.map((l) => ({ kind: "line" as const, line: l, depth: l.depth })),
+    ...visibleLines.map((l) => ({ kind: "line" as const, line: l, depth: l.avgDepth })),
   ];
   sceneItems.sort((a, b) => a.depth - b.depth);
 
