@@ -21,10 +21,15 @@ CREATE TABLE users (
     username      VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role          user_role    NOT NULL DEFAULT 'user',
+    first_name    VARCHAR(100),
+    last_name     VARCHAR(100),
+    email         VARCHAR(320),
+    avatar_icon   VARCHAR(50),
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX users_username_lower_key ON users (lower(username));
+CREATE UNIQUE INDEX users_email_lower_key ON users (lower(email));
 
 CREATE TABLE quizzes (
     id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -49,6 +54,7 @@ CREATE TABLE quiz_questions (
     question_text TEXT,
     explanation   TEXT,
     hint          TEXT,
+    topic         VARCHAR(100),
     position      INT         NOT NULL DEFAULT 0,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -82,6 +88,8 @@ CREATE TABLE quiz_attempts (
     user_id    UUID        NOT NULL,
     quiz_id    UUID        NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at     TIMESTAMPTZ,
+    duration_seconds INT,
 
     CONSTRAINT quiz_attempts_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id)
@@ -96,6 +104,8 @@ CREATE TABLE quiz_responses (
     attempt_id         UUID        NOT NULL,
     question_id        UUID        NOT NULL,
     selected_option_id UUID        NOT NULL,
+    is_correct         BOOLEAN     NOT NULL,
+    time_spent_ms      INT,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT quiz_responses_attempt_id_fkey
@@ -121,6 +131,7 @@ CREATE TABLE contact_messages(
 
 CREATE INDEX idx_quiz_questions_quiz_id ON quiz_questions (quiz_id);
 CREATE INDEX idx_quiz_questions_iala_light_id ON quiz_questions (iala_light_id);
+CREATE INDEX idx_quiz_questions_topic ON quiz_questions (topic);
 CREATE INDEX idx_quiz_question_options_question_id ON quiz_question_options (question_id);
 CREATE INDEX idx_quiz_question_options_iala_light_id ON quiz_question_options (iala_light_id);
 CREATE INDEX idx_quiz_attempts_user_id ON quiz_attempts (user_id);

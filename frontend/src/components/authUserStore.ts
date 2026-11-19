@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { UserResponse } from '../client'
+import { client } from "../client/client.gen";
 import { getAccessToken, clearAccessToken, setAccessToken } from "../api/config";
 
 const USER_KEY = "majakka.username";
@@ -54,6 +55,41 @@ export function logoutUser() {
   user = null;
   notify();
 }
+
+/** The name the user has filled in; empty until they have. */
+export function getFullName(account: UserResponse): string {
+  return [account.first_name, account.last_name].filter(Boolean).join(" ");
+}
+
+/** Full name when the user has filled it in, otherwise the username. */
+export function getDisplayName(account: UserResponse | null): string {
+  if (!account) return "";
+  return getFullName(account) || account.username;
+}
+
+/** Replace the stored details of the logged-in user, e.g. after a refresh. */
+export function updateAuthUser(nextUser: UserResponse) {
+  if (user?.id !== nextUser.id) return;
+  window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+  user = nextUser;
+  notify();
+}
+
+// A rejected token means the session is over, so log out instead of leaving
+// the UI looking logged in while every call fails. Only the current token
+// counts: a late answer to a request made with an old one must not end a new
+// session, and requests sent without a token (like login) are not affected.
+client.interceptors.response.use((response, request) => {
+  const token = getAccessToken();
+  if (
+    response.status === 401 &&
+    token &&
+    request.headers.get("Authorization") === `Bearer ${token}`
+  ) {
+    logoutUser();
+  }
+  return response;
+});
 
 /** React hook – returns `{ username }` or `null`. */
 export function useAuthUser(): AuthUser {

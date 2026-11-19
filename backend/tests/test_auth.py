@@ -72,6 +72,45 @@ def test_login_with_unknown_user_returns_unauthorized(anon_client):
     assert response.json()["detail"] == "Invalid credentials"
 
 
+def register_with_email(client):
+    response = client.post(
+        "/users",
+        json={"username": "alice", "password": "secret123", "email": "alice@example.com"},
+    )
+    assert response.status_code == 201
+
+
+def test_login_with_email_ignores_case_and_outer_spaces(anon_client):
+    register_with_email(anon_client)
+
+    response = login(anon_client, username=" ALICE@example.com ")
+
+    assert response.status_code == 200
+    assert response.json()["user"]["username"] == "alice"
+
+
+def test_login_with_username_still_works_when_email_is_set(anon_client):
+    register_with_email(anon_client)
+
+    assert login(anon_client, username="alice").status_code == 200
+
+
+def test_login_with_email_and_wrong_password_returns_unauthorized(anon_client):
+    register_with_email(anon_client)
+
+    response = login(anon_client, username="alice@example.com", password="wrong")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid credentials"
+
+
+def test_login_with_unknown_email_returns_unauthorized(anon_client):
+    response = login(anon_client, username="nobody@example.com")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid credentials"
+
+
 def test_protected_routes_exist():
     assert ("GET", "/users") in PROTECTED_ROUTES
     assert ("GET", "/quizzes") in PROTECTED_ROUTES

@@ -61,11 +61,11 @@ def require_answer_is_consistent(
     quiz_id: UUID,
     question_id: UUID,
     selected_option_id: UUID,
-) -> None:
+) -> models.QuizQuestionOption:
     """Check that an answer points at a question of this quiz and one of its options.
 
     The foreign keys alone allow answering a question from another quiz, or
-    picking an option that belongs to a different question.
+    picking an option that belongs to a different question. Returns the option.
     """
     question = require_question(db, question_id)
 
@@ -82,3 +82,5 @@ def require_answer_is_consistent(
             status_code=400,
             detail="Selected option does not belong to the question",
         )
+
+    return option

@@ -30,6 +30,10 @@ class User(Base):
         nullable=False,
         default=UserRole.USER,
     )
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    email = Column(String(320), nullable=True)
+    avatar_icon = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     attempts = relationship("QuizAttempt", back_populates="user", cascade="all, delete-orphan")
 
@@ -60,6 +64,7 @@ class QuizQuestion(Base):
     question_text = Column(Text, nullable=True)
     explanation = Column(Text, nullable=True)
     hint = Column(Text, nullable=True)
+    topic = Column(String(100), nullable=True, index=True)
     position = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -98,6 +103,9 @@ class QuizAttempt(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     quiz_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # Both stay null until the quiz is finished, so a null marks an abandoned attempt.
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
 
     user = relationship("User", back_populates="attempts")
     quiz = relationship("Quiz", back_populates="attempts")
@@ -117,6 +125,9 @@ class QuizResponse(Base):
     attempt_id = Column(UUID(as_uuid=True), ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(UUID(as_uuid=True), ForeignKey("quiz_questions.id", ondelete="CASCADE"), nullable=False)
     selected_option_id = Column(UUID(as_uuid=True), ForeignKey("quiz_question_options.id", ondelete="CASCADE"), nullable=False)
+    # Copied when answering, so correcting a question later keeps past results.
+    is_correct = Column(Boolean, nullable=False)
+    time_spent_ms = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     attempt = relationship("QuizAttempt", back_populates="responses")
