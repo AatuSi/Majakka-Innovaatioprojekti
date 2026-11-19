@@ -49,6 +49,7 @@ def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(get_db)):
             question_text=question.question_text,
             explanation=question.explanation,
             hint=question.hint,
+            topic=question.topic,
             iala_light_id=question.iala_light_id,
             position=question.position,
         )

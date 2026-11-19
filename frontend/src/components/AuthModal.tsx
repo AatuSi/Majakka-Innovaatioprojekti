@@ -47,6 +47,9 @@ export default function AuthModal() {
 function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -125,7 +128,16 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
 
     try {
       if (!isSignIn) {
-        await createUser({ body: { username, password }, throwOnError: true });
+        await createUser({
+          body: {
+            username,
+            password,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            email: email.trim(),
+          },
+          throwOnError: true,
+        });
       }
 
       const response = await login({
@@ -137,7 +149,7 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
         response.data.access_token,
         response.data.user
       );
-      setSuccess({ mode, username });
+      setSuccess({ mode, username: response.data.user.username });
     } catch (error) {
       const detail =
         error &&
@@ -149,10 +161,12 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
 
       setErrorMessage(
         detail === "Invalid credentials"
-          ? "Käyttäjätunnus tai salasana on väärä."
+          ? "Käyttäjätunnus, sähköposti tai salasana on väärä."
           : detail === "Username already exists"
             ? "Käyttäjätunnus on jo käytössä."
-            : "Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.",
+            : detail === "Email already exists"
+              ? "Sähköpostiosoite on jo käytössä."
+              : "Kirjautuminen ei onnistunut. Yritä hetken kuluttua uudelleen.",
       );
     } finally {
       setIsSubmitting(false);
@@ -241,15 +255,17 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
               <div>
                 <label htmlFor="auth-username" className="mb-2 block text-sm font-medium">
-                  Käyttäjätunnus
+                  {isSignIn ? "Käyttäjätunnus tai sähköposti" : "Käyttäjätunnus"}
                 </label>
                 <input
                   ref={firstFieldRef}
                   id="auth-username"
                   type="text"
                   autoComplete="username"
-                  placeholder="Kirjoita käyttäjätunnus"
+                  placeholder={isSignIn ? "Kirjoita käyttäjätunnus tai sähköposti" : "Kirjoita käyttäjätunnus"}
                   required
+                  pattern={isSignIn ? undefined : "[^@]+"}
+                  title={isSignIn ? undefined : "Käyttäjätunnus ei voi sisältää @-merkkiä"}
                   value={username}
                   onChange={(event) => {
                     setUsername(event.target.value);
@@ -258,6 +274,66 @@ function AuthDialog({ initialMode }: { initialMode: AuthMode }) {
                   className={inputClass}
                 />
               </div>
+
+              {!isSignIn && (
+                <>
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="auth-first-name" className="mb-2 block text-sm font-medium">
+                        Etunimi
+                      </label>
+                      <input
+                        id="auth-first-name"
+                        type="text"
+                        autoComplete="given-name"
+                        placeholder="Kirjoita etunimi"
+                        required
+                        pattern=".*\S.*"
+                        title="Kirjoita etunimi"
+                        maxLength={100}
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="auth-last-name" className="mb-2 block text-sm font-medium">
+                        Sukunimi
+                      </label>
+                      <input
+                        id="auth-last-name"
+                        type="text"
+                        autoComplete="family-name"
+                        placeholder="Kirjoita sukunimi"
+                        required
+                        pattern=".*\S.*"
+                        title="Kirjoita sukunimi"
+                        maxLength={100}
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="auth-email" className="mb-2 block text-sm font-medium">
+                      Sähköpostiosoite
+                    </label>
+                    <input
+                      id="auth-email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="Kirjoita sähköpostiosoite"
+                      required
+                      maxLength={320}
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <label htmlFor="auth-password" className="mb-2 block text-sm font-medium">
