@@ -846,11 +846,30 @@ export function buildDisplay(scenario: Scenario): Display {
  * Geometry and animation
  * ========================================================================== */
 
-/** Ideal nominal sectors, including shared endpoints; no real-world cutoff falloff. */
-export function isVisible(sector: Sector, bearingDeg: number): boolean {
+/** Practical cutoff falloff band in degrees (COLREG Annex I, Sec. 9 specifies 1°–3° cutoff). */
+export const SECTOR_FADE_DEG = 2.5;
+
+/**
+ * Calculates visibility opacity (0.0 to 1.0) based on nominal legal sector and practical cutoff falloff.
+ * Inside the nominal sector, opacity is 1.0. Outside the sector, intensity diminishes
+ * smoothly to practical cutoff (0.0) over SECTOR_FADE_DEG.
+ */
+export function sectorOpacity(sector: Sector, bearingDeg: number): number {
   assertFinite(bearingDeg, "bearingDeg");
+  if (sector.width >= 360) return 1.0;
   const angularDifference = ((((bearingDeg - sector.center) % 360) + 540) % 360) - 180;
-  return Math.abs(angularDifference) <= sector.width / 2 + 1e-9;
+  const diff = Math.abs(angularDifference);
+  const halfWidth = sector.width / 2;
+  if (diff <= halfWidth) return 1.0;
+  const excess = diff - halfWidth;
+  if (excess >= SECTOR_FADE_DEG) return 0.0;
+  const t = 1.0 - excess / SECTOR_FADE_DEG;
+  return t * t * (3 - 2 * t);
+}
+
+/** Nominal sector visibility check; returns true if light is within visible cutoff arc. */
+export function isVisible(sector: Sector, bearingDeg: number): boolean {
+  return sectorOpacity(sector, bearingDeg) > 0.001;
 }
 
 export function isLit(light: Light, timeMs: number): boolean {
@@ -885,12 +904,16 @@ export function projectDisplay(display: Display, bearingDeg: number, timeMs = 0)
   return {
     ...display,
     lights: display.lights
-      .filter((light) => isVisible(light.sector, bearingDeg))
-      .map((light) => ({
-        ...light,
-        ...project(light.position, bearingDeg),
-        on: isLit(light, timeMs),
-      }))
+      .map((light) => {
+        const opacity = +sectorOpacity(light.sector, bearingDeg).toFixed(2);
+        return {
+          ...light,
+          ...project(light.position, bearingDeg),
+          opacity,
+          on: isLit(light, timeMs),
+        };
+      })
+      .filter((light) => light.opacity > 0)
       .sort((a, b) => a.depth - b.depth),
     shapes: display.shapes
       .map((shape) => ({ ...shape, ...project(shape.position, bearingDeg) }))
@@ -938,13 +961,22 @@ function renderLight(light: ProjectedLight, litLights: readonly ProjectedLight[]
         d={`M 0 -1.6 A 1.6 1.6 0 0 ${sweep} 0 1.6 Z`}
         fill={COLORS[light.color]}
         filter={glowFilter}
+        opacity={light.opacity}
       >
         <title>{light.id}</title>
       </path>
     );
   }
   return (
-    <circle key={light.id} cx={light.x} cy={light.y} r="1.6" fill={COLORS[light.color]} filter={glowFilter}>
+    <circle
+      key={light.id}
+      cx={light.x}
+      cy={light.y}
+      r="1.6"
+      fill={COLORS[light.color]}
+      filter={glowFilter}
+      opacity={light.opacity}
+    >
       <title>{light.id}</title>
     </circle>
   );
@@ -1410,7 +1442,7 @@ export function renderSvg(
   scenario: Scenario,
   bearingDeg: number,
   timeMs = 0,
-  showSilhouette = true,
+  showSilhouette = false,
 ): ReactElement {
   const view = projectDisplay(buildDisplay(scenario), bearingDeg, timeMs);
   const litLights = view.lights.filter((light) => light.on);

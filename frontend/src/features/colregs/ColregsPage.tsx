@@ -134,11 +134,10 @@ export default function ColregsPage() {
                     type="button"
                     key={name}
                     aria-pressed={active}
-                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      active
+                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition ${active
                         ? "border-amber-300 bg-amber-300 text-navy-950"
                         : "border-white/20 text-white hover:border-white/40"
-                    }`}
+                      }`}
                     onClick={() => setBearingDeg(90 * i)}
                   >
                     {name}
@@ -149,16 +148,15 @@ export default function ColregsPage() {
 
             <div className="flex items-center justify-between border-t border-white/10 pt-4">
               <span className="text-sm font-semibold uppercase tracking-wide text-amber-300">
-                Aluksen siluetti
+                Havainnollistava aluksen siluetti
               </span>
               <button
                 type="button"
                 aria-pressed={showSilhouette}
-                className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
-                  showSilhouette
+                className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs font-semibold transition ${showSilhouette
                     ? "border-amber-300 bg-amber-300 text-navy-950"
                     : "border-white/20 text-slate-300 hover:border-white/40 hover:text-white"
-                }`}
+                  }`}
                 onClick={() => setShowSilhouette(!showSilhouette)}
               >
                 {showSilhouette ? "Päällä" : "Pois"}
