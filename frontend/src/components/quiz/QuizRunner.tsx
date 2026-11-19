@@ -70,6 +70,7 @@ export default function QuizRunner({
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
+  const [answerImageObjectUrl, setAnswerImageObjectUrl] = useState<string | null>();
 
   const questionHeadingRef = useRef<HTMLHeadingElement>(null)
 
@@ -81,6 +82,20 @@ export default function QuizRunner({
   const [saveError, setSaveError] = useState<string | null>(null)
   const authUser = useAuthUser()
 
+  useEffect(() => {
+    if (!question?.answerImageUrl) return setAnswerImageObjectUrl(null);
+    
+    fetch(question.answerImageUrl)
+      .then((response) => response.blob())
+      .then(URL.createObjectURL)
+      .then(setAnswerImageObjectUrl)
+  }, [question?.answerImageUrl]);
+
+  useEffect(() => {
+    if (!answerImageObjectUrl) return
+  
+    return () => URL.revokeObjectURL(answerImageObjectUrl)
+  }, [answerImageObjectUrl])
   // The attempt is stored when the quiz starts and each answer as it is given,
   // so quizzes left unfinished show up in the statistics too.
   const attemptRef = useRef<Promise<string | null> | null>(null)
@@ -565,7 +580,7 @@ export default function QuizRunner({
                 <div aria-live="polite">
                   {revealed ? (
                     <div
-                      className={`mt-4 rounded-xl border p-4 ${
+                      className={`space-y-4 mt-4 rounded-xl border p-4 ${
                         currentAnswer?.correct
                           ? 'border-green-400/40 bg-green-400/10'
                           : 'border-red-400/40 bg-red-400/10'
@@ -579,6 +594,9 @@ export default function QuizRunner({
                       <p className="mt-2 text-sm leading-relaxed text-slate-300">
                         {currentAnswer?.explanation ?? 'Selitystä ei ole saatavilla.'}
                       </p>
+                      {answerImageObjectUrl && answerImageObjectUrl.length > 0
+                        ? <img className="mx-auto rounded-lg" src={answerImageObjectUrl} />
+                        : null}
                     </div>
                   ) : null}
                 </div>
