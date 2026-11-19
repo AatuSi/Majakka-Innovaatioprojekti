@@ -1,6 +1,8 @@
 import { useState } from "react";
 import './IALA-lights.css'
 
+
+
 interface Characteristic {
   abbr: string;
   name: string;
@@ -41,7 +43,7 @@ type BuoyKind =
 
 const characteristics: Characteristic[] = [
   {
-    abbr: "F",
+    abbr: "Ki",
     name: "Kiinteä",
     animClass: "light-flash-fixed",
     color: "#f8fafc",
@@ -51,8 +53,8 @@ const characteristics: Characteristic[] = [
       "Tasainen, katkeamaton valo. Yksinkertaisin loistotyyppi — palaa jatkuvasti ilman katkoja. Käytetään johtoloistoissa ja joissain pienissä merkkiloistoissa, joissa pysyvä säde riittää.",
   },
   {
-    abbr: "Vl",
-    name: "Välkkyvä",
+    abbr: "V",
+    name: "Vilkkuvalo",
     animClass: "light-flash-single",
     color: "#f8fafc",
     colorLabel: "Valkoinen",
@@ -61,8 +63,8 @@ const characteristics: Characteristic[] = [
       "Yksittäinen välähdys toistuu säännöllisin väliajoin, pimeys aina valoa pidempää. Yleisin loistotyyppi poijuissa ja merimerkkiloistoissa ympäri maailman.",
   },
   {
-    abbr: "Vl(2)",
-    name: "Ryhmävälkky (2)",
+    abbr: "V(2)",
+    name: "Ryhmävilkkuvalo (2)",
     animClass: "light-flash-group2",
     color: "#22c55e",
     colorLabel: "Vihreä",
@@ -71,54 +73,54 @@ const characteristics: Characteristic[] = [
       "Kaksi nopeaa välähdystä peräkkäin, sitten pidempi pimeys. Ryhmävälkkyloistoja käytetään erottamaan vierekkäiset merkit toisistaan — ryhmän välähdysten lukumäärä on tunnistuksen avain.",
   },
   {
-    abbr: "Vl(3)",
-    name: "Ryhmävälkky (3)",
-    animClass: "light-flash-group3",
+    abbr: "V(2+1)",
+    name: "Yhdistetty ryhmävilkkuvalo",
+    animClass: "light-flash-composite-group",
     color: "#ef4444",
     colorLabel: "Punainen",
     period: "7 s",
     description:
-      "Kolme nopeaa välähdystä ennen pimeää jaksoa. Välähdysten laskeminen on tärkeää merkin tunnistamiseksi heikossa näkyvyydessä.",
+      "Kaksi nopeaa välähdystä, selvästi pidempi välitauko ja vielä yksi välähdys ennen pimeää jaksoa. Ryhmien välinen tauko erottaa yhdistetyn ryhmävilkkuvalon tavallisesta kolmen välähdyksen ryhmästä.",
   },
   {
-    abbr: "Iso",
-    name: "Isofaasi",
+    abbr: "T",
+    name: "Tasarytmivalo",
     animClass: "light-flash-iso",
     color: "#f8fafc",
     colorLabel: "Valkoinen",
     period: "2 s",
     description:
-      "Yhtä pitkät valo- ja pimeäjaksot — valo palaa täsmälleen puolet ajasta ja sammuu puolet. Täydellisen tasapainoinen rytmi tekee isofaasiloistoista välittömästi tunnistettavan merellä.",
+      "Yhtä pitkät valo- ja pimeäjaksot — valo palaa täsmälleen puolet ajasta ja sammuu puolet. Täydellisen tasapainoinen rytmi tekee tasarytmivaloista välittömästi tunnistettavan merellä.",
   },
   {
-    abbr: "Pim",
-    name: "Pimennetty",
+    abbr: "Ka",
+    name: "Katkovalo",
     animClass: "light-flash-occulting",
     color: "#f8fafc",
     colorLabel: "Valkoinen",
     period: "3 s",
     description:
-      "Välkkyvän vastakohta — valo palaa kauemmin kuin on pimeänä. Lyhyt pimennys katkaisee muuten tasaisen säteen. Käytetään yleisesti johtoloistoissa ja sektorivaroitusloistoissa.",
+      "Vilkkuvalon vastakohta — valo palaa kauemmin kuin on pimeänä. Lyhyt pimennys katkaisee muuten tasaisen säteen. Käytetään yleisesti johtoloistoissa ja sektorivaroitusloistoissa.",
   },
   {
-    abbr: "Np",
-    name: "Nopea",
+    abbr: "Pv",
+    name: "Jatkuva pikavilkku",
     animClass: "light-flash-quick",
     color: "#f59e0b",
     colorLabel: "Keltainen",
     period: "0,8 s",
     description:
-      "Erittäin nopea välkyntä, 50–60 välähdystä minuutissa. Korkea tahti luo tunnusomaisen kiireellisen luonteen, jota käytetään kardinaalimerkkiloistoissa osoittamaan, että nimetyllä puolella on turvallista navigointivettä.",
+      "Pikavilkku, 50–60 välähdystä minuutissa. Korkea tahti luo tunnusomaisen kiireellisen luonteen, jota käytetään kardinaalimerkkiloistoissa osoittamaan, että nimetyllä puolella on turvallista navigointivettä.",
   },
   {
-    abbr: "PVl",
-    name: "Pitkä välkky",
+    abbr: "KV",
+    name: "Kestovilkku",
     animClass: "light-flash-longflash",
     color: "#f8fafc",
     colorLabel: "Valkoinen",
     period: "10 s",
     description:
-      "Yksittäinen vähintään kahden sekunnin mittainen välähdys. Pitkä hehku erottuu selvästi tavallisista välkkyloistosta. Tyypillisesti turvavesimerkeissä, jotka osoittavat väylän keskikohdan tai maatumispaikan.",
+      "Yksittäinen vähintään kahden sekunnin mittainen välähdys. Pitkä hehku erottuu selvästi tavallisesta vilkkuvalosta. Kestovilkkuja käytetään tyypillisesti turvavesimerkeissä, jotka osoittavat väylän keskikohdan tai maatumispaikan.",
   },
   {
     abbr: "Mo(A)",
@@ -137,7 +139,7 @@ const buoyTypes: BuoyType[] = [
     name: "Lateraali — Paapuuri (IALA-A)",
     lights: ["#ef4444"],
     animClass: "light-flash-single",
-    char: "Vl P",
+    char: "V P",
     shape: "Tynnyri",
     kind: "port",
     description:
@@ -147,7 +149,7 @@ const buoyTypes: BuoyType[] = [
     name: "Lateraali — Styyrpuuri (IALA-A)",
     lights: ["#22c55e"],
     animClass: "light-flash-single",
-    char: "Vl V",
+    char: "V V",
     shape: "Kartio",
     kind: "starboard",
     description:
@@ -157,17 +159,17 @@ const buoyTypes: BuoyType[] = [
     name: "Kardinaali — Pohjoinen",
     lights: ["#f8fafc"],
     animClass: "light-flash-quick",
-    char: "Np",
+    char: "Pv",
     shape: "Pilari / Sauva",
     kind: "north",
     description:
-      "Kulje merkin POHJOISPUOLELTA. Musta-keltainen pilaripoiju kahdella ylöspäin osoittavalla kartiolla. Nopea valkoinen valo (Np) tai erittäin nopea valkoinen valo (ENp). Kaksoiskartiohuippumerkki muistuttaa kirjainta P.",
+      "Kulje merkin POHJOISPUOLELTA. Musta-keltainen pilaripoiju kahdella ylöspäin osoittavalla kartiolla. Valkoinen pikavilkku (Pv) tai nopea pikavilkku (NPv). Kaksoiskartiohuippumerkki muistuttaa kirjainta P.",
   },
   {
     name: "Kardinaali — Eteläinen",
     lights: ["#f8fafc"],
     animClass: "light-flash-cardinal-south",
-    char: "Np(6)+PVl",
+    char: "Pv(6)+KV",
     shape: "Pilari / Sauva",
     kind: "south",
     description:
@@ -177,7 +179,7 @@ const buoyTypes: BuoyType[] = [
     name: "Kardinaali — Itäinen",
     lights: ["#f8fafc"],
     animClass: "light-flash-cardinal-east",
-    char: "Np(3)",
+    char: "Pv(3)",
     shape: "Pilari / Sauva",
     kind: "east",
     description:
@@ -187,7 +189,7 @@ const buoyTypes: BuoyType[] = [
     name: "Kardinaali — Läntinen",
     lights: ["#f8fafc"],
     animClass: "light-flash-cardinal-west",
-    char: "Np(9)",
+    char: "Pv(9)",
     shape: "Pilari / Sauva",
     kind: "west",
     description:
@@ -197,17 +199,17 @@ const buoyTypes: BuoyType[] = [
     name: "Turvavesimerkki",
     lights: ["#ef4444", "#f8fafc"],
     animClass: "light-flash-morse-a",
-    char: "Mo(A) / PVl / Iso",
+    char: "Mo(A) / KV / T",
     shape: "Pallonmuotoinen",
     kind: "safe-water",
     description:
-      "Osoittaa turvallisen kulkuveden joka suuntaan — väylän keskilinja tai maatumismerkki. Punainen-valkoinen pystyraita pallonmuotoinen poiju, usein pitkä välkky, isofaasi tai Morse A valkoinen valo.",
+      "Osoittaa turvallisen kulkuveden joka suuntaan — väylän keskilinja tai maatumismerkki. Punainen-valkoinen pystyraita pallonmuotoinen poiju, usein kestovilkku, tasarytmivalo tai Morse A -valo.",
   },
   {
     name: "Erikoismerkki",
     lights: ["#f59e0b"],
     animClass: "light-flash-single",
-    char: "Vl K",
+    char: "V K",
     shape: "Vaihteleva (X-huippumerkki)",
     kind: "special",
     description:
@@ -217,7 +219,7 @@ const buoyTypes: BuoyType[] = [
     name: "Eristetty vaaramerkki",
     lights: ["#ef4444", "#f8fafc"],
     animClass: "light-flash-group2",
-    char: "Vl(2)",
+    char: "V(2)",
     shape: "Pilari / Sauva",
     kind: "isolated-danger",
     description:
@@ -268,7 +270,7 @@ function CharCard({ c }: { c: Characteristic }) {
             {c.name}
           </span>
         </div>
-        <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-slate-400">
+        <span className="ml-auto shrink-0 whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-slate-400">
           {c.period}
         </span>
       </div>
@@ -497,6 +499,351 @@ function BuoyCard({ b }: { b: BuoyType }) {
   );
 }
 
+interface BuilderPattern {
+  notation: string;
+  name: string;
+  color: string;
+  colorLabel: string;
+  period: number;
+  pulses: Array<{ start: number; end: number }>;
+  steady?: boolean;
+}
+
+const builderColors: Record<
+  string,
+  Pick<BuilderPattern, "color" | "colorLabel">
+> = {
+  P: { color: "#ef4444", colorLabel: "punainen" },
+  V: { color: "#22c55e", colorLabel: "vihreä" },
+  K: { color: "#f59e0b", colorLabel: "keltainen" },
+};
+
+function quickPulses(count: number, includeLongFlash = false) {
+  const pulses = Array.from({ length: count }, (_, index) => ({
+    start: index,
+    end: index + 0.3,
+  }));
+
+  if (includeLongFlash) {
+    pulses.push({ start: count, end: count + 2 });
+  }
+
+  return pulses;
+}
+
+function groupedPulses(count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    start: index * 0.8,
+    end: index * 0.8 + 0.4,
+  }));
+}
+
+function combinedGroupedPulses(firstGroup: number, secondGroup: number) {
+  const secondGroupStart = firstGroup * 0.8 + 1.2;
+
+  return [
+    ...groupedPulses(firstGroup),
+    ...groupedPulses(secondGroup).map((pulse) => ({
+      start: pulse.start + secondGroupStart,
+      end: pulse.end + secondGroupStart,
+    })),
+  ];
+}
+
+function parseLightPattern(value: string): BuilderPattern | null {
+  const normalized = value.trim().toUpperCase().replace(/\s+/g, " ");
+  const colorMatch = normalized.match(/\s+(P|V|K)$/);
+  const notation = (colorMatch
+    ? normalized.slice(0, colorMatch.index).trim()
+    : normalized
+  ).replace(/\s/g, "");
+  const color = colorMatch
+    ? builderColors[colorMatch[1]]
+    : { color: "#f8fafc", colorLabel: "valkoinen" };
+  const base = { ...color, pulses: [] as Array<{ start: number; end: number }> };
+
+  if (notation === "KI") {
+    return {
+      ...base,
+      notation: "Ki",
+      name: "Kiinteä",
+      period: 1,
+      steady: true,
+    };
+  }
+
+  if (notation === "T") {
+    return {
+      ...base,
+      notation: "T",
+      name: "Tasarytmivalo",
+      period: 2,
+      pulses: [{ start: 0, end: 1 }],
+    };
+  }
+
+  if (notation === "KA") {
+    return {
+      ...base,
+      notation: "Ka",
+      name: "Katkovalo",
+      period: 3,
+      pulses: [{ start: 0, end: 2.25 }],
+    };
+  }
+
+  if (notation === "KV") {
+    return {
+      ...base,
+      notation: "KV",
+      name: "Kestovilkku",
+      period: 10,
+      pulses: [{ start: 0, end: 2 }],
+    };
+  }
+
+  if (notation === "MO(A)") {
+    return {
+      ...base,
+      notation: "Mo(A)",
+      name: "Morsekoodi A",
+      period: 6,
+      pulses: [
+        { start: 0, end: 0.5 },
+        { start: 1, end: 2.5 },
+      ],
+    };
+  }
+
+  const combinedQuickMatch = notation.match(/^PV\((\d{1,2})\)\+KV$/);
+  if (combinedQuickMatch) {
+    const count = Number(combinedQuickMatch[1]);
+
+    if (count < 1 || count > 12) {
+      return null;
+    }
+
+    return {
+      ...base,
+      notation: `Pv(${count})+KV`,
+      name: `${count} pikavilkkua ja kestovilkku`,
+      period: count <= 3 ? 10 : 15,
+      pulses: quickPulses(count, true),
+    };
+  }
+
+  const quickMatch = notation.match(/^PV(?:\((\d{1,2})\))?$/);
+  if (quickMatch) {
+    const count = quickMatch[1] ? Number(quickMatch[1]) : 1;
+
+    if (count < 1 || count > 12) {
+      return null;
+    }
+
+    const period =
+      count === 1 ? 1 : count === 3 ? 10 : count >= 6 ? 15 : count * 2;
+    return {
+      ...base,
+      notation: count === 1 ? "Pv" : `Pv(${count})`,
+      name: count === 1 ? "Jatkuva pikavilkku" : `Ryhmäpikavilkku (${count})`,
+      period,
+      pulses: quickPulses(count),
+    };
+  }
+
+  const combinedFlashMatch = notation.match(/^V\((\d{1,2})\+(\d{1,2})\)$/);
+  if (combinedFlashMatch) {
+    const firstGroup = Number(combinedFlashMatch[1]);
+    const secondGroup = Number(combinedFlashMatch[2]);
+
+    if (
+      firstGroup < 1 ||
+      firstGroup > 12 ||
+      secondGroup < 1 ||
+      secondGroup > 12
+    ) {
+      return null;
+    }
+
+    return {
+      ...base,
+      notation: `V(${firstGroup}+${secondGroup})`,
+      name: `Yhdistetty ryhmävilkkuvalo (${firstGroup}+${secondGroup})`,
+      period: Math.max(7, (firstGroup + secondGroup) * 2 + 1),
+      pulses: combinedGroupedPulses(firstGroup, secondGroup),
+    };
+  }
+
+  const flashMatch = notation.match(/^V(?:\((\d{1,2})\))?$/);
+  if (flashMatch) {
+    const count = flashMatch[1] ? Number(flashMatch[1]) : 1;
+
+    if (count < 1 || count > 12) {
+      return null;
+    }
+
+    return {
+      ...base,
+      notation: count === 1 ? "V" : `V(${count})`,
+      name: count === 1 ? "Vilkkuvalo" : `Ryhmävilkkuvalo (${count})`,
+      period: count === 1 ? 3 : count === 2 ? 5 : Math.max(7, count * 2),
+      pulses: groupedPulses(count),
+    };
+  }
+
+  return null;
+}
+
+function LightBuilder() {
+  const [description, setDescription] = useState("Pv(6)+KV");
+  const pattern = parseLightPattern(description);
+
+  const keyframes =
+    pattern && !pattern.steady
+      ? pattern.pulses
+          .map((pulse) => {
+            const start = (pulse.start / pattern.period) * 100;
+            const end = (pulse.end / pattern.period) * 100;
+            const off = Math.min(end + 0.01, 99.99);
+            const beforeStart =
+              pulse.start === 0
+                ? ""
+                : `${Math.max(start - 0.01, 0).toFixed(3)}% { opacity: 0.04; transform: scale(0.92); }`;
+
+            return `${beforeStart}
+          ${start.toFixed(3)}% { opacity: 1; transform: scale(1); }
+          ${end.toFixed(3)}% { opacity: 1; transform: scale(1); }
+          ${off.toFixed(3)}% { opacity: 0.04; transform: scale(0.92); }`;
+          })
+          .join("\n")
+      : "";
+
+  return (
+    <section id="light-builder" className="bg-[#0f2140] px-6 py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 max-w-2xl">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">
+            Harjoittele
+          </p>
+          <h2 className="font-serif text-3xl font-semibold sm:text-4xl">
+            Valojen rakentaja
+          </h2>
+          <p className="mt-4 text-slate-300">
+            Kirjoita IALA-loiston lyhenne ja halutessasi värikoodi. Valo
+            vaihtaa rytmiä ja väriä välittömästi merkinnän mukaan.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
+            Esimerkki: voit määrittää pikavilkkujen määrän merkinnällä{" "}
+            <span className="font-mono text-amber-300">Pv(n)</span> ja liittää
+            siihen erillisen kestovilkun plusmerkillä:{" "}
+            <span className="font-mono text-amber-300">Pv(n)+KV</span>.
+            Esimerkiksi{" "}
+            <span className="font-mono text-white">Pv(6)+KV</span> tarkoittaa
+            kuutta pikavilkkua ja yhtä kestovilkkua.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <div className="relative flex min-h-80 items-center justify-center overflow-hidden bg-black px-6 py-16">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 opacity-50"
+              style={{
+                background:
+                  "radial-gradient(circle at center, rgba(30,41,59,0.45) 0%, rgba(0,0,0,0) 48%)",
+              }}
+            />
+            {pattern && !pattern.steady ? (
+              <>
+                <style>{`
+                  @keyframes builder-light-pattern {
+                    ${keyframes}
+                    100% { opacity: 0.04; transform: scale(0.92); }
+                  }
+                `}</style>
+                <span
+                  key={`${pattern.notation}-${pattern.color}`}
+                  role="img"
+                  aria-label={`${pattern.colorLabel} valo, ${pattern.name}, ${pattern.period} sekunnin jakso`}
+                  className="relative block h-16 w-16 rounded-full"
+                  style={{
+                    animation: `builder-light-pattern ${pattern.period}s linear infinite`,
+                    backgroundColor: pattern.color,
+                    boxShadow:
+                      `0 0 24px 10px ${pattern.color}cc, 0 0 80px 30px ${pattern.color}55`,
+                  }}
+                />
+              </>
+            ) : pattern ? (
+              <span
+                role="img"
+                aria-label={`${pattern.colorLabel} kiinteä valo`}
+                className="relative block h-16 w-16 rounded-full"
+                style={{
+                  backgroundColor: pattern.color,
+                  boxShadow: `0 0 24px 10px ${pattern.color}cc, 0 0 80px 30px ${pattern.color}55`,
+                }}
+              />
+            ) : (
+              <span
+                aria-label="Valo ei vilku, koska rytmiä ei voitu tulkita"
+                className="relative block h-16 w-16 rounded-full bg-white opacity-[0.04]"
+              />
+            )}
+            <span className="absolute bottom-5 left-0 right-0 text-center font-mono text-xs uppercase tracking-[0.18em] text-slate-600">
+              Valon esikatselu
+            </span>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <label
+              htmlFor="light-pattern"
+              className="block text-sm font-semibold text-white"
+            >
+              IALA-lyhenne
+            </label>
+            <input
+              id="light-pattern"
+              type="text"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Esim. Pv(6)+KV"
+              aria-describedby="light-pattern-help"
+              className="mt-3 w-full rounded-xl border border-white/10 bg-[#091428] px-4 py-3.5 text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/60 focus:ring-2 focus:ring-amber-300/10"
+            />
+            <div
+              id="light-pattern-help"
+              className="mt-3 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between"
+            >
+              {pattern ? (
+                <p className="text-slate-400">
+                  Tulkittu valo:{" "}
+                  <span className="font-mono text-amber-300">
+                    {pattern.notation} · {pattern.colorLabel} ·{" "}
+                    {pattern.steady ? "jatkuva" : `${pattern.period} s`}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-red-300">
+                  Merkintää ei tunnistettu. Kokeile esimerkiksi Pv(6)+KV.
+                </p>
+              )}
+              <p className="text-xs text-slate-500">
+                Värit: P punainen · V vihreä · K keltainen · ilman koodia
+                valkoinen
+              </p>
+            </div>
+            <p className="mt-4 border-t border-white/10 pt-4 font-mono text-xs leading-relaxed text-slate-500">
+              Tuetut rytmit: Ki · Ka · T · V · V(n) · V(n+n) · Pv · Pv(n) ·
+              Pv(n)+KV · KV · Mo(A)
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   return (
     <div className="bg-[#0b1830] text-white min-h-screen">
@@ -537,7 +884,7 @@ export default function App() {
               { label: "Värivaihtoehdot", value: "4", sub: "Punainen · Vihreä · Valkoinen · Keltainen" },
               { label: "Kardinaalipisteet", value: "4", sub: "P · E · I · L" },
               { label: "IALA-alue", value: "1", sub: "Alue A" },
-              { label: "Loistotyypit", value: "12+", sub: "K · Vl · Pim · Iso · Np · Mo …" },
+              { label: "Loistotyypit", value: "12+", sub: "Ki · V · Ka · T · Pv · Mo …" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <span className="block font-serif text-3xl font-semibold text-amber-300">
@@ -610,10 +957,10 @@ export default function App() {
               Osio 3
             </p>
             <h2 className="font-serif text-3xl font-semibold sm:text-4xl">
-              Vasen ja Oikea
+              IALA-A-alue
             </h2>
             <p className="mt-4 text-slate-300">
-              Suomessa ja muualla Euroopassa punainen lateraalimerkki osoittaa väylän
+              IALA-A-alueella punainen lateraalimerkki osoittaa väylän
               paapuuripuolen ja vihreä lateraalimerkki styyrpuuripuolen
               kulkusuunnassa.
             </p>
@@ -626,13 +973,13 @@ export default function App() {
                 color: "#ef4444",
                 label: "Punainen",
                 description:
-                  "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti",
+                  "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti, Persianlahden maat.",
               },
               {
                 side: "Styyrpuuri (oikea)",
                 color: "#22c55e",
                 label: "Vihreä",
-                description: "Eurooppa, Afrikka, Aasia (pl. Japani/Korea/Filippiinit), Australia, Uusi-Seelanti",
+                description: "Vihreä kartiopoiju. Vihreä valo (mikä tahansa tyyppi).",
               },
             ] as LateralRow[]).map((row) => (
               <div
@@ -676,7 +1023,8 @@ export default function App() {
                 "Punainen paapuuriin, vihreä styyrpuuriin"
               </p>
               <p className="text-sm text-slate-300 leading-relaxed">
-                IALA-A-vesillä punainen poiju merkitsee aina väylän paapuuripuolen
+                IALA-A-vesillä (Eurooppa, Afrikka, suurin osa Aasiasta)
+                punainen poiju merkitsee aina väylän paapuuripuolen
                 kulkusuunnassa — yleensä kohti satamaa tai ylävirtaan.
               </p>
             </div>
@@ -684,6 +1032,7 @@ export default function App() {
         </div>
       </section>
 
+      <LightBuilder />
     </div>
   );
 }

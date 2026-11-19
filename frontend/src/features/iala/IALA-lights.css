@@ -10,9 +10,13 @@
   6%, 16%, 50% { opacity: 0.05; }
 }
 
-@keyframes flash-group3 {
-  0%, 8%, 16%, 24%, 32%, 40%, 100% { opacity: 1; }
-  4%, 12%, 20%, 36%, 60% { opacity: 0.05; }
+@keyframes flash-composite-group {
+  0%, 5.7% { opacity: 1; }
+  5.71%, 11.39% { opacity: 0.05; }
+  11.4%, 17.1% { opacity: 1; }
+  17.11%, 39.99% { opacity: 0.05; }
+  40%, 45.7% { opacity: 1; }
+  45.71%, 100% { opacity: 0.05; }
 }
 
 @keyframes flash-quick {
@@ -103,8 +107,8 @@
   animation: var(--light-animation);
 }
 
-.light-flash-group3 {
-  --light-animation: flash-group3 7s ease-in-out infinite;
+.light-flash-composite-group {
+  --light-animation: flash-composite-group 7s steps(1) infinite;
   animation: var(--light-animation);
 }
 
