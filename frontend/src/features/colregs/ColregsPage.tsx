@@ -6,6 +6,26 @@ import useColreg from "./useColreg";
 
 const rules = [23, 24, 25, 26, 27, 28, 29, 30] as const;
 
+function getAspectLabel(deg: number): string {
+  const norm = ((deg % 360) + 360) % 360;
+  if (norm === 0 || norm === 360) return "Keula suoraan kohti (lähestyy)";
+  if (norm < 45) return "Viistosti edestä (oikea keula)";
+  if (norm === 45) return "Oikea keulakulma (45°)";
+  if (norm < 90) return "Viistosti edestä (styyrpuuri)";
+  if (norm === 90) return "Styyrpuuri suoraan sivulta (oikealta)";
+  if (norm < 135) return "Viistosti takaa (styyrpuuri)";
+  if (norm === 135) return "Oikea peräkulma (135°)";
+  if (norm < 180) return "Viistosti takaa (oikea perä)";
+  if (norm === 180) return "Perä suoraan kohti (loittonee)";
+  if (norm < 225) return "Viistosti takaa (vasen perä)";
+  if (norm === 225) return "Vasen peräkulma (225°)";
+  if (norm < 270) return "Viistosti takaa (paapuuri)";
+  if (norm === 270) return "Paapuuri suoraan sivulta (vasemmalta)";
+  if (norm < 315) return "Viistosti edestä (paapuuri)";
+  if (norm === 315) return "Vasen keulakulma (315°)";
+  return "Viistosti edestä (vasen keula)";
+}
+
 const options = EXAMPLES.map((scenario, index) => ({
   scenario,
   value: String(index),
@@ -147,6 +167,22 @@ export default function ColregsPage() {
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#020617] shadow-xl">
+            {/* Aspect & heading orientation badge */}
+            <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-lg border border-white/15 bg-navy-950/80 px-2.5 py-1 text-xs text-slate-200 backdrop-blur-sm pointer-events-none select-none">
+              <svg
+                className="h-3.5 w-3.5 text-amber-300 shrink-0"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+                style={{ transform: `rotate(${180 - bearingDeg}deg)` }}
+              >
+                <path d="M12 2 L17 9 L16 22 L8 22 L7 9 Z" />
+              </svg>
+              <span className="font-medium text-slate-300">
+                {getAspectLabel(bearingDeg)}
+              </span>
+            </div>
+
             <button
               type="button"
               aria-label="Vaihda aluksen siluetin näkyvyyttä"

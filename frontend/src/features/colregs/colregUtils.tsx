@@ -969,124 +969,404 @@ function GlowFilter({ id, color }: { id: string; color: string }): ReactElement 
   );
 }
 
-/** 3D model of a generic ship hull and wheelhouse, projected to 2D SVG elements. */
+/** 3D model of a vessel with sheer, aft wheelhouse, and directional features. */
 function renderShipSilhouette(bearingDeg: number): ReactElement {
   const rad = (bearingDeg * Math.PI) / 180;
-  const proj = ([x, y, z]: Vec3): [number, number] => [
-    +(-x * Math.cos(rad) + y * Math.sin(rad)).toFixed(1),
-    +(-z).toFixed(1),
-  ];
-  const toPoints = (pts: Vec3[]) => pts.map(proj).map(([x, y]) => `${x},${y}`).join(" ");
+  const proj = ([x, y, z]: Vec3): { x: number; y: number; depth: number } => ({
+    x: +(-x * Math.cos(rad) + y * Math.sin(rad)).toFixed(1),
+    y: +(-z).toFixed(1),
+    depth: +(x * Math.sin(rad) + y * Math.cos(rad)).toFixed(1),
+  });
+
+  const area2D = (pts: Array<{ x: number; y: number }>): number => {
+    let a = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const j = (i + 1) % pts.length;
+      a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+    }
+    return a;
+  };
+
+  const toPointsString = (pts: Array<{ x: number; y: number }>) =>
+    pts.map((p) => `${p.x},${p.y}`).join(" ");
 
   // Stations along the hull (starboard side; port is mirrored at -x)
+  // Sheer line: bow is raised (z=7.5) with forward raked stem; stern is lower (z=4.5)
   const stations: Array<{ d: Vec3; w: Vec3 }> = [
-    { d: [0, 36, 5], w: [0, 33, 0] },     // bow stem
-    { d: [5, 26, 5], w: [4, 25, 0] },     // forward shoulder
-    { d: [8, 12, 5], w: [7, 12, 0] },     // midships fwd
-    { d: [8, -12, 5], w: [7, -12, 0] },   // midships aft
-    { d: [6, -26, 5], w: [5, -26, 0] },   // aft quarter
-    { d: [4, -38, 5], w: [3, -37, 0] },   // transom corner
+    { d: [0, 36, 7.5], w: [0, 31, 0] },       // bow stem
+    { d: [5.2, 26, 6.2], w: [4.2, 25, 0] },   // fwd shoulder
+    { d: [7.5, 10, 5.2], w: [6.8, 10, 0] },   // midships fwd
+    { d: [7.5, -14, 4.6], w: [6.8, -14, 0] }, // midships aft
+    { d: [6.0, -26, 4.5], w: [5.2, -26, 0] }, // aft quarter
+    { d: [4.2, -38, 4.5], w: [3.2, -37, 0] }, // transom corner
   ];
 
-  // Hull side quads
-  const hullFaces: Vec3[][] = [];
-  for (let i = 0; i < stations.length - 1; i++) {
-    // Starboard
-    hullFaces.push([stations[i].d, stations[i + 1].d, stations[i + 1].w, stations[i].w]);
-    // Port
-    hullFaces.push([
-      [-stations[i].d[0], stations[i].d[1], stations[i].d[2]],
-      [-stations[i + 1].d[0], stations[i + 1].d[1], stations[i + 1].d[2]],
-      [-stations[i + 1].w[0], stations[i + 1].w[1], stations[i + 1].w[2]],
-      [-stations[i].w[0], stations[i].w[1], stations[i].w[2]],
-    ]);
+  interface OverlayPoly {
+    points3D: Vec3[];
+    fill: string;
+    stroke: string;
+    strokeWidth?: number;
+    fillOpacity?: number;
   }
-  // Transom (stern face)
-  const stern = stations[stations.length - 1];
-  hullFaces.push([
-    stern.d,
-    [-stern.d[0], stern.d[1], stern.d[2]],
-    [-stern.w[0], stern.w[1], stern.w[2]],
-    stern.w,
-  ]);
+
+  interface RenderablePoly {
+    id: string;
+    points3D: Vec3[];
+    fill: string;
+    stroke: string;
+    strokeWidth?: number;
+    fillOpacity?: number;
+    forceVisible?: boolean;
+    overlays?: OverlayPoly[];
+  }
+
+  const polys: RenderablePoly[] = [];
+
+  // Starboard hull faces (wound for outward normal)
+  for (let i = 0; i < stations.length - 1; i++) {
+    polys.push({
+      id: `hull-sb-${i}`,
+      points3D: [stations[i].d, stations[i].w, stations[i + 1].w, stations[i + 1].d],
+      fill: "#0a182b",
+      stroke: "#1c3452",
+    });
+  }
+
+  // Port hull faces (wound for outward normal)
+  for (let i = 0; i < stations.length - 1; i++) {
+    polys.push({
+      id: `hull-port-${i}`,
+      points3D: [
+        [-stations[i].d[0], stations[i].d[1], stations[i].d[2]],
+        [-stations[i + 1].d[0], stations[i + 1].d[1], stations[i + 1].d[2]],
+        [-stations[i + 1].w[0], stations[i + 1].w[1], stations[i + 1].w[2]],
+        [-stations[i].w[0], stations[i].w[1], stations[i].w[2]],
+      ],
+      fill: "#0d1e35",
+      stroke: "#1f3b5e",
+    });
+  }
+
+  // Transom (flat stern face)
+  polys.push({
+    id: "transom",
+    points3D: [
+      [-stations[5].d[0], stations[5].d[1], stations[5].d[2]],
+      stations[5].d,
+      stations[5].w,
+      [-stations[5].w[0], stations[5].w[1], stations[5].w[2]],
+    ],
+    fill: "#071220",
+    stroke: "#172b43",
+  });
 
   // Deck surface polygon
-  const deckPoints: Vec3[] = [
+  const deck3D: Vec3[] = [
     ...stations.map((s) => s.d),
     ...stations.slice(1).reverse().map((s) => [-s.d[0], s.d[1], s.d[2]] as Vec3),
   ];
+  polys.push({
+    id: "deck",
+    points3D: deck3D,
+    fill: "#10233b",
+    stroke: "#224269",
+    forceVisible: true,
+  });
 
-  // Superstructure / wheelhouse box
-  const cabinFaces: Vec3[][] = [
-    // front
-    [[-4.5, 8, 5], [4.5, 8, 5], [4.5, 8, 13], [-4.5, 8, 13]],
-    // back
-    [[4.5, -12, 5], [-4.5, -12, 5], [-4.5, -12, 13], [4.5, -12, 13]],
-    // starboard
-    [[4.5, 8, 5], [4.5, -12, 5], [4.5, -12, 13], [4.5, 8, 13]],
-    // port
-    [[-4.5, -12, 5], [-4.5, 8, 5], [-4.5, 8, 13], [-4.5, -12, 13]],
-    // roof
-    [[-4.5, 8, 13], [4.5, 8, 13], [4.5, -12, 13], [-4.5, -12, 13]],
+  // Wheelhouse / Cabin positioned aft of midships (y from -16 to 4, width ±4.2, height 5 to 13)
+  const cWidth = 4.2;
+  const cFwd = 4.0;
+  const cAft = -16.0;
+  const cBottom = 5.0;
+  const cTop = 13.0;
+  const winZMin = 9.2;
+  const winZMax = 12.0;
+
+  // Cabin front wall (faces forward +y) with its 3 forward bridge window panes
+  polys.push({
+    id: "cabin-front",
+    points3D: [
+      [-cWidth, cFwd, cBottom],
+      [cWidth, cFwd, cBottom],
+      [cWidth, cFwd, cTop],
+      [-cWidth, cFwd, cTop],
+    ],
+    fill: "#142742",
+    stroke: "#274b7a",
+    overlays: [
+      // Center pane
+      {
+        points3D: [[-1.0, cFwd, winZMin], [1.0, cFwd, winZMin], [1.0, cFwd, winZMax], [-1.0, cFwd, winZMax]],
+        fill: "#38bdf8",
+        fillOpacity: 0.65,
+        stroke: "#7dd3fc",
+        strokeWidth: 0.3,
+      },
+      // Starboard pane
+      {
+        points3D: [[1.4, cFwd, winZMin], [3.5, cFwd, winZMin], [3.5, cFwd, winZMax], [1.4, cFwd, winZMax]],
+        fill: "#38bdf8",
+        fillOpacity: 0.65,
+        stroke: "#7dd3fc",
+        strokeWidth: 0.3,
+      },
+      // Port pane
+      {
+        points3D: [[-3.5, cFwd, winZMin], [-1.4, cFwd, winZMin], [-1.4, cFwd, winZMax], [-3.5, cFwd, winZMax]],
+        fill: "#38bdf8",
+        fillOpacity: 0.65,
+        stroke: "#7dd3fc",
+        strokeWidth: 0.3,
+      },
+    ],
+  });
+
+  // Cabin back wall (faces aft -y) with aft companionway door
+  polys.push({
+    id: "cabin-back",
+    points3D: [
+      [cWidth, cAft, cBottom],
+      [-cWidth, cAft, cBottom],
+      [-cWidth, cAft, cTop],
+      [cWidth, cAft, cTop],
+    ],
+    fill: "#0f1f36",
+    stroke: "#223f66",
+    overlays: [
+      {
+        points3D: [[-1.2, cAft, 5.2], [1.2, cAft, 5.2], [1.2, cAft, 10.0], [-1.2, cAft, 10.0]],
+        fill: "#081422",
+        stroke: "#1b324f",
+        strokeWidth: 0.4,
+      },
+    ],
+  });
+
+  // Cabin starboard wall (faces +x) with 2 side windows
+  polys.push({
+    id: "cabin-sb",
+    points3D: [
+      [cWidth, cFwd, cBottom],
+      [cWidth, cAft, cBottom],
+      [cWidth, cAft, cTop],
+      [cWidth, cFwd, cTop],
+    ],
+    fill: "#12243d",
+    stroke: "#254773",
+    overlays: [
+      {
+        points3D: [[cWidth, 0.5, winZMin], [cWidth, -3.5, winZMin], [cWidth, -3.5, 11.8], [cWidth, 0.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+      {
+        points3D: [[cWidth, -5.5, winZMin], [cWidth, -9.5, winZMin], [cWidth, -9.5, 11.8], [cWidth, -5.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+    ],
+  });
+
+  // Cabin port wall (faces -x) with 2 side windows
+  polys.push({
+    id: "cabin-port",
+    points3D: [
+      [-cWidth, cAft, cBottom],
+      [-cWidth, cFwd, cBottom],
+      [-cWidth, cFwd, cTop],
+      [-cWidth, cAft, cTop],
+    ],
+    fill: "#12243d",
+    stroke: "#254773",
+    overlays: [
+      {
+        points3D: [[-cWidth, -3.5, winZMin], [-cWidth, 0.5, winZMin], [-cWidth, 0.5, 11.8], [-cWidth, -3.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+      {
+        points3D: [[-cWidth, -9.5, winZMin], [-cWidth, -5.5, winZMin], [-cWidth, -5.5, 11.8], [-cWidth, -9.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+    ],
+  });
+
+  // Cabin roof
+  polys.push({
+    id: "cabin-roof",
+    points3D: [
+      [-cWidth, cFwd, cTop],
+      [cWidth, cFwd, cTop],
+      [cWidth, cAft, cTop],
+      [-cWidth, cAft, cTop],
+    ],
+    fill: "#162c4a",
+    stroke: "#2c568b",
+    forceVisible: true,
+  });
+
+  // Filter with back-face culling & calculate depth
+  interface ProjectedOverlay {
+    points2D: Array<{ x: number; y: number }>;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    fillOpacity?: number;
+  }
+
+  interface ProjectedFace {
+    id: string;
+    points2D: Array<{ x: number; y: number }>;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    fillOpacity?: number;
+    avgDepth: number;
+    overlays?: ProjectedOverlay[];
+  }
+
+  const visibleFaces: ProjectedFace[] = [];
+  for (const poly of polys) {
+    const projected = poly.points3D.map(proj);
+    const area = area2D(projected);
+    if (area > 0.005 || poly.forceVisible) {
+      const avgDepth = projected.reduce((sum, p) => sum + p.depth, 0) / projected.length;
+      const projectedOverlays = poly.overlays?.map((ov) => ({
+        points2D: ov.points3D.map(proj),
+        fill: ov.fill,
+        stroke: ov.stroke,
+        strokeWidth: ov.strokeWidth ?? 0.3,
+        fillOpacity: ov.fillOpacity,
+      }));
+
+      visibleFaces.push({
+        id: poly.id,
+        points2D: projected,
+        fill: poly.fill,
+        stroke: poly.stroke,
+        strokeWidth: poly.strokeWidth ?? 0.4,
+        fillOpacity: poly.fillOpacity,
+        avgDepth,
+        overlays: projectedOverlays,
+      });
+    }
+  }
+
+  // Masts and standing rigging
+  interface ProjectedLine {
+    id: string;
+    p1: { x: number; y: number };
+    p2: { x: number; y: number };
+    avgDepth: number;
+    stroke: string;
+    strokeWidth: number;
+  }
+  const lines3D: Array<{ id: string; p1: Vec3; p2: Vec3; stroke?: string; strokeWidth?: number }> = [
+    // Bow jackstaff at prow
+    { id: "jackstaff", p1: [0, 36, 7.5], p2: [0, 36, 12.5], stroke: "#2a4d79", strokeWidth: 0.5 },
+    // Stern flagstaff
+    { id: "flagstaff", p1: [0, -38, 4.5], p2: [0, -38, 9.5], stroke: "#1f3a5d", strokeWidth: 0.5 },
+    // Fore mast (on foredeck at y=20)
+    { id: "fore-mast", p1: [0, 20, 5.8], p2: [0, 20, 32], stroke: "#254773", strokeWidth: 0.6 },
+    // Fore mast yardarm
+    { id: "fore-yardarm", p1: [-3.2, 20, 24], p2: [3.2, 20, 24], stroke: "#254773", strokeWidth: 0.5 },
+    // Main / Radar mast (on wheelhouse roof at y=-6)
+    { id: "main-mast", p1: [0, -6, 13], p2: [0, -6, 38], stroke: "#2b5282", strokeWidth: 0.6 },
+    // Main mast yardarm / radar bar
+    { id: "main-yardarm", p1: [-4.2, -6, 28], p2: [4.2, -6, 28], stroke: "#2b5282", strokeWidth: 0.5 },
   ];
 
-  // Masts: fore mast and main/wheelhouse mast
-  const foreMastBottom = proj([0, 20, 5]);
-  const foreMastTop = proj([0, 20, 30]);
-  const mainMastBottom = proj([0, -2, 13]);
-  const mainMastTop = proj([0, -2, 36]);
+  const visibleLines: ProjectedLine[] = lines3D.map((l) => {
+    const a = proj(l.p1);
+    const b = proj(l.p2);
+    return {
+      id: l.id,
+      p1: { x: a.x, y: a.y },
+      p2: { x: b.x, y: b.y },
+      avgDepth: (a.depth + b.depth) / 2,
+      stroke: l.stroke ?? "#223d63",
+      strokeWidth: l.strokeWidth ?? 0.5,
+    };
+  });
+
+  // Sort visible items by depth (Painter's algorithm: farthest rendered first)
+  type SceneItem =
+    | { kind: "face"; face: ProjectedFace; depth: number }
+    | { kind: "line"; line: ProjectedLine; depth: number };
+
+  const sceneItems: SceneItem[] = [
+    ...visibleFaces.map((f) => ({ kind: "face" as const, face: f, depth: f.avgDepth })),
+    ...visibleLines.map((l) => ({ kind: "line" as const, line: l, depth: l.depth })),
+  ];
+  sceneItems.sort((a, b) => a.depth - b.depth);
+
+  // Subtle bow wave foam line at waterline bow
+  const bowWl = proj([0, 31, 0]);
+  const bowWaveSide1 = proj([3, 24, 0]);
+  const bowWaveSide2 = proj([-3, 24, 0]);
 
   return (
     <g className="ship-silhouette" pointerEvents="none">
-      {/* Hull sides */}
-      {hullFaces.map((face, index) => (
-        <polygon
-          key={`hull-${index}`}
-          points={toPoints(face)}
-          fill="#0c192c"
-          stroke="#1e3555"
+      {/* 3D vessel rendered back-to-front */}
+      {sceneItems.map((item) => {
+        if (item.kind === "face") {
+          return (
+            <g key={item.face.id}>
+              <polygon
+                points={toPointsString(item.face.points2D)}
+                fill={item.face.fill}
+                fillOpacity={item.face.fillOpacity}
+                stroke={item.face.stroke}
+                strokeWidth={item.face.strokeWidth}
+                strokeLinejoin="round"
+              />
+              {item.face.overlays?.map((ov, oIdx) => (
+                <polygon
+                  key={`${item.face.id}-ov-${oIdx}`}
+                  points={toPointsString(ov.points2D)}
+                  fill={ov.fill}
+                  fillOpacity={ov.fillOpacity}
+                  stroke={ov.stroke}
+                  strokeWidth={ov.strokeWidth}
+                  strokeLinejoin="round"
+                />
+              ))}
+            </g>
+          );
+        }
+        return (
+          <line
+            key={item.line.id}
+            x1={item.line.p1.x}
+            y1={item.line.p1.y}
+            x2={item.line.p2.x}
+            y2={item.line.p2.y}
+            stroke={item.line.stroke}
+            strokeWidth={item.line.strokeWidth}
+            strokeLinecap="round"
+          />
+        );
+      })}
+
+      {/* Subtle bow wave at waterline when bow is facing viewer */}
+      {bowWl.depth > -10 && (
+        <path
+          d={`M ${bowWaveSide1.x} ${bowWaveSide1.y} Q ${bowWl.x} ${bowWl.y + 0.6} ${bowWaveSide2.x} ${bowWaveSide2.y}`}
+          stroke="#38bdf8"
+          strokeOpacity="0.35"
           strokeWidth="0.4"
-          strokeLinejoin="round"
+          fill="none"
         />
-      ))}
-      {/* Deck */}
-      <polygon
-        points={toPoints(deckPoints)}
-        fill="#0d1b30"
-        stroke="#1e3555"
-        strokeWidth="0.4"
-        strokeLinejoin="round"
-      />
-      {/* Cabin */}
-      {cabinFaces.map((face, index) => (
-        <polygon
-          key={`cabin-${index}`}
-          points={toPoints(face)}
-          fill="#102038"
-          stroke="#223d63"
-          strokeWidth="0.4"
-          strokeLinejoin="round"
-        />
-      ))}
-      {/* Masts */}
-      <line
-        x1={foreMastBottom[0]}
-        y1={foreMastBottom[1]}
-        x2={foreMastTop[0]}
-        y2={foreMastTop[1]}
-        stroke="#1e3555"
-        strokeWidth="0.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1={mainMastBottom[0]}
-        y1={mainMastBottom[1]}
-        x2={mainMastTop[0]}
-        y2={mainMastTop[1]}
-        stroke="#223d63"
-        strokeWidth="0.5"
-        strokeLinecap="round"
-      />
+      )}
     </g>
   );
 }
