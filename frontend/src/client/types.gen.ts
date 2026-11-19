@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_upload_avatar
+ */
+export type BodyUploadAvatar = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
  * ContactMessageCreate
  */
 export type ContactMessageCreate = {
@@ -343,7 +353,11 @@ export type QuizAttemptHistoryItem = {
     /**
      * Completed At
      */
-    completed_at: string;
+    completed_at?: string | null;
+    /**
+     * Last Activity At
+     */
+    last_activity_at: string;
     /**
      * Duration Seconds
      */
@@ -793,6 +807,10 @@ export type UserResponse = {
      * Avatar Icon
      */
     avatar_icon?: 'user' | 'graduation-cap' | null;
+    /**
+     * Avatar Updated At
+     */
+    avatar_updated_at?: string | null;
 };
 
 /**
@@ -1086,6 +1104,98 @@ export type ChangePasswordResponses = {
 };
 
 export type ChangePasswordResponse = ChangePasswordResponses[keyof ChangePasswordResponses];
+
+export type DeleteAvatarData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/avatar';
+};
+
+export type DeleteAvatarErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAvatarError = DeleteAvatarErrors[keyof DeleteAvatarErrors];
+
+export type DeleteAvatarResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteAvatarResponse = DeleteAvatarResponses[keyof DeleteAvatarResponses];
+
+export type GetAvatarData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/avatar';
+};
+
+export type GetAvatarErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAvatarError = GetAvatarErrors[keyof GetAvatarErrors];
+
+export type GetAvatarResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UploadAvatarData = {
+    body: BodyUploadAvatar;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/avatar';
+};
+
+export type UploadAvatarErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UploadAvatarError = UploadAvatarErrors[keyof UploadAvatarErrors];
+
+export type UploadAvatarResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserResponse;
+};
+
+export type UploadAvatarResponse = UploadAvatarResponses[keyof UploadAvatarResponses];
 
 export type ListPublicQuizzesData = {
     body?: never;
@@ -1648,9 +1758,23 @@ export type CreateAttemptResponse = CreateAttemptResponses[keyof CreateAttemptRe
 export type GetAttemptHistoryData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Include Unfinished
+         */
+        include_unfinished?: boolean;
+    };
     url: '/quiz-attempts/history';
 };
+
+export type GetAttemptHistoryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAttemptHistoryError = GetAttemptHistoryErrors[keyof GetAttemptHistoryErrors];
 
 export type GetAttemptHistoryResponses = {
     /**

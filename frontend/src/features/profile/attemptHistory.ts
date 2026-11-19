@@ -9,19 +9,59 @@ export function scoreRatio(item: QuizAttemptHistoryItem) {
   return item.total_questions > 0 ? item.score / item.total_questions : 0
 }
 
-/** The logged-in user's finished quiz attempts, newest first. */
+export function isUnfinished(item: QuizAttemptHistoryItem) {
+  return item.completed_at === null || item.completed_at === undefined
+}
+
+/** Page that runs the quiz, by its name in the database. */
+export function quizPath(quizName?: string | null) {
+  return quizName === 'IALA-tietovisa' ? '/IALA-quiz' : '/COLREG-quiz'
+}
+
+/**
+ * The unfinished attempts worth continuing: per quiz only the latest, and only
+ * when the quiz has not been finished after it was started. Older ones were
+ * left behind for a newer try, so offering them would only add noise.
+ */
+function continuableAttempts(all: QuizAttemptHistoryItem[]) {
+  const latestFinishedStart = new Map<string, string>()
+  for (const item of all) {
+    if (isUnfinished(item)) continue
+    const previous = latestFinishedStart.get(item.quiz_id)
+    if (!previous || item.created_at > previous) latestFinishedStart.set(item.quiz_id, item.created_at)
+  }
+
+  const latestUnfinished = new Map<string, QuizAttemptHistoryItem>()
+  for (const item of all) {
+    if (!isUnfinished(item)) continue
+    const previous = latestUnfinished.get(item.quiz_id)
+    if (!previous || item.created_at > previous.created_at) latestUnfinished.set(item.quiz_id, item)
+  }
+
+  return new Set(
+    [...latestUnfinished.values()]
+      .filter((item) => item.created_at > (latestFinishedStart.get(item.quiz_id) ?? ''))
+      .map((item) => item.id),
+  )
+}
+
+/**
+ * The logged-in user's quiz attempts. `history` holds the finished ones, which
+ * all statistics are counted from; `rows` adds the unfinished attempts that can
+ * be continued, for the attempt list. Both are newest first.
+ */
 export function useAttemptHistory() {
-  const [history, setHistory] = useState<QuizAttemptHistoryItem[]>([])
+  const [all, setAll] = useState<QuizAttemptHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
-    void getAttemptHistory().then((result) => {
+    void getAttemptHistory({ query: { include_unfinished: true } }).then((result) => {
       if (cancelled) return
       if (result.error) setError(getApiErrorMessage(result))
-      else setHistory(result.data ?? [])
+      else setAll(result.data)
       setLoading(false)
     })
 
@@ -30,7 +70,11 @@ export function useAttemptHistory() {
     }
   }, [])
 
-  return { history, loading, error }
+  const continuable = continuableAttempts(all)
+  const history = all.filter((item) => !isUnfinished(item))
+  const rows = all.filter((item) => !isUnfinished(item) || continuable.has(item.id))
+
+  return { history, rows, loading, error }
 }
 
 /**

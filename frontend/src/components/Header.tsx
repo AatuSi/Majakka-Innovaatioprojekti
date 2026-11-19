@@ -6,7 +6,6 @@ import { scrollIfAlreadyHere } from "./navigation";
 import AuthModal from "./AuthModal";
 import { openAuthModal } from "./authModalStore";
 import { useAuthUser } from "./authUserStore";
-import { resetAvatar, syncSavedAvatarIcon } from "../features/profile/avatarStore";
 import NotificationBell from "../features/profile/NotificationBell";
 import ProfileAvatar from "../features/profile/ProfileAvatar";
 
@@ -26,14 +25,6 @@ export default function Header() {
   // const isQuiz = pathname.endsWith("-quiz");
   const isQuiz = pathname === '/quizzes' || pathname.endsWith('-quiz')
   const authUser = useAuthUser();
-
-  // The header is on every page, so the avatar is kept up to date from here.
-  const userId = authUser?.id;
-  const savedAvatarIcon = authUser?.avatar_icon ?? null;
-  useEffect(() => {
-    if (userId) syncSavedAvatarIcon(savedAvatarIcon);
-    else resetAvatar();
-  }, [userId, savedAvatarIcon]);
 
   // The menu remembers the location it was opened at, so any navigation,
   // including the browser's back and forward buttons, closes it.

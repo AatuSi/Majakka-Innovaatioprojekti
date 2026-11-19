@@ -8,13 +8,14 @@ import {
   faXmark,
   faUpload,
   faPen,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import Toast from '../../components/Toast'
 import { getDisplayName, updateAuthUser, useAuthUser } from '../../components/authUserStore'
 import { getApiErrorMessage } from '../../api/errors'
-import { updateUser } from '../../client'
+import { deleteAvatar, updateUser, uploadAvatar } from '../../client'
 import { summarizeAttempts, useAttemptHistory } from './attemptHistory'
-import { avatarIcons, selectAvatarIcon, selectUploadedAvatar, uploadAvatar, useAvatar } from './avatarStore'
+import { AVATAR_ACCEPT, AVATAR_MAX_BYTES, avatarIcons, getAvatarImageUrl, useAvatar } from './avatarStore'
 import type { AvatarIconName } from './avatarStore'
 import ProfileAvatar from './ProfileAvatar'
 import {
@@ -46,7 +47,9 @@ export default function ProfileAccountPage() {
     ? new Date(authUser.created_at).toLocaleDateString('fi-FI', { month: 'long', year: 'numeric' })
     : ''
   const [profileSaved, setProfileSaved] = useState(false)
-  const { selectedIcon, uploadedImage } = useAvatar()
+  const avatar = useAvatar()
+  const uploadedImageUrl = getAvatarImageUrl(authUser)
+  const [avatarBusy, setAvatarBusy] = useState(false)
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -99,7 +102,8 @@ export default function ProfileAccountPage() {
     setTimeout(() => setProfileSaved(false), 3000)
   }
 
-  const handleIconSelect = async (name: AvatarIconName) => {
+  // null as the icon switches back to the uploaded picture, which stays saved.
+  const handleIconSelect = async (name: AvatarIconName | null) => {
     setShowAvatarModal(false)
     if (!authUser) return
 
@@ -114,17 +118,59 @@ export default function ProfileAccountPage() {
       return
     }
 
-    selectAvatarIcon(avatarIcons[name])
     updateAuthUser(result.data)
   }
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file?.type.startsWith('image/')) return
+    if (!file || !authUser || avatarBusy) return
 
-    uploadAvatar(file)
+    setAvatarError(null)
+    if (!AVATAR_ACCEPT.split(',').includes(file.type)) {
+      setAvatarError('Kuvan pitää olla PNG-, JPEG- tai WebP-muodossa.')
+      return
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      setAvatarError('Kuva on liian suuri, enintään 2 Mt.')
+      return
+    }
+
+    setAvatarBusy(true)
+    const result = await uploadAvatar({ path: { user_id: authUser.id }, body: { file } })
+    setAvatarBusy(false)
+
+    if (result.error) {
+      setAvatarError(
+        getApiErrorMessage(result, {
+          byStatus: {
+            413: 'Kuva on liian suuri, enintään 2 Mt.',
+            415: 'Tiedosto ei ole kelvollinen PNG-, JPEG- tai WebP-kuva.',
+          },
+        }),
+      )
+      return
+    }
+
+    updateAuthUser(result.data)
     setShowAvatarModal(false)
+  }
+
+  const handleImageDelete = async () => {
+    if (!authUser || avatarBusy) return
+
+    setAvatarError(null)
+    setAvatarBusy(true)
+    const result = await deleteAvatar({ path: { user_id: authUser.id } })
+    setAvatarBusy(false)
+
+    if (result.error) {
+      setAvatarError(getApiErrorMessage(result))
+      return
+    }
+
+    // 204 has no body, so the saved user is updated here.
+    updateAuthUser({ ...authUser, avatar_updated_at: null })
   }
 
   return (
@@ -254,7 +300,7 @@ export default function ProfileAccountPage() {
                   type="button"
                   onClick={() => void handleIconSelect(name)}
                   className={`flex h-16 w-16 items-center justify-center rounded-full border-2 transition cursor-pointer ${
-                    selectedIcon === avatarIcons[name]
+                    avatar.kind === 'icon' && avatar.icon === avatarIcons[name]
                       ? 'border-[#1D90F4] bg-[#1D90F4]/15 text-[#38bdf8] shadow-[0_0_20px_rgba(29,144,244,0.35)]'
                       : 'border-[#2A3548] bg-[#182130] text-[#c3cddb] hover:border-[#1D90F4]/60'
                   }`}
@@ -262,21 +308,18 @@ export default function ProfileAccountPage() {
                   <FontAwesomeIcon icon={avatarIcons[name]} className="text-xl" />
                 </button>
               ))}
-              {uploadedImage && (
+              {uploadedImageUrl && (
                 <button
                   type="button"
-                  onClick={() => {
-                    selectUploadedAvatar()
-                    setShowAvatarModal(false)
-                  }}
+                  onClick={() => void handleIconSelect(null)}
                   aria-label="Käytä omaa kuvaa"
                   className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 transition cursor-pointer ${
-                    selectedIcon === null
+                    avatar.kind === 'image'
                       ? 'border-[#1D90F4] shadow-[0_0_20px_rgba(29,144,244,0.35)]'
                       : 'border-[#2A3548] hover:border-[#1D90F4]/60'
                   }`}
                 >
-                  <img src={uploadedImage} alt="" className="h-full w-full object-cover" />
+                  <img src={uploadedImageUrl} alt="" className="h-full w-full object-cover" />
                 </button>
               )}
             </div>
@@ -284,18 +327,36 @@ export default function ProfileAccountPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
+              accept={AVATAR_ACCEPT}
+              onChange={(e) => void handleImageUpload(e)}
               className="hidden"
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
+              disabled={avatarBusy}
               className={`${secondaryButton} mt-6 w-full`}
             >
               <FontAwesomeIcon icon={faUpload} />
-              <span>Lataa oma kuva</span>
+              <span>{avatarBusy ? 'Tallennetaan…' : uploadedImageUrl ? 'Vaihda oma kuva' : 'Lataa oma kuva'}</span>
             </button>
+            <p className="mt-2 text-center text-xs text-[#718096]">PNG, JPEG tai WebP, enintään 2 Mt</p>
+            {uploadedImageUrl && (
+              <button
+                type="button"
+                onClick={() => void handleImageDelete()}
+                disabled={avatarBusy}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 text-sm text-rose-300 transition hover:text-rose-200 cursor-pointer disabled:opacity-40"
+              >
+                <FontAwesomeIcon icon={faTrash} className="text-xs" />
+                Poista oma kuva
+              </button>
+            )}
+            {avatarError && (
+              <p role="alert" className="mt-3 text-center text-sm text-rose-300">
+                {avatarError}
+              </p>
+            )}
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { QuizAnswer, QuizDefinition } from './types'
 import './quiz.css'
@@ -7,6 +7,7 @@ import {
   completeAttempt,
   createAttempt,
   createResponse,
+  getAttempt,
 } from '../../client'
 import { useAuthUser } from '../authUserStore'
 
@@ -54,9 +55,12 @@ function TitleBar() {
 export default function QuizRunner({
   quiz,
   relatedLink,
+  resumeAttemptId,
 }: {
   quiz: QuizDefinition
   relatedLink?: ReactNode
+  /** An unfinished attempt of this quiz to continue instead of starting anew. */
+  resumeAttemptId?: string
 }) {
   const [phase, setPhase] = useState<Phase>('intro')
   const [index, setIndex] = useState(0)
@@ -142,7 +146,109 @@ export default function QuizRunner({
     setSavingAttempt(false)
   }
 
+  // Continuing an unfinished attempt: the given answers are read back from the
+  // server and the quiz goes on from the first unanswered question.
+  const [resuming, setResuming] = useState(Boolean(resumeAttemptId))
+  const [resumeError, setResumeError] = useState<string | null>(null)
+  const authUserId = authUser?.id
+
+  useEffect(() => {
+    if (!resumeAttemptId) return
+    let cancelled = false
+    // A function, so the check is read again after every await.
+    const isCancelled = () => cancelled
+
+    async function resume(attemptId: string) {
+      const fail = (message: string) => {
+        if (cancelled) return
+        setResumeError(message)
+        setResuming(false)
+      }
+
+      if (!authUserId) {
+        fail('Kirjaudu sisään jatkaaksesi keskeneräistä suoritusta.')
+        return
+      }
+
+      const result = await getAttempt({ path: { attempt_id: attemptId } })
+      const attempt = result.data
+      if (!attempt || attempt.quiz_id !== quiz.id || attempt.completed_at) {
+        fail('Keskeneräistä suoritusta ei löytynyt. Voit aloittaa tietovisan alusta.')
+        return
+      }
+
+      const savedResponses = attempt.responses ?? []
+      const responses = new Map(savedResponses.map((response) => [response.question_id, response]))
+      const answered = quiz.questions.filter((item) => responses.has(item.id))
+      // The correct option and explanation come from the same check as when answering.
+      const checks = await Promise.all(
+        answered.map((item) =>
+          checkPublicAnswer({
+            path: { quiz_id: quiz.id },
+            body: {
+              question_id: item.id,
+              selected_option_id: responses.get(item.id)?.selected_option_id ?? '',
+            },
+          }),
+        ),
+      )
+      if (cancelled) return
+
+      const restored: QuizAnswer[] = []
+      for (const [i, item] of answered.entries()) {
+        const response = responses.get(item.id)
+        const check = checks[i].data
+        if (!response || !check) {
+          fail('Keskeneräistä suoritusta ei voitu ladata. Yritä uudelleen.')
+          return
+        }
+        restored.push({
+          questionId: item.id,
+          selectedOptionId: response.selected_option_id,
+          // The result saved when answering, so a later fix to the question doesn't change it.
+          correct: response.is_correct,
+          correctOptionId: check.correct_option_id,
+          explanation: check.explanation ?? undefined,
+        })
+      }
+
+      const spentMs = savedResponses.reduce((sum, response) => sum + (response.time_spent_ms ?? 0), 0)
+      attemptRef.current = Promise.resolve(attempt.id)
+      savedAnswersRef.current = []
+      setAnswers(restored)
+      setStartedAt(Date.now() - spentMs)
+      setSelectedOptionId(null)
+      setRevealed(false)
+      setShowValidation(false)
+
+      const nextIndex = quiz.questions.findIndex((item) => !responses.has(item.id))
+      if (nextIndex === -1) {
+        // Every question was answered but completing failed last time: just complete it.
+        setElapsedMs(spentMs)
+        setPhase('result')
+        setSavingAttempt(true)
+        const completed = await completeAttempt({ path: { attempt_id: attempt.id } })
+        if (!isCancelled()) {
+          if (completed.error) setSaveError('Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.')
+          setSavingAttempt(false)
+        }
+      } else {
+        questionShownAtRef.current = Date.now()
+        setIndex(nextIndex)
+        setPhase('active')
+      }
+      setResuming(false)
+    }
+
+    void resume(resumeAttemptId)
+
+    return () => {
+      cancelled = true
+    }
+  }, [resumeAttemptId, authUserId, quiz])
+
   function start() {
+    setResumeError(null)
     beginAttempt()
     questionShownAtRef.current = Date.now()
     setPhase('active')
@@ -308,13 +414,24 @@ export default function QuizRunner({
                 Valitse jokaiseen kysymykseen yksi vaihtoehto ja tarkista
                 vastauksesi. Saat perustelun heti, ja yhteenvedon näet lopuksi.
               </p>
-              <button
-                type="button"
-                onClick={start}
-                className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
-              >
-                Aloita tietovisa
-              </button>
+              {resumeError ? (
+                <p role="alert" className="mt-6 text-sm text-amber-300">
+                  {resumeError}
+                </p>
+              ) : null}
+              {resuming ? (
+                <p className="mt-8 text-sm text-slate-300" aria-live="polite">
+                  Ladataan keskeneräistä suoritusta...
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={start}
+                  className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
+                >
+                  Aloita tietovisa
+                </button>
+              )}
             </div>
           ) : null}
 

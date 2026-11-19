@@ -9,8 +9,16 @@ import {
   faBookOpen,
   faRotateRight,
   faMagnifyingGlass,
+  faPlay,
 } from '@fortawesome/free-solid-svg-icons'
-import { PASS_RATIO, scoreRatio, summarizeAttempts, useAttemptHistory } from './attemptHistory'
+import {
+  PASS_RATIO,
+  isUnfinished,
+  quizPath,
+  scoreRatio,
+  summarizeAttempts,
+  useAttemptHistory,
+} from './attemptHistory'
 import { card, eyebrow, input, insetPanel, secondaryButton, sectionIntro, sectionTitle } from './profileStyles'
 
 const quizTitle = (name?: string | null) => name ?? 'Nimetön testi'
@@ -32,7 +40,7 @@ export default function ProfileStatsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [visibleCount, setVisibleCount] = useState(5)
 
-  const { history, loading, error } = useAttemptHistory()
+  const { history, rows, loading, error } = useAttemptHistory()
   const summary = summarizeAttempts(history)
   const statValue = (value: string) => (loading || error ? '–' : value)
 
@@ -41,13 +49,13 @@ export default function ProfileStatsPage() {
       ? '–'
       : `${summary.improvement > 0 ? '+' : ''}${summary.improvement}%`
 
-  const filteredHistory = history.filter((item) => {
+  const filteredHistory = rows.filter((item) => {
     return quizTitle(item.quiz_name).toLowerCase().includes(searchTerm.toLowerCase())
   })
 
   const emptyMessage = loading
     ? 'Ladataan suorituksia...'
-    : (error ?? (history.length === 0 ? 'Ei vielä suorituksia.' : 'Ei hakuehtoja vastaavia suorituksia.'))
+    : (error ?? (rows.length === 0 ? 'Ei vielä suorituksia.' : 'Ei hakuehtoja vastaavia suorituksia.'))
 
   const displayedHistory = filteredHistory.slice(0, visibleCount)
 
@@ -96,6 +104,14 @@ export default function ProfileStatsPage() {
         <span className={eyebrow}>Edistyminen</span>
         <h2 className={`mt-1 ${sectionTitle}`}>Tilastot</h2>
         <p className={sectionIntro}>Seuraa loistotestien tuloksia, oppimisen etenemistä sekä aihealueita.</p>
+        {/* Deliberate duplicate of the /results page (Tulokset), kept so the
+            team can compare both and pick one. Remove once decided. */}
+        <p className="mt-2 text-xs text-[#718096]">
+          Vertailuun: samat tiedot sivulla{' '}
+          <Link to="/results" className="text-[#38bdf8] underline">
+            Tulokset
+          </Link>
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -161,33 +177,53 @@ export default function ProfileStatsPage() {
                   </td>
                 </tr>
               ) : (
-                displayedHistory.map((quiz) => (
-                  <tr key={quiz.id} className="transition-colors hover:bg-[#1D90F4]/5">
-                    <td className="px-5 py-4 font-medium text-white">{quizTitle(quiz.quiz_name)}</td>
-                    <td className="whitespace-nowrap px-5 py-4 font-light">{formatDate(quiz.completed_at)}</td>
-                    <td className="whitespace-nowrap px-5 py-4">
-                      <span
-                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                          scoreRatio(quiz) >= PASS_RATIO
-                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                            : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
-                        }`}
-                      >
-                        {quiz.score}/{quiz.total_questions}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4 font-light">{formatDuration(quiz.duration_seconds)}</td>
-                    <td className="whitespace-nowrap px-5 py-4 text-right">
-                      <Link
-                        to={quiz.quiz_name === 'IALA-tietovisa' ? '/IALA-quiz' : '/COLREG-quiz'}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D90F4] underline-offset-4 transition hover:underline cursor-pointer"
-                      >
-                        <FontAwesomeIcon icon={faRotateRight} className="text-[10px]" />
-                        <span>Kertaa</span>
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                displayedHistory.map((quiz) => {
+                  const unfinished = isUnfinished(quiz)
+
+                  return (
+                    <tr key={quiz.id} className="transition-colors hover:bg-[#1D90F4]/5">
+                      <td className="px-5 py-4 font-medium text-white">{quizTitle(quiz.quiz_name)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 font-light">{formatDate(quiz.last_activity_at)}</td>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        {unfinished ? (
+                          // No result yet, only how far the attempt got.
+                          <span className="rounded-full border border-[#2A3548] bg-[#0F1724] px-2.5 py-0.5 text-xs font-medium text-[#9fb0c7]">
+                            {quiz.total_questions} vastattu
+                          </span>
+                        ) : (
+                          <span
+                            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                              scoreRatio(quiz) >= PASS_RATIO
+                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                                : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                            }`}
+                          >
+                            {quiz.score}/{quiz.total_questions}
+                          </span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 font-light">
+                        {unfinished ? (
+                          <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                            Kesken
+                          </span>
+                        ) : (
+                          formatDuration(quiz.duration_seconds)
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-right">
+                        <Link
+                          to={quizPath(quiz.quiz_name)}
+                          search={unfinished ? { resume: quiz.id } : {}}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D90F4] underline-offset-4 transition hover:underline cursor-pointer"
+                        >
+                          <FontAwesomeIcon icon={unfinished ? faPlay : faRotateRight} className="text-[10px]" />
+                          <span>{unfinished ? 'Jatka' : 'Kertaa'}</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

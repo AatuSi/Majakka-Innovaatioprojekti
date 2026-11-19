@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { listQuizResultsByTopic } from '../../client'
 import type { QuizTopicResult } from '../../client'
 import { getApiErrorMessage } from '../../api/errors'
@@ -49,6 +50,17 @@ export default function QuizResultsPage() {
             ? 'Kaikkien käyttäjien tietovisatulokset yhteensä.'
             : 'Tallennettujen tietovisasuoritustesi tulokset.'}
         </p>
+
+        {/* Deliberate duplicate of the profile's Tilastot page, kept so the
+            team can compare both and pick one. Remove once decided. */}
+        {authUser && (
+          <p className="mt-2 text-sm text-slate-400">
+            Vertailuun: samat tiedot profiilissa{' '}
+            <Link to="/profile/stats" className="text-amber-300 underline">
+              Tilastot
+            </Link>
+          </p>
+        )}
 
         {!authUser ? (
           <div className="mt-8">
