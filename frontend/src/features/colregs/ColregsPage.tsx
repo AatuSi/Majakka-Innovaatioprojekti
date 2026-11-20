@@ -6,6 +6,26 @@ import useColreg from "./useColreg";
 
 const rules = [23, 24, 25, 26, 27, 28, 29, 30] as const;
 
+function getAspectLabel(deg: number): string {
+  const norm = ((deg % 360) + 360) % 360;
+  if (norm === 0 || norm === 360) return "Keula suoraan kohti (lähestyy)";
+  if (norm < 45) return "Viistosti edestä (oikea keula)";
+  if (norm === 45) return "Oikea keulakulma (45°)";
+  if (norm < 90) return "Viistosti edestä (styyrpuuri)";
+  if (norm === 90) return "Styyrpuuri suoraan sivulta (oikealta)";
+  if (norm < 135) return "Viistosti takaa (styyrpuuri)";
+  if (norm === 135) return "Oikea peräkulma (135°)";
+  if (norm < 180) return "Viistosti takaa (oikea perä)";
+  if (norm === 180) return "Perä suoraan kohti (loittonee)";
+  if (norm < 225) return "Viistosti takaa (vasen perä)";
+  if (norm === 225) return "Vasen peräkulma (225°)";
+  if (norm < 270) return "Viistosti takaa (paapuuri)";
+  if (norm === 270) return "Paapuuri suoraan sivulta (vasemmalta)";
+  if (norm < 315) return "Viistosti edestä (paapuuri)";
+  if (norm === 315) return "Vasen keulakulma (315°)";
+  return "Viistosti edestä (vasen keula)";
+}
+
 const options = EXAMPLES.map((scenario, index) => ({
   scenario,
   value: String(index),
@@ -26,7 +46,15 @@ const options = EXAMPLES.map((scenario, index) => ({
 }));
 
 export default function ColregsPage() {
-  const { view, scenario, bearingDeg, setScenario, setBearingDeg } = useColreg();
+  const {
+    view,
+    scenario,
+    bearingDeg,
+    showSilhouette,
+    setScenario,
+    setBearingDeg,
+    setShowSilhouette,
+  } = useColreg();
 
   const [selectedOption, setSelectedOption] = useState("");
 
@@ -106,11 +134,10 @@ export default function ColregsPage() {
                     type="button"
                     key={name}
                     aria-pressed={active}
-                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      active
+                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition ${active
                         ? "border-amber-300 bg-amber-300 text-navy-950"
                         : "border-white/20 text-white hover:border-white/40"
-                    }`}
+                      }`}
                     onClick={() => setBearingDeg(90 * i)}
                   >
                     {name}
@@ -118,9 +145,50 @@ export default function ColregsPage() {
                 );
               })}
             </div>
+
+            <div className="flex items-center justify-between border-t border-white/10 pt-4">
+              <span className="text-sm font-semibold uppercase tracking-wide text-amber-300">
+                Havainnollistava aluksen siluetti
+              </span>
+              <button
+                type="button"
+                aria-pressed={showSilhouette}
+                className={`cursor-pointer rounded-full border px-4 py-1.5 text-xs font-semibold transition ${showSilhouette
+                    ? "border-amber-300 bg-amber-300 text-navy-950"
+                    : "border-white/20 text-slate-300 hover:border-white/40 hover:text-white"
+                  }`}
+                onClick={() => setShowSilhouette(!showSilhouette)}
+              >
+                {showSilhouette ? "Päällä" : "Pois"}
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-white/10">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#020617] shadow-xl">
+            {/* Aspect & heading orientation badge */}
+            <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-lg border border-white/15 bg-navy-950/80 px-2.5 py-1 text-xs text-slate-200 backdrop-blur-sm pointer-events-none select-none">
+              <svg
+                className="h-3.5 w-3.5 text-amber-300 shrink-0"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+                style={{ transform: `rotate(${180 - bearingDeg}deg)` }}
+              >
+                <path d="M12 2 L17 9 L16 22 L8 22 L7 9 Z" />
+              </svg>
+              <span className="font-medium text-slate-300">
+                {getAspectLabel(bearingDeg)}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Vaihda aluksen siluetin näkyvyyttä"
+              className="absolute right-3 top-3 z-10 cursor-pointer rounded-lg border border-white/15 bg-navy-950/80 px-2.5 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm transition hover:border-amber-300/50 hover:text-amber-300"
+              onClick={() => setShowSilhouette(!showSilhouette)}
+            >
+              {showSilhouette ? "Piilota siluetti" : "Näytä siluetti"}
+            </button>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="-60 -65 120 80"

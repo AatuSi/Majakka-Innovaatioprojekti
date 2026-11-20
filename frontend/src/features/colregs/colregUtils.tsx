@@ -846,11 +846,30 @@ export function buildDisplay(scenario: Scenario): Display {
  * Geometry and animation
  * ========================================================================== */
 
-/** Ideal nominal sectors, including shared endpoints; no real-world cutoff falloff. */
-export function isVisible(sector: Sector, bearingDeg: number): boolean {
+/** Practical cutoff falloff band in degrees (COLREG Annex I, Sec. 9 specifies 1°–3° cutoff). */
+export const SECTOR_FADE_DEG = 2.5;
+
+/**
+ * Calculates visibility opacity (0.0 to 1.0) based on nominal legal sector and practical cutoff falloff.
+ * Inside the nominal sector, opacity is 1.0. Outside the sector, intensity diminishes
+ * smoothly to practical cutoff (0.0) over SECTOR_FADE_DEG.
+ */
+export function sectorOpacity(sector: Sector, bearingDeg: number): number {
   assertFinite(bearingDeg, "bearingDeg");
+  if (sector.width >= 360) return 1.0;
   const angularDifference = ((((bearingDeg - sector.center) % 360) + 540) % 360) - 180;
-  return Math.abs(angularDifference) <= sector.width / 2 + 1e-9;
+  const diff = Math.abs(angularDifference);
+  const halfWidth = sector.width / 2;
+  if (diff <= halfWidth) return 1.0;
+  const excess = diff - halfWidth;
+  if (excess >= SECTOR_FADE_DEG) return 0.0;
+  const t = 1.0 - excess / SECTOR_FADE_DEG;
+  return t * t * (3 - 2 * t);
+}
+
+/** Nominal sector visibility check; returns true if light is within visible cutoff arc. */
+export function isVisible(sector: Sector, bearingDeg: number): boolean {
+  return sectorOpacity(sector, bearingDeg) > 0.001;
 }
 
 export function isLit(light: Light, timeMs: number): boolean {
@@ -885,12 +904,16 @@ export function projectDisplay(display: Display, bearingDeg: number, timeMs = 0)
   return {
     ...display,
     lights: display.lights
-      .filter((light) => isVisible(light.sector, bearingDeg))
-      .map((light) => ({
-        ...light,
-        ...project(light.position, bearingDeg),
-        on: isLit(light, timeMs),
-      }))
+      .map((light) => {
+        const opacity = +sectorOpacity(light.sector, bearingDeg).toFixed(2);
+        return {
+          ...light,
+          ...project(light.position, bearingDeg),
+          opacity,
+          on: isLit(light, timeMs),
+        };
+      })
+      .filter((light) => light.opacity > 0)
       .sort((a, b) => a.depth - b.depth),
     shapes: display.shapes
       .map((shape) => ({ ...shape, ...project(shape.position, bearingDeg) }))
@@ -927,6 +950,8 @@ function renderLight(light: ProjectedLight, litLights: readonly ProjectedLight[]
       (other) => other.id === oppositeId && samePosition(other.position, light.position),
     );
 
+  const glowFilter = `url(#glow-${light.color})`;
+
   if (isCombined) {
     const sweep = light.id === "port" ? 1 : 0;
     return (
@@ -935,25 +960,512 @@ function renderLight(light: ProjectedLight, litLights: readonly ProjectedLight[]
         transform={`translate(${light.x} ${light.y})`}
         d={`M 0 -1.6 A 1.6 1.6 0 0 ${sweep} 0 1.6 Z`}
         fill={COLORS[light.color]}
+        filter={glowFilter}
+        opacity={light.opacity}
       >
         <title>{light.id}</title>
       </path>
     );
   }
   return (
-    <circle key={light.id} cx={light.x} cy={light.y} r="1.6" fill={COLORS[light.color]}>
+    <circle
+      key={light.id}
+      cx={light.x}
+      cy={light.y}
+      r="1.6"
+      fill={COLORS[light.color]}
+      filter={glowFilter}
+      opacity={light.opacity}
+    >
       <title>{light.id}</title>
     </circle>
   );
 }
 
+/** SVG glow filter: two‑layer Gaussian blur for a soft halo around each light. */
+function GlowFilter({ id, color }: { id: string; color: string }): ReactElement {
+  return (
+    <filter id={id} x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur2" />
+      <feFlood floodColor={color} floodOpacity="0.6" result="color1" />
+      <feFlood floodColor={color} floodOpacity="0.3" result="color2" />
+      <feComposite in="color1" in2="blur1" operator="in" result="glow1" />
+      <feComposite in="color2" in2="blur2" operator="in" result="glow2" />
+      <feMerge>
+        <feMergeNode in="glow2" />
+        <feMergeNode in="glow1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  );
+}
+
+/** 3D model of a vessel with sheer, aft wheelhouse, and directional features. */
+function renderShipSilhouette(bearingDeg: number): ReactElement {
+  const rad = (bearingDeg * Math.PI) / 180;
+  const proj = ([x, y, z]: Vec3): { x: number; y: number; depth: number } => ({
+    x: +(-x * Math.cos(rad) + y * Math.sin(rad)).toFixed(1),
+    y: +(-z).toFixed(1),
+    depth: +(x * Math.sin(rad) + y * Math.cos(rad)).toFixed(1),
+  });
+
+  const area2D = (pts: Array<{ x: number; y: number }>): number => {
+    let a = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const j = (i + 1) % pts.length;
+      a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+    }
+    return a;
+  };
+
+  const toPointsString = (pts: Array<{ x: number; y: number }>) =>
+    pts.map((p) => `${p.x},${p.y}`).join(" ");
+
+  // Stations along the hull (starboard side; port is mirrored at -x)
+  // Sheer line: bow is raised (z=7.5) with forward raked stem; stern is lower (z=4.5)
+  const stations: Array<{ d: Vec3; w: Vec3 }> = [
+    { d: [0, 36, 7.5], w: [0, 31, 0] },       // bow stem
+    { d: [5.2, 26, 6.2], w: [4.2, 25, 0] },   // fwd shoulder
+    { d: [7.5, 10, 5.2], w: [6.8, 10, 0] },   // midships fwd
+    { d: [7.5, -14, 4.6], w: [6.8, -14, 0] }, // midships aft
+    { d: [6.0, -26, 4.5], w: [5.2, -26, 0] }, // aft quarter
+    { d: [4.2, -38, 4.5], w: [3.2, -37, 0] }, // transom corner
+  ];
+
+  interface OverlayPoly {
+    points3D: Vec3[];
+    fill: string;
+    stroke: string;
+    strokeWidth?: number;
+    fillOpacity?: number;
+  }
+
+  interface RenderablePoly {
+    id: string;
+    points3D: Vec3[];
+    fill: string;
+    stroke: string;
+    strokeWidth?: number;
+    fillOpacity?: number;
+    forceVisible?: boolean;
+    overlays?: OverlayPoly[];
+  }
+
+  const polys: RenderablePoly[] = [];
+
+  // Starboard hull faces (wound for outward normal)
+  for (let i = 0; i < stations.length - 1; i++) {
+    polys.push({
+      id: `hull-sb-${i}`,
+      points3D: [stations[i].d, stations[i].w, stations[i + 1].w, stations[i + 1].d],
+      fill: "#0a182b",
+      stroke: "#1c3452",
+    });
+  }
+
+  // Port hull faces (wound for outward normal)
+  for (let i = 0; i < stations.length - 1; i++) {
+    polys.push({
+      id: `hull-port-${i}`,
+      points3D: [
+        [-stations[i].d[0], stations[i].d[1], stations[i].d[2]],
+        [-stations[i + 1].d[0], stations[i + 1].d[1], stations[i + 1].d[2]],
+        [-stations[i + 1].w[0], stations[i + 1].w[1], stations[i + 1].w[2]],
+        [-stations[i].w[0], stations[i].w[1], stations[i].w[2]],
+      ],
+      fill: "#0d1e35",
+      stroke: "#1f3b5e",
+    });
+  }
+
+  // Transom (flat stern face)
+  polys.push({
+    id: "transom",
+    points3D: [
+      [-stations[5].d[0], stations[5].d[1], stations[5].d[2]],
+      stations[5].d,
+      stations[5].w,
+      [-stations[5].w[0], stations[5].w[1], stations[5].w[2]],
+    ],
+    fill: "#071220",
+    stroke: "#172b43",
+  });
+
+  // Deck surface polygon
+  const deck3D: Vec3[] = [
+    ...stations.map((s) => s.d),
+    ...stations.slice(1).reverse().map((s) => [-s.d[0], s.d[1], s.d[2]] as Vec3),
+  ];
+  polys.push({
+    id: "deck",
+    points3D: deck3D,
+    fill: "#10233b",
+    stroke: "#224269",
+    forceVisible: true,
+  });
+
+  // Wheelhouse / Cabin positioned aft of midships (y from -16 to 4, width ±4.2, height 4.8 to 13)
+  const cWidth = 4.2;
+  const cFwd = 4.0;
+  const cAft = -16.0;
+  const cBottom = 4.8;
+  const cTop = 13.0;
+  const winZMin = 9.2;
+  const winZMax = 12.0;
+
+  // Cabin front wall (faces forward +y) with its 3 forward bridge window panes
+  polys.push({
+    id: "cabin-front",
+    points3D: [
+      [-cWidth, cFwd, cBottom],
+      [cWidth, cFwd, cBottom],
+      [cWidth, cFwd, cTop],
+      [-cWidth, cFwd, cTop],
+    ],
+    fill: "#142742",
+    stroke: "#274b7a",
+    overlays: [
+      // Center pane
+      {
+        points3D: [[-1.0, cFwd, winZMin], [1.0, cFwd, winZMin], [1.0, cFwd, winZMax], [-1.0, cFwd, winZMax]],
+        fill: "#38bdf8",
+        fillOpacity: 0.65,
+        stroke: "#7dd3fc",
+        strokeWidth: 0.3,
+      },
+      // Starboard pane
+      {
+        points3D: [[1.4, cFwd, winZMin], [3.5, cFwd, winZMin], [3.5, cFwd, winZMax], [1.4, cFwd, winZMax]],
+        fill: "#38bdf8",
+        fillOpacity: 0.65,
+        stroke: "#7dd3fc",
+        strokeWidth: 0.3,
+      },
+      // Port pane
+      {
+        points3D: [[-3.5, cFwd, winZMin], [-1.4, cFwd, winZMin], [-1.4, cFwd, winZMax], [-3.5, cFwd, winZMax]],
+        fill: "#38bdf8",
+        fillOpacity: 0.65,
+        stroke: "#7dd3fc",
+        strokeWidth: 0.3,
+      },
+    ],
+  });
+
+  // Cabin back wall (faces aft -y) with aft companionway door
+  polys.push({
+    id: "cabin-back",
+    points3D: [
+      [cWidth, cAft, cBottom],
+      [-cWidth, cAft, cBottom],
+      [-cWidth, cAft, cTop],
+      [cWidth, cAft, cTop],
+    ],
+    fill: "#0f1f36",
+    stroke: "#223f66",
+    overlays: [
+      {
+        points3D: [[-1.2, cAft, 5.2], [1.2, cAft, 5.2], [1.2, cAft, 10.0], [-1.2, cAft, 10.0]],
+        fill: "#081422",
+        stroke: "#1b324f",
+        strokeWidth: 0.4,
+      },
+    ],
+  });
+
+  // Cabin starboard wall (faces +x) with 2 side windows
+  polys.push({
+    id: "cabin-sb",
+    points3D: [
+      [cWidth, cFwd, cBottom],
+      [cWidth, cAft, cBottom],
+      [cWidth, cAft, cTop],
+      [cWidth, cFwd, cTop],
+    ],
+    fill: "#12243d",
+    stroke: "#254773",
+    overlays: [
+      {
+        points3D: [[cWidth, 0.5, winZMin], [cWidth, -3.5, winZMin], [cWidth, -3.5, 11.8], [cWidth, 0.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+      {
+        points3D: [[cWidth, -5.5, winZMin], [cWidth, -9.5, winZMin], [cWidth, -9.5, 11.8], [cWidth, -5.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+    ],
+  });
+
+  // Cabin port wall (faces -x) with 2 side windows
+  polys.push({
+    id: "cabin-port",
+    points3D: [
+      [-cWidth, cAft, cBottom],
+      [-cWidth, cFwd, cBottom],
+      [-cWidth, cFwd, cTop],
+      [-cWidth, cAft, cTop],
+    ],
+    fill: "#12243d",
+    stroke: "#254773",
+    overlays: [
+      {
+        points3D: [[-cWidth, -3.5, winZMin], [-cWidth, 0.5, winZMin], [-cWidth, 0.5, 11.8], [-cWidth, -3.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+      {
+        points3D: [[-cWidth, -9.5, winZMin], [-cWidth, -5.5, winZMin], [-cWidth, -5.5, 11.8], [-cWidth, -9.5, 11.8]],
+        fill: "#0284c7",
+        fillOpacity: 0.45,
+        stroke: "#38bdf8",
+        strokeWidth: 0.3,
+      },
+    ],
+  });
+
+  // Cabin roof
+  polys.push({
+    id: "cabin-roof",
+    points3D: [
+      [-cWidth, cFwd, cTop],
+      [cWidth, cFwd, cTop],
+      [cWidth, cAft, cTop],
+      [-cWidth, cAft, cTop],
+    ],
+    fill: "#162c4a",
+    stroke: "#2c568b",
+    forceVisible: true,
+  });
+
+  // Filter with back-face culling & calculate depth
+  interface ProjectedOverlay {
+    points2D: Array<{ x: number; y: number }>;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    fillOpacity?: number;
+  }
+
+  interface ProjectedFace {
+    id: string;
+    points2D: Array<{ x: number; y: number }>;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    fillOpacity?: number;
+    avgDepth: number;
+    overlays?: ProjectedOverlay[];
+  }
+
+  const visibleFaces: ProjectedFace[] = [];
+  for (const poly of polys) {
+    const projected = poly.points3D.map(proj);
+    const area = area2D(projected);
+    if (area > 0.005 || poly.forceVisible) {
+      const avgDepth = projected.reduce((sum, p) => sum + p.depth, 0) / projected.length;
+      const projectedOverlays = poly.overlays?.map((ov) => ({
+        points2D: ov.points3D.map(proj),
+        fill: ov.fill,
+        stroke: ov.stroke,
+        strokeWidth: ov.strokeWidth ?? 0.3,
+        fillOpacity: ov.fillOpacity,
+      }));
+
+      visibleFaces.push({
+        id: poly.id,
+        points2D: projected,
+        fill: poly.fill,
+        stroke: poly.stroke,
+        strokeWidth: poly.strokeWidth ?? 0.4,
+        fillOpacity: poly.fillOpacity,
+        avgDepth,
+        overlays: projectedOverlays,
+      });
+    }
+  }
+
+  // Masts and standing rigging
+  interface ProjectedLine {
+    id: string;
+    p1: { x: number; y: number };
+    p2: { x: number; y: number };
+    avgDepth: number;
+    stroke: string;
+    strokeWidth: number;
+  }
+
+  // Line-of-sight occlusion calculations:
+  const cosBearing = Math.cos(rad);
+
+  // Cabin horizontal footprint in 2D projection
+  const cabinCorners3D: Vec3[] = [
+    [-cWidth, cFwd, cBottom],
+    [cWidth, cFwd, cBottom],
+    [cWidth, cAft, cBottom],
+    [-cWidth, cAft, cBottom],
+    [-cWidth, cFwd, cTop],
+    [cWidth, cFwd, cTop],
+    [cWidth, cAft, cTop],
+    [-cWidth, cAft, cTop],
+  ];
+  const cabinProj = cabinCorners3D.map(proj);
+  const minCabinX = Math.min(...cabinProj.map((p) => p.x));
+  const maxCabinX = Math.max(...cabinProj.map((p) => p.x));
+
+  const foreMastX = proj([0, 20, 5.8]).x;
+  // Lower section of fore mast (deck to cabin roof) is occluded when looking from astern and behind cabin body
+  const foreLowerOccluded =
+    cosBearing < 0 && foreMastX >= minCabinX - 0.2 && foreMastX <= maxCabinX + 0.2;
+
+  const lines3D: Array<{ id: string; p1: Vec3; p2: Vec3; stroke?: string; strokeWidth?: number }> = [];
+
+  // Bow jackstaff at prow (naturally occluded by hull/superstructure via depth sorting)
+  lines3D.push({ id: "jackstaff", p1: [0, 36, 7.5], p2: [0, 36, 10.0], stroke: "#2a4d79", strokeWidth: 0.5 });
+
+  // Stern flagstaff at transom (naturally occluded by hull/superstructure via depth sorting)
+  lines3D.push({ id: "flagstaff", p1: [0, -38, 4.5], p2: [0, -38, 7.0], stroke: "#1f3a5d", strokeWidth: 0.5 });
+
+  // Fore mast lower section (from deck z=5.8 to cabin roof z=13.0; hidden when occluded by cabin)
+  if (!foreLowerOccluded) {
+    lines3D.push({ id: "fore-mast-lower", p1: [0, 20, 5.8], p2: [0, 20, 13.0], stroke: "#254773", strokeWidth: 0.6 });
+  }
+
+  // Fore mast upper section (from cabin roof z=13.0 to top z=32.0; always visible above cabin roof)
+  lines3D.push({ id: "fore-mast-upper", p1: [0, 20, 13.0], p2: [0, 20, 32], stroke: "#254773", strokeWidth: 0.6 });
+
+  // Fore mast yardarm
+  lines3D.push({ id: "fore-yardarm", p1: [-3.2, 20, 24], p2: [3.2, 20, 24], stroke: "#254773", strokeWidth: 0.5 });
+
+  // Main / Radar mast (on wheelhouse roof at y=-6)
+  lines3D.push({ id: "main-mast", p1: [0, -6, 13], p2: [0, -6, 38], stroke: "#2b5282", strokeWidth: 0.6 });
+
+  // Main mast yardarm / radar bar
+  lines3D.push({ id: "main-yardarm", p1: [-4.2, -6, 28], p2: [4.2, -6, 28], stroke: "#2b5282", strokeWidth: 0.5 });
+
+  const visibleLines: ProjectedLine[] = lines3D.map((l) => {
+    const a = proj(l.p1);
+    const b = proj(l.p2);
+    return {
+      id: l.id,
+      p1: { x: a.x, y: a.y },
+      p2: { x: b.x, y: b.y },
+      avgDepth: (a.depth + b.depth) / 2,
+      stroke: l.stroke ?? "#223d63",
+      strokeWidth: l.strokeWidth ?? 0.5,
+    };
+  });
+
+  // Sort visible items by depth (Painter's algorithm: farthest rendered first)
+  type SceneItem =
+    | { kind: "face"; face: ProjectedFace; depth: number }
+    | { kind: "line"; line: ProjectedLine; depth: number };
+
+  const sceneItems: SceneItem[] = [
+    ...visibleFaces.map((f) => ({ kind: "face" as const, face: f, depth: f.avgDepth })),
+    ...visibleLines.map((l) => ({ kind: "line" as const, line: l, depth: l.avgDepth })),
+  ];
+  sceneItems.sort((a, b) => a.depth - b.depth);
+
+  // Subtle bow wave foam line at waterline bow
+  const bowWl = proj([0, 31, 0]);
+  const bowWaveSide1 = proj([3, 24, 0]);
+  const bowWaveSide2 = proj([-3, 24, 0]);
+
+  return (
+    <g className="ship-silhouette" pointerEvents="none">
+      {/* 3D vessel rendered back-to-front */}
+      {sceneItems.map((item) => {
+        if (item.kind === "face") {
+          return (
+            <g key={item.face.id}>
+              <polygon
+                points={toPointsString(item.face.points2D)}
+                fill={item.face.fill}
+                fillOpacity={item.face.fillOpacity}
+                stroke={item.face.stroke}
+                strokeWidth={item.face.strokeWidth}
+                strokeLinejoin="round"
+              />
+              {item.face.overlays?.map((ov, oIdx) => (
+                <polygon
+                  key={`${item.face.id}-ov-${oIdx}`}
+                  points={toPointsString(ov.points2D)}
+                  fill={ov.fill}
+                  fillOpacity={ov.fillOpacity}
+                  stroke={ov.stroke}
+                  strokeWidth={ov.strokeWidth}
+                  strokeLinejoin="round"
+                />
+              ))}
+            </g>
+          );
+        }
+        return (
+          <line
+            key={item.line.id}
+            x1={item.line.p1.x}
+            y1={item.line.p1.y}
+            x2={item.line.p2.x}
+            y2={item.line.p2.y}
+            stroke={item.line.stroke}
+            strokeWidth={item.line.strokeWidth}
+            strokeLinecap="round"
+          />
+        );
+      })}
+
+      {/* Subtle bow wave at waterline when bow is facing viewer */}
+      {bowWl.depth > -10 && (
+        <path
+          d={`M ${bowWaveSide1.x} ${bowWaveSide1.y} Q ${bowWl.x} ${bowWl.y + 0.6} ${bowWaveSide2.x} ${bowWaveSide2.y}`}
+          stroke="#38bdf8"
+          strokeOpacity="0.35"
+          strokeWidth="0.4"
+          fill="none"
+        />
+      )}
+    </g>
+  );
+}
+
 /** React SVG elements; wrap the result in an <svg> with an appropriate viewBox. */
-export function renderSvg(scenario: Scenario, bearingDeg: number, timeMs = 0): ReactElement {
+export function renderSvg(
+  scenario: Scenario,
+  bearingDeg: number,
+  timeMs = 0,
+  showSilhouette = false,
+): ReactElement {
   const view = projectDisplay(buildDisplay(scenario), bearingDeg, timeMs);
   const litLights = view.lights.filter((light) => light.on);
   return (
     <>
-      <rect x="-60" y="-65" width="120" height="80" fill="#080f1d" />
+      <defs>
+        <GlowFilter id="glow-white" color={COLORS.white} />
+        <GlowFilter id="glow-red" color={COLORS.red} />
+        <GlowFilter id="glow-green" color={COLORS.green} />
+        <GlowFilter id="glow-yellow" color={COLORS.yellow} />
+        <linearGradient id="water-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#09182d" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#020617" stopOpacity="0.05" />
+        </linearGradient>
+      </defs>
+      {/* Night background */}
+      <rect x="-60" y="-65" width="120" height="80" fill="#020617" />
+      {/* Waterline & subtle sea surface */}
+      <rect x="-60" y="0" width="120" height="15" fill="url(#water-grad)" />
+      <line x1="-58" y1="0" x2="58" y2="0" stroke="#1b3452" strokeWidth="0.4" strokeOpacity="0.8" />
+      {/* Ship silhouette */}
+      {showSilhouette && renderShipSilhouette(bearingDeg)}
+      {/* Navigation lights */}
       {litLights.map((light) => renderLight(light, litLights))}
     </>
   );
