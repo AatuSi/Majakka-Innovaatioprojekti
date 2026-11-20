@@ -15,6 +15,8 @@ import { getDisplayName, updateAuthUser, useAuthUser } from '../../components/au
 import { getApiErrorMessage } from '../../api/errors'
 import { deleteAvatar, updateUser, uploadAvatar } from '../../client'
 import { summarizeAttempts, useAttemptHistory } from './attemptHistory'
+import ContinueCard from './ContinueCard'
+import { useModalFocus } from './useModalFocus'
 import { AVATAR_ACCEPT, AVATAR_MAX_BYTES, avatarIcons, getAvatarImageUrl, useAvatar } from './avatarStore'
 import type { AvatarIconName } from './avatarStore'
 import ProfileAvatar from './ProfileAvatar'
@@ -35,6 +37,12 @@ import {
 
 const availableIcons = Object.keys(avatarIcons) as AvatarIconName[]
 
+// Names for screen readers, since the icon buttons show no text.
+const iconLabels: Record<AvatarIconName, string> = {
+  user: 'Käyttäjäkuvake',
+  'graduation-cap': 'Ylioppilaslakkikuvake',
+}
+
 function formatPracticeTime(totalSeconds: number) {
   return totalSeconds < 3600
     ? `${Math.round(totalSeconds / 60)} min`
@@ -52,18 +60,20 @@ export default function ProfileAccountPage() {
   const [avatarBusy, setAvatarBusy] = useState(false)
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const avatarModalRef = useRef<HTMLDivElement>(null)
+  useModalFocus(avatarModalRef, showAvatarModal, () => setShowAvatarModal(false))
 
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
 
-  const { history, loading: historyLoading } = useAttemptHistory()
+  const { history, rows, loading: historyLoading } = useAttemptHistory()
   const summary = summarizeAttempts(history)
   const statValue = (value: string) => (historyLoading ? '–' : value)
 
   const statsData = [
     { icon: faClipboardList, value: statValue(`${summary.completed}`), label: 'Suoritusta' },
-    { icon: faClock, value: statValue(formatPracticeTime(summary.totalSeconds)), label: 'Simulaattoriaikaa' },
+    { icon: faClock, value: statValue(formatPracticeTime(summary.totalSeconds)), label: 'Harjoitteluaikaa' },
     { icon: faTrophy, value: statValue(`${summary.accuracy}%`), label: 'Tarkkuusaste' },
   ]
 
@@ -188,7 +198,7 @@ export default function ProfileAccountPage() {
           {authUser?.role === 'admin' ? 'Ylläpitäjä' : 'Opiskelija'}
         </span>
         <p className="mt-3 text-sm font-light text-[#9fb0c7]">
-          Metropolia AMK • Liittynyt {joinedAt}
+          Liittynyt {joinedAt}
         </p>
 
         <button
@@ -207,6 +217,8 @@ export default function ProfileAccountPage() {
       </section>
 
       <div className="flex flex-col gap-6">
+        <ContinueCard rows={rows} loading={historyLoading} />
+
         {/* stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {statsData.map((stat) => (
@@ -275,7 +287,13 @@ export default function ProfileAccountPage() {
 
       {showAvatarModal && (
         <div className={modalBackdrop}>
-          <div className={modalPanel} role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+          <div
+            ref={avatarModalRef}
+            className={modalPanel}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="avatar-modal-title"
+          >
             <div className="flex items-start justify-between">
               <div>
                 <span className={eyebrow}>Profiilikuva</span>
@@ -299,6 +317,8 @@ export default function ProfileAccountPage() {
                   key={name}
                   type="button"
                   onClick={() => void handleIconSelect(name)}
+                  aria-label={iconLabels[name]}
+                  aria-pressed={avatar.kind === 'icon' && avatar.icon === avatarIcons[name]}
                   className={`flex h-16 w-16 items-center justify-center rounded-full border-2 transition cursor-pointer ${
                     avatar.kind === 'icon' && avatar.icon === avatarIcons[name]
                       ? 'border-[#1D90F4] bg-[#1D90F4]/15 text-[#38bdf8] shadow-[0_0_20px_rgba(29,144,244,0.35)]'
@@ -313,6 +333,7 @@ export default function ProfileAccountPage() {
                   type="button"
                   onClick={() => void handleIconSelect(null)}
                   aria-label="Käytä omaa kuvaa"
+                  aria-pressed={avatar.kind === 'image'}
                   className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 transition cursor-pointer ${
                     avatar.kind === 'image'
                       ? 'border-[#1D90F4] shadow-[0_0_20px_rgba(29,144,244,0.35)]'

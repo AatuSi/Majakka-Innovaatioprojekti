@@ -1,4 +1,5 @@
-import { useState, type SubmitEvent } from 'react'
+import { useRef, useState } from 'react'
+import type { SubmitEvent } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -10,9 +11,12 @@ import {
   faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import Toast from '../../components/Toast'
+import { showToast } from '../../components/toastStore'
 import { logoutUser, useAuthUser } from '../../components/authUserStore'
 import { getApiErrorMessage } from '../../api/errors'
 import { changePassword, deleteUser } from '../../client'
+import { setQuizReminders, useQuizReminders } from './notificationStore'
+import { useModalFocus } from './useModalFocus'
 import {
   card,
   dangerButton,
@@ -30,8 +34,7 @@ import {
 
 export default function ProfileSettingsPage() {
   const navigate = useNavigate()
-  const [pushNotifications, setPushNotifications] = useState(false)
-  const [emailNotifications, setEmailNotifications] = useState(false)
+  const remindersOn = useQuizReminders()
   const [passwordSaved, setPasswordSaved] = useState(false)
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -41,6 +44,15 @@ export default function ProfileSettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const deleteModalRef = useRef<HTMLDivElement>(null)
+
+  const closeDeleteModal = () => {
+    if (deleting) return
+    setShowDeleteModal(false)
+    setDeleteConfirmText('')
+    setDeleteError(null)
+  }
+  useModalFocus(deleteModalRef, showDeleteModal, closeDeleteModal)
 
   const authUser = useAuthUser()
   const [currentPassword, setCurrentPassword] = useState('')
@@ -101,26 +113,21 @@ export default function ProfileSettingsPage() {
     // Leave the profile first, so its logged-out view doesn't flash by.
     await navigate({ to: '/' })
     logoutUser()
-    alert('Tili poistettu onnistuneesti.')
+    showToast('Tili poistettu onnistuneesti.')
   }
 
 
+  // Saved in this browser, see notificationStore.
   const toggles = [
     {
-      id: 'push',
-      title: 'Ilmoitus 1',
-      description: 'Kuvaus',
-      checked: pushNotifications,
-      onToggle: () => setPushNotifications(!pushNotifications),
-      ariaLabel: 'Kytke push-ilmoitukset',
-    },
-    {
-      id: 'email',
-      title: 'Ilmoitus 2',
-      description: 'Kuvaus',
-      checked: emailNotifications,
-      onToggle: () => setEmailNotifications(!emailNotifications),
-      ariaLabel: 'Kytke sähköposti-ilmoitukset',
+      id: 'quiz-reminders',
+      title: 'Kesken jääneet tietovisat',
+      description: 'Muistuta tietovisoista, joita et ole suorittanut loppuun. Asetus tallentuu tähän selaimeen.',
+      checked: remindersOn,
+      onToggle: () => {
+        if (authUser) setQuizReminders(authUser.id, !remindersOn)
+      },
+      ariaLabel: 'Kytke muistutukset kesken jääneistä tietovisoista',
     },
   ]
 
@@ -130,7 +137,7 @@ export default function ProfileSettingsPage() {
       <div>
         <span className={eyebrow}>Tili</span>
         <h2 className={`mt-1 ${sectionTitle}`}>Asetukset</h2>
-        <p className={sectionIntro}>Hallinnoi tilisi kirjautumistietoja, ilmoituskanavia ja tilin tilaa.</p>
+        <p className={sectionIntro}>Hallinnoi tilisi kirjautumistietoja, ilmoituksia ja tilin tilaa.</p>
       </div>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -234,7 +241,7 @@ export default function ProfileSettingsPage() {
               </div>
               <div>
                 <h3 className="text-xl font-light text-white">Ilmoitukset</h3>
-                <p className="text-sm font-light text-[#9fb0c7]">Valitse miten ja milloin haluat ilmoituksia</p>
+                <p className="text-sm font-light text-[#9fb0c7]">Valitse, mistä haluat ilmoituksia.</p>
               </div>
             </div>
             <div className="mt-6 space-y-3">
@@ -285,7 +292,7 @@ export default function ProfileSettingsPage() {
               <div>
                 <div className="text-sm font-medium text-white">Poista tili pysyvästi</div>
                 <div className="text-sm font-light text-[#9fb0c7]">
-                  Kaikki loistotestin tulokset ja suoritustiedot poistetaan.
+                  Kaikki tietovisojen tulokset ja suoritustiedot poistetaan.
                 </div>
               </div>
               <button type="button" onClick={() => setShowDeleteModal(true)} className={`${dangerButton} shrink-0`}>
@@ -300,6 +307,7 @@ export default function ProfileSettingsPage() {
       {showDeleteModal && (
         <div className={modalBackdrop}>
           <div
+            ref={deleteModalRef}
             className="w-full max-w-md rounded-2xl border border-rose-500/40 bg-[#0F1724]/95 p-6 shadow-2xl backdrop-blur-xl sm:p-8"
             role="alertdialog"
             aria-modal="true"
@@ -314,7 +322,7 @@ export default function ProfileSettingsPage() {
               </h3>
             </div>
             <p className="mt-4 text-sm font-light leading-relaxed text-[#c3cddb]">
-              Tätä toimintoa ei voi peruuttaa. Kaikki oppimistietosi ja loistotestien suorituksesi poistetaan lopullisesti.
+              Tätä toimintoa ei voi peruuttaa. Kaikki oppimistietosi ja tietovisasuorituksesi poistetaan lopullisesti.
             </p>
             <div className="mt-5 space-y-2">
               <label htmlFor="delete-confirm" className="block text-sm text-[#9fb0c7]">
@@ -337,11 +345,8 @@ export default function ProfileSettingsPage() {
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setShowDeleteModal(false)
-                  setDeleteConfirmText('')
-                  setDeleteError(null)
-                }}
+                onClick={closeDeleteModal}
+                disabled={deleting}
                 className={secondaryButton}
               >
                 Peruuta

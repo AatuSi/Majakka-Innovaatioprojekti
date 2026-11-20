@@ -25,6 +25,9 @@ export default function Header() {
   // const isQuiz = pathname.endsWith("-quiz");
   const isQuiz = pathname === '/quizzes' || pathname.endsWith('-quiz')
   const authUser = useAuthUser();
+  // Admins see everyone's results; other users their own, in the profile.
+  const resultsPath =
+    authUser?.role === "admin" ? "/results" : "/profile/stats";
 
   // The menu remembers the location it was opened at, so any navigation,
   // including the browser's back and forward buttons, closes it.
@@ -129,11 +132,11 @@ export default function Header() {
               <div className="hidden items-center gap-3 sm:flex">
                 {/* Results for every logged-in user, messages for admins only */}
                 <Link
-                  to="/results"
+                  to={resultsPath}
                   className={navLinkBase}
                   activeProps={{ className: navLinkActive }}
                   inactiveProps={{ className: navLinkInactive }}
-                  onClick={navigateTo("/results")}
+                  onClick={navigateTo(resultsPath)}
                 >
                   Tulokset
                 </Link>
@@ -268,8 +271,8 @@ export default function Header() {
             {authUser && (
               <li>
                 <Link
-                  to="/results"
-                  onClick={navigateTo("/results")}
+                  to={resultsPath}
+                  onClick={navigateTo(resultsPath)}
                   className="block py-2 text-lg text-white hover:text-[#1D90F4]"
                   activeProps={{ className: "text-[#1D90F4] font-medium" }}
                 >

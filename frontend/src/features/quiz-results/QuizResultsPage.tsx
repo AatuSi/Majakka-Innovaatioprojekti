@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Navigate } from '@tanstack/react-router'
 import { listQuizResultsByTopic } from '../../client'
 import type { QuizTopicResult } from '../../client'
 import { getApiErrorMessage } from '../../api/errors'
 import { openAuthModal } from '../../components/authModalStore'
 import { useAuthUser } from '../../components/authUserStore'
 
-// Quiz results grouped by topic (one quiz = one topic). A regular user sees
-// their own results; the backend gives an admin everyone's results combined.
+// Quiz results grouped by topic (one quiz = one topic), for every user
+// combined. Only admins get here: a regular user's own results are on the
+// profile's Tilastot page, so they are sent there.
 export default function QuizResultsPage() {
   const authUser = useAuthUser()
   const [results, setResults] = useState<QuizTopicResult[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // The endpoint needs a login, so wait until there is a user.
-    if (!authUser) return
+    // The endpoint needs a login, and only admins stay on this page.
+    if (authUser?.role !== 'admin') return
 
     async function loadResults() {
       const result = await listQuizResultsByTopic()
@@ -32,7 +33,9 @@ export default function QuizResultsPage() {
     void loadResults()
   }, [authUser])
 
-  const isAdmin = authUser?.role === 'admin'
+  if (authUser && authUser.role !== 'admin') {
+    return <Navigate to="/profile/stats" replace />
+  }
 
   return (
     <main className="flex-1 bg-navy-900 px-6 py-16">
@@ -46,21 +49,9 @@ export default function QuizResultsPage() {
         </h1>
 
         <p className="mt-4 text-slate-300">
-          {isAdmin
-            ? 'Kaikkien käyttäjien tietovisatulokset yhteensä.'
-            : 'Tallennettujen tietovisasuoritustesi tulokset.'}
+          Kaikkien käyttäjien tietovisatulokset yhteensä. Omat tuloksesi
+          näet profiilisi Tilastot-sivulla.
         </p>
-
-        {/* Deliberate duplicate of the profile's Tilastot page, kept so the
-            team can compare both and pick one. Remove once decided. */}
-        {authUser && (
-          <p className="mt-2 text-sm text-slate-400">
-            Vertailuun: samat tiedot profiilissa{' '}
-            <Link to="/profile/stats" className="text-amber-300 underline">
-              Tilastot
-            </Link>
-          </p>
-        )}
 
         {!authUser ? (
           <div className="mt-8">

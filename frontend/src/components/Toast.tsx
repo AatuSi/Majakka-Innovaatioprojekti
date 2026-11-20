@@ -9,6 +9,8 @@ interface ToastProps {
 export default function Toast({ show, message }: ToastProps) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={`fixed top-24 right-8 z-[60] flex items-center gap-3 rounded-xl border border-emerald-500/40 bg-[#0F1724]/95 px-4 py-3 shadow-2xl backdrop-blur-xl text-sm font-light text-white transition-all duration-300 ease-out ${
         show
           ? 'translate-x-0 opacity-100 scale-100'

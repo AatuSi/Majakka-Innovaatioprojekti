@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getAttemptHistory } from '../../client'
-import type { QuizAttemptHistoryItem } from '../../client'
+import { getAttemptHistory, listQuizResultsByTopic } from '../../client'
+import type { QuizAttemptHistoryItem, QuizTopicResult } from '../../client'
 import { getApiErrorMessage } from '../../api/errors'
 
 export const PASS_RATIO = 0.7
@@ -13,17 +13,12 @@ export function isUnfinished(item: QuizAttemptHistoryItem) {
   return item.completed_at === null || item.completed_at === undefined
 }
 
-/** Page that runs the quiz, by its name in the database. */
-export function quizPath(quizName?: string | null) {
-  return quizName === 'IALA-tietovisa' ? '/IALA-quiz' : '/COLREG-quiz'
-}
-
 /**
  * The unfinished attempts worth continuing: per quiz only the latest, and only
  * when the quiz has not been finished after it was started. Older ones were
  * left behind for a newer try, so offering them would only add noise.
  */
-function continuableAttempts(all: QuizAttemptHistoryItem[]) {
+export function continuableAttempts(all: QuizAttemptHistoryItem[]) {
   const latestFinishedStart = new Map<string, string>()
   for (const item of all) {
     if (isUnfinished(item)) continue
@@ -108,4 +103,45 @@ export function summarizeAttempts(history: QuizAttemptHistoryItem[]) {
     totalSeconds: history.reduce((acc, curr) => acc + (curr.duration_seconds ?? 0), 0),
     improvement: averageImprovement(history),
   }
+}
+
+/**
+ * The logged-in user's results per quiz, one row for every quiz, also the ones
+ * not tried yet. The user id is passed even though the backend defaults to the
+ * caller, because an admin would otherwise get every user's results combined.
+ */
+export function useTopicResults(userId?: string) {
+  const [topics, setTopics] = useState<QuizTopicResult[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+    let cancelled = false
+
+    void listQuizResultsByTopic({ query: { user_id: userId } }).then((result) => {
+      if (cancelled) return
+      if (result.error) setError(getApiErrorMessage(result))
+      else setTopics(result.data)
+      setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
+  return { topics, loading, error }
+}
+
+/** The tried quiz with the lowest share of correct answers, or null. */
+export function weakestTopic(topics: QuizTopicResult[]) {
+  let weakest: (QuizTopicResult & { accuracy: number }) | null = null
+
+  for (const topic of topics) {
+    if (topic.accuracy === null || topic.accuracy === undefined) continue
+    if (!weakest || topic.accuracy < weakest.accuracy) weakest = { ...topic, accuracy: topic.accuracy }
+  }
+
+  return weakest
 }

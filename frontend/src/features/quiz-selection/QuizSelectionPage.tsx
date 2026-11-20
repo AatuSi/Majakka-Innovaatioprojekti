@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { listPublicQuizzes } from '../../client'
 import { getApiErrorMessage } from '../../api/errors'
+import { quizPagePath } from './quizPages'
 
 export default function QuizSelectionPage() {
   const [quizzes, setQuizzes] = useState<
@@ -24,6 +25,12 @@ export default function QuizSelectionPage() {
     void loadQuizzes()
   }, [])
 
+  // A quiz without its own page cannot be played yet, so it is left out.
+  const playableQuizzes = quizzes.flatMap((quiz) => {
+    const path = quizPagePath(quiz.name)
+    return path ? [{ quiz, path }] : []
+  })
+
   if (error) {
     return <p className="p-8 text-red-300">{error}</p>
   }
@@ -43,20 +50,17 @@ export default function QuizSelectionPage() {
           Valitse tietovisa, jonka haluat suorittaa.
         </p>
 
-        {quizzes.length === 0 ? (
+        {playableQuizzes.length === 0 ? (
           <p className="mt-8 text-slate-300">
             Tietovisoja ei löytynyt.
           </p>
         ) : (
           <div className="mt-10 grid gap-6 sm:grid-cols-2">
-            {quizzes.map((quiz) => {
-              const isIala = quiz.name === 'IALA-tietovisa'
-              const href = isIala ? '/IALA-quiz' : '/COLREG-quiz'
-
+            {playableQuizzes.map(({ quiz, path }) => {
               return (
                 <Link
                   key={quiz.id}
-                  to={href}
+                  to={path}
                   className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/60 hover:bg-white/10"
                 >
                   <h2 className="font-serif text-2xl font-semibold">
