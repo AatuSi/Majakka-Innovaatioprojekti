@@ -31,6 +31,11 @@ def get_user(user_id: UUID, db: Session = Depends(get_db)):
     return user
 
 
+@router.get("/me", response_model=schemas.UserResponse, dependencies=protected)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+
 @router.post("", status_code=201, response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if user.role == schemas.UserRole.ADMIN:
@@ -78,6 +83,15 @@ def update_user(
 
     if user.username is not None:
         db_user.username = user.username
+
+    if "first_name" in user.model_fields_set:
+        db_user.first_name = user.first_name
+
+    if "last_name" in user.model_fields_set:
+        db_user.last_name = user.last_name
+
+    if "email" in user.model_fields_set:
+        db_user.email = user.email
 
     if user.password is not None:
         db_user.password_hash = password_hasher.hash(user.password)

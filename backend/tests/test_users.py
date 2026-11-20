@@ -4,7 +4,7 @@ def test_create_user(client):
         json={
             "username": "alice",
             "password": "secret123",
-            "role": "user",
+            "role": "opiskelija",
         },
     )
 
@@ -13,7 +13,7 @@ def test_create_user(client):
     data = response.json()
 
     assert data["username"] == "alice"
-    assert data["role"] == "user"
+    assert data["role"] == "opiskelija"
     assert "id" in data
     assert "password" not in data
     assert "password_hash" not in data
@@ -29,7 +29,7 @@ def test_create_user_uses_user_role_by_default(client):
     )
 
     assert response.status_code == 201
-    assert response.json()["role"] == "user"
+    assert response.json()["role"] == "opiskelija"
 
 
 def test_create_duplicate_user_returns_conflict(client):
@@ -100,13 +100,35 @@ def test_update_user(client):
         json={
             "username": "alice-updated",
             "password": "new-password",
-            "role": "admin",
+            "role": "ylläpitäjä",
+            "first_name": "Alice",
+            "last_name": "Example",
+            "email": "alice@example.com",
         },
     )
 
     assert response.status_code == 200
     assert response.json()["username"] == "alice-updated"
-    assert response.json()["role"] == "admin"
+    assert response.json()["role"] == "ylläpitäjä"
+    assert response.json()["first_name"] == "Alice"
+    assert response.json()["last_name"] == "Example"
+    assert response.json()["email"] == "alice@example.com"
+
+
+def test_update_user_to_teacher(client):
+    create_response = client.post(
+        "/users",
+        json={"username": "teacher-user", "password": "secret123"},
+    )
+    user_id = create_response.json()["id"]
+
+    response = client.put(
+        f"/users/{user_id}",
+        json={"role": "opettaja"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "opettaja"
 
 
 def test_delete_user(client):

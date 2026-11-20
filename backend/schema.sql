@@ -14,11 +14,14 @@ DROP TABLE IF EXISTS contact_messages CASCADE;
 
 DROP TYPE IF EXISTS user_role CASCADE;
 
-CREATE TYPE user_role AS ENUM ('admin', 'user');
+CREATE TYPE user_role AS ENUM ('admin', 'teacher', 'user');
 
 CREATE TABLE users (
     id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     username      VARCHAR(255) NOT NULL,
+    first_name    VARCHAR(100),
+    last_name     VARCHAR(100),
+    email         VARCHAR(320),
     password_hash VARCHAR(255) NOT NULL,
     role          user_role    NOT NULL DEFAULT 'user',
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()

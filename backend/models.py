@@ -10,6 +10,7 @@ from database import Base
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
+    TEACHER = "teacher"
     USER = "user"
 
 
@@ -18,6 +19,9 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(255), unique=True, nullable=False, index=True)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    email = Column(String(320), nullable=True)
     password_hash = Column(String(255), nullable=False)
     role = Column(
         SQLEnum(

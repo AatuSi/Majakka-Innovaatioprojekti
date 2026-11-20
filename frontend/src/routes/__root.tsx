@@ -9,6 +9,8 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import { getAccessToken } from "../api/config";
+import { useAuthUser } from "../components/authUserStore";
 
 import appCss from "../styles.css?url";
 
@@ -43,8 +45,23 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const authUser = useAuthUser();
+
   const isLoginRoute = useRouterState({
     select: (state) => state.location.pathname === "/login",
+  });
+
+  const showAdminChrome = useRouterState({
+    select: (state) => {
+      const isAdminPath =
+        state.location.pathname === "/admin" ||
+        state.location.pathname.startsWith("/admin/");
+      const isLoggedInAdmin =
+        typeof window !== "undefined" &&
+        Boolean(getAccessToken()) &&
+        authUser?.role === "admin";
+      return isAdminPath && isLoggedInAdmin;
+    },
   });
 
   return (
@@ -55,13 +72,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body
         className={`bg-navy-950 font-sans text-white ${isLoginRoute ? "" : "flex min-h-dvh flex-col"}`}
       >
-        {!isLoginRoute && <Header />}
-        {isLoginRoute ? (
+        {!isLoginRoute && !showAdminChrome && <Header />}
+
+        {isLoginRoute || showAdminChrome ? (
           children
         ) : (
           <main className="flex flex-1 flex-col">{children}</main>
         )}
-        {!isLoginRoute && <Footer />}
+
+        {!isLoginRoute && !showAdminChrome && <Footer />}
+
         <TanStackDevtools
           config={{
             position: "bottom-right",
@@ -79,7 +99,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NotFound() {
+export function NotFound() {
   return (
     <section className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">

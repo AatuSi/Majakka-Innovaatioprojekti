@@ -15,6 +15,7 @@ Password = Annotated[str, Field(min_length=1)]
 
 class UserRole(str, Enum):
     ADMIN = "admin"
+    TEACHER = "teacher"
     USER = "user"
 
 
@@ -22,6 +23,9 @@ class UserRole(str, Enum):
 
 class UserBase(BaseModel):
     username: Name
+    first_name: Optional[Annotated[str, Field(max_length=100)]] = None
+    last_name: Optional[Annotated[str, Field(max_length=100)]] = None
+    email: Optional[Annotated[str, Field(max_length=320)]] = None
 
 
 class UserCreate(UserBase):
@@ -35,6 +39,9 @@ class UserUpdate(BaseModel):
     username: Optional[Username] = None
     password: Optional[Password] = None
     role: Optional[UserRole] = None
+    first_name: Optional[Annotated[str, Field(max_length=100)]] = None
+    last_name: Optional[Annotated[str, Field(max_length=100)]] = None
+    email: Optional[Annotated[str, Field(max_length=320)]] = None
 
 
 class UserResponse(UserBase):

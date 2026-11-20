@@ -129,7 +129,10 @@ export default function Header() {
               </span>
               <button
                 type="button"
-                onClick={logoutUser}
+                onClick={() => {
+                  logoutUser()
+                  window.location.assign("/")
+                }}
                 className={`${cutCorner} bg-[#2A3548] p-0.5 transition hover:bg-[#3A4A5E]`}
               >
                 <span
@@ -247,6 +250,7 @@ export default function Header() {
                   onClick={() => {
                     closeMenu();
                     logoutUser();
+                    window.location.assign("/")
                   }}
                   className="block py-2 text-lg font-medium text-red-400"
                 >

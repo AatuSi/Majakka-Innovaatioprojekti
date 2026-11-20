@@ -28,6 +28,10 @@ function loadUser(): AuthUser {
 let user: AuthUser = loadUser();
 const listeners = new Set<() => void>();
 
+export function getAuthUser(): AuthUser {
+  return user;
+}
+
 function notify() {
   listeners.forEach((l) => l());
 }

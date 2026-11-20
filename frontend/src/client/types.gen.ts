@@ -618,6 +618,18 @@ export type UserCreate = {
      */
     username: string;
     /**
+     * First Name
+     */
+    first_name?: string | null;
+    /**
+     * Last Name
+     */
+    last_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
      * Password
      */
     password: string;
@@ -633,6 +645,18 @@ export type UserResponse = {
      */
     username: string;
     /**
+     * First Name
+     */
+    first_name?: string | null;
+    /**
+     * Last Name
+     */
+    last_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
      * Id
      */
     id: string;
@@ -646,7 +670,7 @@ export type UserResponse = {
 /**
  * UserRole
  */
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'teacher' | 'user';
 
 /**
  * UserUpdate
@@ -661,6 +685,18 @@ export type UserUpdate = {
      */
     password?: string | null;
     role?: UserRole | null;
+    /**
+     * First Name
+     */
+    first_name?: string | null;
+    /**
+     * Last Name
+     */
+    last_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
 };
 
 /**
@@ -1768,6 +1804,24 @@ export type UpdateIalaLightResponses = {
 };
 
 export type UpdateIalaLightResponse = UpdateIalaLightResponses[keyof UpdateIalaLightResponses];
+
+export type ListContactMessagesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/contact';
+};
+
+export type ListContactMessagesResponses = {
+    /**
+     * Response List Contact Messages
+     *
+     * Successful Response
+     */
+    200: Array<ContactMessageResponse>;
+};
+
+export type ListContactMessagesResponse = ListContactMessagesResponses[keyof ListContactMessagesResponses];
 
 export type CreateContactMessageData = {
     body: ContactMessageCreate;

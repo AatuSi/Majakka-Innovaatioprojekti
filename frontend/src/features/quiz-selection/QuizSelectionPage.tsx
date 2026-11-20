@@ -50,13 +50,11 @@ export default function QuizSelectionPage() {
         ) : (
           <div className="mt-10 grid gap-6 sm:grid-cols-2">
             {quizzes.map((quiz) => {
-              const isIala = quiz.name === 'IALA-tietovisa'
-              const href = isIala ? '/IALA-quiz' : '/COLREG-quiz'
-
               return (
                 <Link
                   key={quiz.id}
-                  to={href}
+                  to="/quiz/$quizId"
+                  params={{ quizId: quiz.id }}
                   className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-amber-300/60 hover:bg-white/10"
                 >
                   <h2 className="font-serif text-2xl font-semibold">
