@@ -1,17 +1,17 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { useEffect, useState, useRef } from 'react'
 
-interface ToastItem {
+export interface ToastItem {
   id: number
   message: string
   color: string
   icon: IconDefinition
-  duration?: number // Viive sekunteina (esim. 5-10s)
+  duration?: number
 }
 
-interface ToastContainerProps {
+export interface ToastContainerProps {
   toasts: ToastItem[]
   onClose: (id: number) => void
 }
@@ -36,26 +36,22 @@ function SingleToast({
   const [isVisible, setIsVisible] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
 
-  // Tallennetaan onClose useRefiin, jotta ajastin ei nollaannu kun parent-komponentti renderöityy uudelleen
   const onCloseRef = useRef(onClose)
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
 
   useEffect(() => {
-    // 1. Käynnistetään sisääntuloanimaatio (fade-in)
     const showTimer = setTimeout(() => {
       setIsVisible(true)
     }, 20)
 
     const totalDuration = (toast.duration || 5) * 1000
 
-    // 2. Käynnistetään ulostulo (fade out vasemmalta oikealle) 300ms ennen poistoa
     const exitTimer = setTimeout(() => {
       setIsExiting(true)
     }, totalDuration - 300)
 
-    // 3. Poistetaan ilmoitus pinosta kun duration on kokonaan kulunut
     const removeTimer = setTimeout(() => {
       onCloseRef.current(toast.id)
     }, totalDuration)
@@ -78,10 +74,10 @@ function SingleToast({
     <div
       className={`pointer-events-auto flex items-center gap-3 rounded-xl border bg-[#1E2839] px-4 py-3 shadow-2xl text-xs text-white transition-all duration-300 ease-out ${
         isExiting
-          ? 'opacity-0 translate-x-12 scale-95' // Fade out vasemmalta OIKEALLE
+          ? 'opacity-0 translate-x-12 scale-95'
           : isVisible
-          ? 'opacity-100 translate-x-0 scale-100' // Valmis / paikallaan
-          : 'opacity-0 translate-x-12 scale-95' // Alkutila: tulee oikealta vasemmalle
+            ? 'opacity-100 translate-x-0 scale-100'
+            : 'opacity-0 translate-x-12 scale-95'
       }`}
       style={{
         borderColor: `${toast.color}66`,
@@ -107,6 +103,28 @@ function SingleToast({
       >
         <FontAwesomeIcon icon={faTimes} className="text-xs" />
       </button>
+    </div>
+  )
+}
+
+export interface ToastProps {
+  show: boolean
+  message: string
+}
+
+export function Toast({ show, message }: ToastProps) {
+  return (
+    <div
+      className={`fixed top-24 right-8 z-[60] flex items-center gap-3 rounded-xl border border-emerald-500/40 bg-[#0F1724]/95 px-4 py-3 shadow-2xl backdrop-blur-xl text-sm font-light text-white transition-all duration-300 ease-out ${
+        show
+          ? 'translate-x-0 opacity-100 scale-100'
+          : 'translate-x-16 opacity-0 scale-95 pointer-events-none'
+      }`}
+    >
+      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+        <FontAwesomeIcon icon={faCheck} />
+      </div>
+      <span>{message}</span>
     </div>
   )
 }

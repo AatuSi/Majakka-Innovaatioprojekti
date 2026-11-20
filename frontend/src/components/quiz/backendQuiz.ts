@@ -15,6 +15,7 @@ export function mapBackendQuiz(
     accentLights: metadata.accentLights,
     questions: (quiz.questions ?? []).map((question) => ({
       id: question.id,
+      answerImageUrl: question.answer_image_url,
       prompt: question.question_text ?? '',
       hint: question.hint ?? undefined,
       options: (question.options ?? []).map((option) => ({

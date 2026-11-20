@@ -1,8 +1,14 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { QuizAnswer, QuizDefinition } from './types'
 import './quiz.css'
-import { checkPublicAnswer, createAttempt } from '../../client'
+import {
+  checkPublicAnswer,
+  completeAttempt,
+  createAttempt,
+  createResponse,
+  getAttempt,
+} from '../../client'
 import { useAuthUser } from '../authUserStore'
 
 type Phase = 'intro' | 'active' | 'result'
@@ -49,9 +55,12 @@ function TitleBar() {
 export default function QuizRunner({
   quiz,
   relatedLink,
+  resumeAttemptId,
 }: {
   quiz: QuizDefinition
   relatedLink?: ReactNode
+  /** An unfinished attempt of this quiz to continue instead of starting anew. */
+  resumeAttemptId?: string
 }) {
   const [phase, setPhase] = useState<Phase>('intro')
   const [index, setIndex] = useState(0)
@@ -61,6 +70,7 @@ export default function QuizRunner({
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
+  const [answerImageObjectUrl, setAnswerImageObjectUrl] = useState<string | null>();
 
   const questionHeadingRef = useRef<HTMLHeadingElement>(null)
 
@@ -72,7 +82,190 @@ export default function QuizRunner({
   const [saveError, setSaveError] = useState<string | null>(null)
   const authUser = useAuthUser()
 
+  useEffect(() => {
+    if (!question?.answerImageUrl) return setAnswerImageObjectUrl(null);
+    
+    fetch(question.answerImageUrl)
+      .then((response) => response.blob())
+      .then(URL.createObjectURL)
+      .then(setAnswerImageObjectUrl)
+  }, [question?.answerImageUrl]);
+
+  useEffect(() => {
+    if (!answerImageObjectUrl) return
+  
+    return () => URL.revokeObjectURL(answerImageObjectUrl)
+  }, [answerImageObjectUrl])
+  // The attempt is stored when the quiz starts and each answer as it is given,
+  // so quizzes left unfinished show up in the statistics too.
+  const attemptRef = useRef<Promise<string | null> | null>(null)
+  const savedAnswersRef = useRef<Array<Promise<boolean>>>([])
+  const questionShownAtRef = useRef(0)
+  const checkingRef = useRef(false)
+
+  function beginAttempt() {
+    attemptRef.current = null
+    savedAnswersRef.current = []
+    setSaveError(null)
+    if (!authUser) return
+
+    attemptRef.current = createAttempt({
+      body: { user_id: authUser.id, quiz_id: quiz.id },
+    }).then((result) => result.data?.id ?? null)
+  }
+
+  function recordAnswer(
+    questionId: string,
+    optionId: string,
+    timeSpentMs: number,
+  ) {
+    const attempt = attemptRef.current
+    if (!attempt) return
+
+    savedAnswersRef.current.push(
+      attempt.then(async (attemptId) => {
+        if (!attemptId) return false
+        const result = await createResponse({
+          path: { attempt_id: attemptId },
+          body: {
+            question_id: questionId,
+            selected_option_id: optionId,
+            time_spent_ms: timeSpentMs,
+          },
+        })
+        return !result.error
+      }),
+    )
+  }
+
+  // Waits for every answer first: an attempt with a missing answer would show
+  // the wrong score, so it stays unfinished instead.
+  async function finishAttempt() {
+    const attempt = attemptRef.current
+    if (!attempt) return
+
+    setSavingAttempt(true)
+
+    const [attemptId, savedAnswers] = await Promise.all([
+      attempt,
+      Promise.all(savedAnswersRef.current),
+    ])
+    const completed =
+      attemptId !== null &&
+      savedAnswers.every(Boolean) &&
+      !(await completeAttempt({ path: { attempt_id: attemptId } })).error
+
+    if (!completed) {
+      setSaveError('Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.')
+    }
+    setSavingAttempt(false)
+  }
+
+  // Continuing an unfinished attempt: the given answers are read back from the
+  // server and the quiz goes on from the first unanswered question.
+  const [resuming, setResuming] = useState(Boolean(resumeAttemptId))
+  const [resumeError, setResumeError] = useState<string | null>(null)
+  const authUserId = authUser?.id
+
+  useEffect(() => {
+    if (!resumeAttemptId) return
+    let cancelled = false
+    // A function, so the check is read again after every await.
+    const isCancelled = () => cancelled
+
+    async function resume(attemptId: string) {
+      const fail = (message: string) => {
+        if (cancelled) return
+        setResumeError(message)
+        setResuming(false)
+      }
+
+      if (!authUserId) {
+        fail('Kirjaudu sisään jatkaaksesi keskeneräistä suoritusta.')
+        return
+      }
+
+      const result = await getAttempt({ path: { attempt_id: attemptId } })
+      const attempt = result.data
+      if (!attempt || attempt.quiz_id !== quiz.id || attempt.completed_at) {
+        fail('Keskeneräistä suoritusta ei löytynyt. Voit aloittaa tietovisan alusta.')
+        return
+      }
+
+      const savedResponses = attempt.responses ?? []
+      const responses = new Map(savedResponses.map((response) => [response.question_id, response]))
+      const answered = quiz.questions.filter((item) => responses.has(item.id))
+      // The correct option and explanation come from the same check as when answering.
+      const checks = await Promise.all(
+        answered.map((item) =>
+          checkPublicAnswer({
+            path: { quiz_id: quiz.id },
+            body: {
+              question_id: item.id,
+              selected_option_id: responses.get(item.id)?.selected_option_id ?? '',
+            },
+          }),
+        ),
+      )
+      if (cancelled) return
+
+      const restored: QuizAnswer[] = []
+      for (const [i, item] of answered.entries()) {
+        const response = responses.get(item.id)
+        const check = checks[i].data
+        if (!response || !check) {
+          fail('Keskeneräistä suoritusta ei voitu ladata. Yritä uudelleen.')
+          return
+        }
+        restored.push({
+          questionId: item.id,
+          selectedOptionId: response.selected_option_id,
+          // The result saved when answering, so a later fix to the question doesn't change it.
+          correct: response.is_correct,
+          correctOptionId: check.correct_option_id,
+          explanation: check.explanation ?? undefined,
+        })
+      }
+
+      const spentMs = savedResponses.reduce((sum, response) => sum + (response.time_spent_ms ?? 0), 0)
+      attemptRef.current = Promise.resolve(attempt.id)
+      savedAnswersRef.current = []
+      setAnswers(restored)
+      setStartedAt(Date.now() - spentMs)
+      setSelectedOptionId(null)
+      setRevealed(false)
+      setShowValidation(false)
+
+      const nextIndex = quiz.questions.findIndex((item) => !responses.has(item.id))
+      if (nextIndex === -1) {
+        // Every question was answered but completing failed last time: just complete it.
+        setElapsedMs(spentMs)
+        setPhase('result')
+        setSavingAttempt(true)
+        const completed = await completeAttempt({ path: { attempt_id: attempt.id } })
+        if (!isCancelled()) {
+          if (completed.error) setSaveError('Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.')
+          setSavingAttempt(false)
+        }
+      } else {
+        questionShownAtRef.current = Date.now()
+        setIndex(nextIndex)
+        setPhase('active')
+      }
+      setResuming(false)
+    }
+
+    void resume(resumeAttemptId)
+
+    return () => {
+      cancelled = true
+    }
+  }, [resumeAttemptId, authUserId, quiz])
+
   function start() {
+    setResumeError(null)
+    beginAttempt()
+    questionShownAtRef.current = Date.now()
     setPhase('active')
     setIndex(0)
     setSelectedOptionId(null)
@@ -83,38 +276,15 @@ export default function QuizRunner({
     setElapsedMs(0)
   }
 
-  async function saveAttempt(completedAnswers: QuizAnswer[]) {
-    if (!authUser) return
-
-    setSavingAttempt(true)
-    setSaveError(null)
-
-    try {
-      await createAttempt({
-        body: {
-          user_id: authUser.id,
-          quiz_id: quiz.id,
-          responses: completedAnswers.map((answer) => ({
-            question_id: answer.questionId,
-            selected_option_id: answer.selectedOptionId,
-          })),
-        },
-        throwOnError: true,
-      })
-    } catch {
-      setSaveError(
-        'Tulosta ei voitu tallentaa. Voit silti nähdä tuloksesi.',
-      )
-    } finally {
-      setSavingAttempt(false)
-    }
-  }
-
   async function checkAnswer() {
     if (selectedOptionId === null) {
       setShowValidation(true)
       return
     }
+
+    if (checkingRef.current) return
+    checkingRef.current = true
+    const timeSpentMs = Date.now() - questionShownAtRef.current
 
     try {
       const result = await checkPublicAnswer({
@@ -126,6 +296,7 @@ export default function QuizRunner({
         throwOnError: true,
       })
 
+      recordAnswer(question.id, selectedOptionId, timeSpentMs)
       setRevealed(true)
       setAnswers((previous) => [
         ...previous,
@@ -139,6 +310,8 @@ export default function QuizRunner({
       ])
     } catch {
       setShowValidation(true)
+    } finally {
+      checkingRef.current = false
     }
   }
 
@@ -146,17 +319,15 @@ export default function QuizRunner({
     (answer) => answer.questionId === question.id,
   )
 
-  async function goToNext() {
+  function goToNext() {
     if (index + 1 >= total) {
       setElapsedMs(startedAt === null ? 0 : Date.now() - startedAt)
-
-      if (authUser) {
-        await saveAttempt(answers)
-      }
       setPhase('result')
+      void finishAttempt()
       return
     }
 
+    questionShownAtRef.current = Date.now()
     setIndex(index + 1)
     setSelectedOptionId(null)
     setRevealed(false)
@@ -258,13 +429,24 @@ export default function QuizRunner({
                 Valitse jokaiseen kysymykseen yksi vaihtoehto ja tarkista
                 vastauksesi. Saat perustelun heti, ja yhteenvedon näet lopuksi.
               </p>
-              <button
-                type="button"
-                onClick={start}
-                className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
-              >
-                Aloita tietovisa
-              </button>
+              {resumeError ? (
+                <p role="alert" className="mt-6 text-sm text-amber-300">
+                  {resumeError}
+                </p>
+              ) : null}
+              {resuming ? (
+                <p className="mt-8 text-sm text-slate-300" aria-live="polite">
+                  Ladataan keskeneräistä suoritusta...
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={start}
+                  className="mt-8 rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-200 quiz-focus"
+                >
+                  Aloita tietovisa
+                </button>
+              )}
             </div>
           ) : null}
 
@@ -398,7 +580,7 @@ export default function QuizRunner({
                 <div aria-live="polite">
                   {revealed ? (
                     <div
-                      className={`mt-4 rounded-xl border p-4 ${
+                      className={`space-y-4 mt-4 rounded-xl border p-4 ${
                         currentAnswer?.correct
                           ? 'border-green-400/40 bg-green-400/10'
                           : 'border-red-400/40 bg-red-400/10'
@@ -412,6 +594,9 @@ export default function QuizRunner({
                       <p className="mt-2 text-sm leading-relaxed text-slate-300">
                         {currentAnswer?.explanation ?? 'Selitystä ei ole saatavilla.'}
                       </p>
+                      {answerImageObjectUrl && answerImageObjectUrl.length > 0
+                        ? <img className="mx-auto rounded-lg" src={answerImageObjectUrl} />
+                        : null}
                     </div>
                   ) : null}
                 </div>

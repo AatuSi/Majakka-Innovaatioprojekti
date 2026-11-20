@@ -2,9 +2,21 @@
 
 import enum
 import uuid
-from sqlalchemy import Column, String, Text, Boolean, Integer, DateTime, ForeignKey, Enum as SQLEnum, func
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
+
 from database import Base
 
 
@@ -34,6 +46,10 @@ class User(Base):
         nullable=False,
         default=UserRole.USER,
     )
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    email = Column(String(320), nullable=True)
+    avatar_icon = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     attempts = relationship("QuizAttempt", back_populates="user", cascade="all, delete-orphan")
 
@@ -61,9 +77,11 @@ class QuizQuestion(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     quiz_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     iala_light_id = Column(UUID(as_uuid=True), ForeignKey("iala_lights.id", ondelete="SET NULL"), nullable=True, index=True)
+    answer_image_url = Column(Text, nullable=True)
     question_text = Column(Text, nullable=True)
     explanation = Column(Text, nullable=True)
     hint = Column(Text, nullable=True)
+    topic = Column(String(100), nullable=True, index=True)
     position = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -102,6 +120,9 @@ class QuizAttempt(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     quiz_id = Column(UUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # Both stay null until the quiz is finished, so a null marks an abandoned attempt.
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
 
     user = relationship("User", back_populates="attempts")
     quiz = relationship("Quiz", back_populates="attempts")
@@ -121,6 +142,9 @@ class QuizResponse(Base):
     attempt_id = Column(UUID(as_uuid=True), ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(UUID(as_uuid=True), ForeignKey("quiz_questions.id", ondelete="CASCADE"), nullable=False)
     selected_option_id = Column(UUID(as_uuid=True), ForeignKey("quiz_question_options.id", ondelete="CASCADE"), nullable=False)
+    # Copied when answering, so correcting a question later keeps past results.
+    is_correct = Column(Boolean, nullable=False)
+    time_spent_ms = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     attempt = relationship("QuizAttempt", back_populates="responses")

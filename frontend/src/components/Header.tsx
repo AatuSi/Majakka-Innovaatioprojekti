@@ -5,7 +5,9 @@ import LighthouseMark from "./LighthouseMark";
 import { scrollIfAlreadyHere } from "./navigation";
 import AuthModal from "./AuthModal";
 import { openAuthModal } from "./authModalStore";
-import { useAuthUser, logoutUser } from "./authUserStore";
+import { useAuthUser } from "./authUserStore";
+import NotificationBell from "../features/profile/NotificationBell";
+import ProfileAvatar from "../features/profile/ProfileAvatar";
 
 const cutCorner =
   "[clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]";
@@ -123,24 +125,44 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           {authUser ? (
-            <div className="hidden items-center gap-3 sm:flex">
-              <span className="text-sm font-medium text-[#A0AEC0]">
-                {authUser.username}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  logoutUser()
-                  window.location.assign("/")
-                }}
-                className={`${cutCorner} bg-[#2A3548] p-0.5 transition hover:bg-[#3A4A5E]`}
-              >
-                <span
-                  className={`${cutCornerInner} block bg-[#182130] px-6 py-2 text-lg font-medium text-white`}
+            <div className="flex items-center gap-3">
+              <div className="hidden items-center gap-3 sm:flex">
+                {/* Results for every logged-in user, messages for admins only */}
+                <Link
+                  to="/results"
+                  className={navLinkBase}
+                  activeProps={{ className: navLinkActive }}
+                  inactiveProps={{ className: navLinkInactive }}
+                  onClick={navigateTo("/results")}
                 >
-                  Kirjaudu ulos
+                  Tulokset
+                </Link>
+                {authUser.role === "admin" && (
+                  <Link
+                    to="/messages"
+                    className={navLinkBase}
+                    activeProps={{ className: navLinkActive }}
+                    inactiveProps={{ className: navLinkInactive }}
+                    onClick={navigateTo("/messages")}
+                  >
+                    Viestit
+                  </Link>
+                )}
+              </div>
+              <NotificationBell />
+              <Link
+                to="/profile"
+                aria-label={`Oma profiili: ${authUser.username}`}
+                className="group flex items-center gap-2"
+                onClick={navigateTo("/profile")}
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#1D90F4] bg-[#0F1724] text-base text-[#38bdf8] transition group-hover:border-[#3BA0F6]">
+                  <ProfileAvatar />
                 </span>
-              </button>
+                <span className="hidden max-w-40 truncate text-sm font-medium text-[#A0AEC0] transition-colors group-hover:text-white sm:block">
+                  {authUser.username}
+                </span>
+              </Link>
             </div>
           ) : (
             <button
@@ -243,20 +265,32 @@ export default function Header() {
                 Hankkeesta
               </Link>
             </li>
-            <li className="pt-2">
-              {authUser ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    logoutUser();
-                    window.location.assign("/")
-                  }}
-                  className="block py-2 text-lg font-medium text-red-400"
+            {authUser && (
+              <li>
+                <Link
+                  to="/results"
+                  onClick={navigateTo("/results")}
+                  className="block py-2 text-lg text-white hover:text-[#1D90F4]"
+                  activeProps={{ className: "text-[#1D90F4] font-medium" }}
                 >
-                  Kirjaudu ulos ({authUser.username})
-                </button>
-              ) : (
+                  Tulokset
+                </Link>
+              </li>
+            )}
+            {authUser?.role === "admin" && (
+              <li>
+                <Link
+                  to="/messages"
+                  onClick={navigateTo("/messages")}
+                  className="block py-2 text-lg text-white hover:text-[#1D90F4]"
+                  activeProps={{ className: "text-[#1D90F4] font-medium" }}
+                >
+                  Viestit
+                </Link>
+              </li>
+            )}
+            {!authUser && (
+              <li className="pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -267,8 +301,8 @@ export default function Header() {
                 >
                   Kirjaudu
                 </button>
-              )}
-            </li>
+              </li>
+            )}
           </ul>
         </nav>
       )}

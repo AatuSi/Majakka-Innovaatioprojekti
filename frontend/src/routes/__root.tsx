@@ -46,23 +46,19 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const authUser = useAuthUser();
-
-  const isLoginRoute = useRouterState({
-    select: (state) => state.location.pathname === "/login",
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
   });
+  const isLoginRoute = pathname === "/login";
 
-  const showAdminChrome = useRouterState({
-    select: (state) => {
-      const isAdminPath =
-        state.location.pathname === "/admin" ||
-        state.location.pathname.startsWith("/admin/");
-      const isLoggedInAdmin =
-        typeof window !== "undefined" &&
-        Boolean(getAccessToken()) &&
-        authUser?.role === "admin";
-      return isAdminPath && isLoggedInAdmin;
-    },
-  });
+  const showAdminChrome = (() => {
+    const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
+    const isLoggedInAdmin =
+      typeof window !== "undefined" &&
+      Boolean(getAccessToken()) &&
+      authUser?.role === "admin";
+    return isAdminPath && isLoggedInAdmin;
+  })();
 
   return (
     <html lang="fi">

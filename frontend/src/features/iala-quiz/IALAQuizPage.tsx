@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { listPublicQuizzes } from '../../client'
 import { getApiErrorMessage } from '../../api/errors'
@@ -8,6 +8,7 @@ import type { QuizDefinition } from '../../components/quiz/types'
 
 export default function IALAQuizPage() {
   const [quiz, setQuiz] = useState<QuizDefinition | null>(null)
+  const { resume } = useSearch({ from: '/IALA-quiz' })
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -52,6 +53,9 @@ export default function IALAQuizPage() {
   return (
       <QuizRunner
         quiz={quiz}
+        resumeAttemptId={resume}
+        // A new resume link starts over from that attempt.
+        key={resume ?? 'new'}
         relatedLink={
           <Link
             to="/COLREG-quiz"

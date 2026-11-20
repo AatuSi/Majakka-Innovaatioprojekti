@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_upload_avatar
+ */
+export type BodyUploadAvatar = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
  * ContactMessageCreate
  */
 export type ContactMessageCreate = {
@@ -167,6 +177,20 @@ export type LoginRequest = {
 };
 
 /**
+ * PasswordChange
+ */
+export type PasswordChange = {
+    /**
+     * Current Password
+     */
+    current_password: string;
+    /**
+     * New Password
+     */
+    new_password: string;
+};
+
+/**
  * PublicAnswerCheckRequest
  */
 export type PublicAnswerCheckRequest = {
@@ -307,6 +331,48 @@ export type QuizAttemptCreate = {
 };
 
 /**
+ * QuizAttemptHistoryItem
+ */
+export type QuizAttemptHistoryItem = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+    /**
+     * Quiz Name
+     */
+    quiz_name?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Completed At
+     */
+    completed_at?: string | null;
+    /**
+     * Last Activity At
+     */
+    last_activity_at: string;
+    /**
+     * Duration Seconds
+     */
+    duration_seconds?: number | null;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Total Questions
+     */
+    total_questions: number;
+};
+
+/**
  * QuizAttemptResponse
  */
 export type QuizAttemptResponse = {
@@ -326,6 +392,14 @@ export type QuizAttemptResponse = {
      * Created At
      */
     created_at: string;
+    /**
+     * Completed At
+     */
+    completed_at?: string | null;
+    /**
+     * Duration Seconds
+     */
+    duration_seconds?: number | null;
     /**
      * Responses
      */
@@ -362,6 +436,10 @@ export type QuizQuestionCreate = {
      * Hint
      */
     hint?: string | null;
+    /**
+     * Topic
+     */
+    topic?: string | null;
     /**
      * Iala Light Id
      */
@@ -471,6 +549,10 @@ export type QuizQuestionResponse = {
      */
     hint?: string | null;
     /**
+     * Topic
+     */
+    topic?: string | null;
+    /**
      * Iala Light Id
      */
     iala_light_id?: string | null;
@@ -512,6 +594,10 @@ export type QuizQuestionUpdate = {
      * Hint
      */
     hint?: string | null;
+    /**
+     * Topic
+     */
+    topic?: string | null;
     /**
      * Iala Light Id
      */
@@ -556,6 +642,10 @@ export type QuizResponseCreate = {
      * Selected Option Id
      */
     selected_option_id: string;
+    /**
+     * Time Spent Ms
+     */
+    time_spent_ms?: number | null;
 };
 
 /**
@@ -579,9 +669,57 @@ export type QuizResponseItemSchema = {
      */
     selected_option_id: string;
     /**
+     * Is Correct
+     */
+    is_correct: boolean;
+    /**
+     * Time Spent Ms
+     */
+    time_spent_ms?: number | null;
+    /**
      * Created At
      */
     created_at: string;
+};
+
+/**
+ * QuizTopicResult
+ *
+ * Aggregated results for one quiz. Each quiz is one topic (e.g. IALA, COLREG).
+ */
+export type QuizTopicResult = {
+    /**
+     * Quiz Id
+     */
+    quiz_id: string;
+    /**
+     * Quiz Name
+     */
+    quiz_name?: string | null;
+    /**
+     * Question Count
+     */
+    question_count: number;
+    /**
+     * Attempt Count
+     */
+    attempt_count: number;
+    /**
+     * Answer Count
+     */
+    answer_count: number;
+    /**
+     * Correct Count
+     */
+    correct_count: number;
+    /**
+     * Accuracy
+     */
+    accuracy?: number | null;
+    /**
+     * Last Attempt At
+     */
+    last_attempt_at?: string | null;
 };
 
 /**
@@ -634,6 +772,18 @@ export type UserCreate = {
      */
     password: string;
     role?: UserRole | null;
+    /**
+     * First Name
+     */
+    first_name?: string | null;
+    /**
+     * Last Name
+     */
+    last_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
 };
 
 /**
@@ -665,12 +815,51 @@ export type UserResponse = {
      * Created At
      */
     created_at: string;
+    /**
+     * First Name
+     */
+    first_name?: string | null;
+    /**
+     * Last Name
+     */
+    last_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+    /**
+     * Avatar Icon
+     */
+    avatar_icon?: 'user' | 'graduation-cap' | null;
+    /**
+     * Avatar Updated At
+     */
+    avatar_updated_at?: string | null;
 };
 
 /**
  * UserRole
  */
 export type UserRole = 'admin' | 'teacher' | 'user';
+
+/**
+ * UserSummary
+ */
+export type UserSummary = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Id
+     */
+    id: string;
+    role: UserRole;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
 
 /**
  * UserUpdate
@@ -680,10 +869,6 @@ export type UserUpdate = {
      * Username
      */
     username?: string | null;
-    /**
-     * Password
-     */
-    password?: string | null;
     role?: UserRole | null;
     /**
      * First Name
@@ -697,6 +882,10 @@ export type UserUpdate = {
      * Email
      */
     email?: string | null;
+    /**
+     * Avatar Icon
+     */
+    avatar_icon?: 'user' | 'graduation-cap' | null;
 };
 
 /**
@@ -790,7 +979,7 @@ export type ListUsersResponses = {
      *
      * Successful Response
      */
-    200: Array<UserResponse>;
+    200: Array<UserSummary>;
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
@@ -909,6 +1098,128 @@ export type UpdateUserResponses = {
 };
 
 export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];
+
+export type ChangePasswordData = {
+    body: PasswordChange;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/password';
+};
+
+export type ChangePasswordErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChangePasswordError = ChangePasswordErrors[keyof ChangePasswordErrors];
+
+export type ChangePasswordResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ChangePasswordResponse = ChangePasswordResponses[keyof ChangePasswordResponses];
+
+export type DeleteAvatarData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/avatar';
+};
+
+export type DeleteAvatarErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAvatarError = DeleteAvatarErrors[keyof DeleteAvatarErrors];
+
+export type DeleteAvatarResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteAvatarResponse = DeleteAvatarResponses[keyof DeleteAvatarResponses];
+
+export type GetAvatarData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/avatar';
+};
+
+export type GetAvatarErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAvatarError = GetAvatarErrors[keyof GetAvatarErrors];
+
+export type GetAvatarResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UploadAvatarData = {
+    body: BodyUploadAvatar;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/users/{user_id}/avatar';
+};
+
+export type UploadAvatarErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UploadAvatarError = UploadAvatarErrors[keyof UploadAvatarErrors];
+
+export type UploadAvatarResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserResponse;
+};
+
+export type UploadAvatarResponse = UploadAvatarResponses[keyof UploadAvatarResponses];
 
 export type ListPublicQuizzesData = {
     body?: never;
@@ -1468,6 +1779,68 @@ export type CreateAttemptResponses = {
 
 export type CreateAttemptResponse = CreateAttemptResponses[keyof CreateAttemptResponses];
 
+export type GetAttemptHistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Include Unfinished
+         */
+        include_unfinished?: boolean;
+    };
+    url: '/quiz-attempts/history';
+};
+
+export type GetAttemptHistoryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAttemptHistoryError = GetAttemptHistoryErrors[keyof GetAttemptHistoryErrors];
+
+export type GetAttemptHistoryResponses = {
+    /**
+     * Response Get Attempt History
+     *
+     * Successful Response
+     */
+    200: Array<QuizAttemptHistoryItem>;
+};
+
+export type GetAttemptHistoryResponse = GetAttemptHistoryResponses[keyof GetAttemptHistoryResponses];
+
+export type CompleteAttemptData = {
+    body?: never;
+    path: {
+        /**
+         * Attempt Id
+         */
+        attempt_id: string;
+    };
+    query?: never;
+    url: '/quiz-attempts/{attempt_id}/complete';
+};
+
+export type CompleteAttemptErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CompleteAttemptError = CompleteAttemptErrors[keyof CompleteAttemptErrors];
+
+export type CompleteAttemptResponses = {
+    /**
+     * Successful Response
+     */
+    200: QuizAttemptResponse;
+};
+
+export type CompleteAttemptResponse = CompleteAttemptResponses[keyof CompleteAttemptResponses];
+
 export type DeleteAttemptData = {
     body?: never;
     path: {
@@ -1650,6 +2023,38 @@ export type GetResponseResponses = {
 
 export type GetResponseResponse = GetResponseResponses[keyof GetResponseResponses];
 
+export type ListQuizResultsByTopicData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * User Id
+         */
+        user_id?: string | null;
+    };
+    url: '/quiz-results/by-topic';
+};
+
+export type ListQuizResultsByTopicErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListQuizResultsByTopicError = ListQuizResultsByTopicErrors[keyof ListQuizResultsByTopicErrors];
+
+export type ListQuizResultsByTopicResponses = {
+    /**
+     * Response List Quiz Results By Topic
+     *
+     * Successful Response
+     */
+    200: Array<QuizTopicResult>;
+};
+
+export type ListQuizResultsByTopicResponse = ListQuizResultsByTopicResponses[keyof ListQuizResultsByTopicResponses];
+
 export type ListIalaLightsData = {
     body?: never;
     path?: never;
@@ -1808,9 +2213,23 @@ export type UpdateIalaLightResponse = UpdateIalaLightResponses[keyof UpdateIalaL
 export type ListContactMessagesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Topic
+         */
+        topic?: string | null;
+    };
     url: '/contact';
 };
+
+export type ListContactMessagesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListContactMessagesError = ListContactMessagesErrors[keyof ListContactMessagesErrors];
 
 export type ListContactMessagesResponses = {
     /**
@@ -1847,3 +2266,63 @@ export type CreateContactMessageResponses = {
 };
 
 export type CreateContactMessageResponse = CreateContactMessageResponses[keyof CreateContactMessageResponses];
+
+export type DeleteContactMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/contact/{message_id}';
+};
+
+export type DeleteContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteContactMessageError = DeleteContactMessageErrors[keyof DeleteContactMessageErrors];
+
+export type DeleteContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteContactMessageResponse = DeleteContactMessageResponses[keyof DeleteContactMessageResponses];
+
+export type GetContactMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message Id
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/contact/{message_id}';
+};
+
+export type GetContactMessageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetContactMessageError = GetContactMessageErrors[keyof GetContactMessageErrors];
+
+export type GetContactMessageResponses = {
+    /**
+     * Successful Response
+     */
+    200: ContactMessageResponse;
+};
+
+export type GetContactMessageResponse = GetContactMessageResponses[keyof GetContactMessageResponses];
