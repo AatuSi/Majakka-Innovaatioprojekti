@@ -772,18 +772,6 @@ export type UserCreate = {
      */
     password: string;
     role?: UserRole | null;
-    /**
-     * First Name
-     */
-    first_name?: string | null;
-    /**
-     * Last Name
-     */
-    last_name?: string | null;
-    /**
-     * Email
-     */
-    email?: string | null;
 };
 
 /**
@@ -815,18 +803,6 @@ export type UserResponse = {
      * Created At
      */
     created_at: string;
-    /**
-     * First Name
-     */
-    first_name?: string | null;
-    /**
-     * Last Name
-     */
-    last_name?: string | null;
-    /**
-     * Email
-     */
-    email?: string | null;
     /**
      * Avatar Icon
      */
