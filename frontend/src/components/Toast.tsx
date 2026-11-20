@@ -16,10 +16,15 @@ export interface ToastContainerProps {
   onClose: (id: number) => void
 }
 
-export default function ToastContainer({ toasts, onClose }: ToastContainerProps) {
+export default function ToastContainer({
+  toasts = [],
+  onClose,
+}: ToastContainerProps) {
+  const safeToasts = Array.isArray(toasts) ? toasts : []
+
   return (
     <div className="fixed top-20 right-8 z-50 flex flex-col gap-3 pointer-events-none items-end">
-      {toasts.map((toast) => (
+      {safeToasts.map((toast) => (
         <SingleToast key={toast.id} toast={toast} onClose={onClose} />
       ))}
     </div>
