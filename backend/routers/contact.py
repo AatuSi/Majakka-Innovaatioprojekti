@@ -11,7 +11,11 @@ import schemas
 
 router = APIRouter(prefix="/contact", tags=["contact"])
 
-<<<<<<< HEAD
+# POST /contact stays public. The management endpoints below are admin only;
+# the router is included without the global auth dependency in main.py, so
+# each of them declares it here.
+admin_only = [Depends(require_admin)]
+
 
 @router.get("", response_model=list[schemas.ContactMessageResponse], dependencies=[Depends(require_admin)])
 def list_contact_messages(db: Session = Depends(get_db)):
@@ -20,12 +24,6 @@ def list_contact_messages(db: Session = Depends(get_db)):
         .order_by(models.ContactMessage.created_at.desc())
         .all()
     )
-=======
-# POST /contact stays public. The management endpoints below are admin only;
-# the router is included without the global auth dependency in main.py, so
-# each of them declares it here.
-admin_only = [Depends(require_admin)]
->>>>>>> origin/main
 
 @router.post("", status_code=201,response_model=schemas.ContactMessageResponse,)
 def create_contact_message(
