@@ -24,9 +24,6 @@ CREATE TABLE users (
     email         VARCHAR(320),
     password_hash VARCHAR(255) NOT NULL,
     role          user_role    NOT NULL DEFAULT 'user',
-    first_name    VARCHAR(100),
-    last_name     VARCHAR(100),
-    email         VARCHAR(320),
     avatar_icon   VARCHAR(50),
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
