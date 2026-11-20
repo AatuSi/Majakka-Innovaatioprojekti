@@ -10,7 +10,7 @@ import {
   faPen,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons'
-import Toast from '../../components/Toast'
+import { Toast } from '../../components/Toast'
 import { getDisplayName, updateAuthUser, useAuthUser } from '../../components/authUserStore'
 import { getApiErrorMessage } from '../../api/errors'
 import { deleteAvatar, updateUser, uploadAvatar } from '../../client'
@@ -152,7 +152,13 @@ export default function ProfileAccountPage() {
       return
     }
 
-    updateAuthUser(result.data)
+    const updatedUser = {
+      ...authUser,
+      ...result.data,
+      avatar_icon: null,
+      avatar_updated_at: result.data?.avatar_updated_at ?? new Date().toISOString(),
+    }
+    updateAuthUser(updatedUser)
     setShowAvatarModal(false)
   }
 

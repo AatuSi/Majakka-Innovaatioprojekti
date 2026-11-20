@@ -12,7 +12,7 @@ export interface ToastItem {
 }
 
 export interface ToastContainerProps {
-  toasts: ToastItem[]
+  toasts?: ToastItem[]
   onClose: (id: number) => void
 }
 
@@ -23,7 +23,7 @@ export default function ToastContainer({
   const safeToasts = Array.isArray(toasts) ? toasts : []
 
   return (
-    <div className="fixed top-20 right-8 z-50 flex flex-col gap-3 pointer-events-none items-end">
+    <div className="fixed top-20 right-8 z-[70] flex flex-col gap-3 pointer-events-none items-end">
       {safeToasts.map((toast) => (
         <SingleToast key={toast.id} toast={toast} onClose={onClose} />
       ))}
@@ -120,7 +120,7 @@ export interface ToastProps {
 export function Toast({ show, message }: ToastProps) {
   return (
     <div
-      className={`fixed top-24 right-8 z-[60] flex items-center gap-3 rounded-xl border border-emerald-500/40 bg-[#0F1724]/95 px-4 py-3 shadow-2xl backdrop-blur-xl text-sm font-light text-white transition-all duration-300 ease-out ${
+      className={`fixed top-24 right-8 z-[70] flex items-center gap-3 rounded-xl border border-emerald-500/40 bg-[#0F1724]/95 px-4 py-3 shadow-2xl backdrop-blur-xl text-sm font-light text-white transition-all duration-300 ease-out ${
         show
           ? 'translate-x-0 opacity-100 scale-100'
           : 'translate-x-16 opacity-0 scale-95 pointer-events-none'

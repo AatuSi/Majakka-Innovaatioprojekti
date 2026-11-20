@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, notFound, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUser,
+  faGraduationCap,
   faRightFromBracket,
   faMagnifyingGlass,
   faChevronLeft,
@@ -13,10 +14,26 @@ import {
   faClipboardList,
   faEnvelope,
   faXmark,
+  faCompass,
+  faLightbulb,
 } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import LighthouseMark from '#/components/LighthouseMark'
 import { getAccessToken } from '#/api/config'
 import { logoutUser, useAuthUser } from '#/components/authUserStore'
+
+interface PageSearchResult {
+  id: string
+  title: string
+  subtitle: string
+  to: string
+  icon: IconDefinition
+}
+
+const headerAvatarIcons: Record<string, IconDefinition> = {
+  user: faUser,
+  'graduation-cap': faGraduationCap,
+}
 
 export default function AdminLayout() {
   const location = useLocation()
@@ -25,6 +42,13 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [currentUser, setCurrentUser] = useState(authUser)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [avatarImgFailed, setAvatarImgFailed] = useState(false)
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  const searchContainerRef = useRef<HTMLDivElement | null>(null)
+  const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
   useEffect(() => {
     setCurrentUser(authUser)
@@ -33,7 +57,6 @@ export default function AdminLayout() {
     const userId = authUser?.id
     if (!token || !userId) return
 
-    const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
     void fetch(`${baseUrl}/users/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -45,7 +68,11 @@ export default function AdminLayout() {
         )
       })
       .catch(() => {})
-  }, [authUser])
+  }, [authUser, baseUrl])
+
+  useEffect(() => {
+    setAvatarImgFailed(false)
+  }, [currentUser?.id, currentUser?.avatar_icon, currentUser?.avatar_updated_at])
 
   useEffect(() => {
     if (!showLogoutConfirm) return
@@ -56,9 +83,129 @@ export default function AdminLayout() {
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown as never)
+    return () => window.removeEventListener('keydown', handleKeyDown as never)
   }, [showLogoutConfirm])
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setSearchOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
+
+  useEffect(() => {
+    setSearchOpen(false)
+  }, [location.pathname])
+
+  const navLinks = [
+    { label: 'Hallintapaneeli', icon: faChartColumn, to: '/admin' },
+    { label: 'Tilastot', icon: faSquarePollVertical, to: '/admin/statistics' },
+    { label: 'Tietokanta', icon: faDatabase, to: '/admin/database' },
+    { label: 'Tietovisat', icon: faClipboardList, to: '/admin/quizzes' },
+    { label: 'Yhteydenotot', icon: faEnvelope, to: '/admin/messages' },
+  ]
+
+  const searchablePages: PageSearchResult[] = [
+    {
+      id: 'page-/admin',
+      title: 'Hallintapaneeli',
+      subtitle: '/admin',
+      to: '/admin',
+      icon: faChartColumn,
+    },
+    {
+      id: 'page-/admin/statistics',
+      title: 'Tilastot',
+      subtitle: '/admin/statistics',
+      to: '/admin/statistics',
+      icon: faSquarePollVertical,
+    },
+    {
+      id: 'page-/admin/database',
+      title: 'Tietokanta',
+      subtitle: '/admin/database',
+      to: '/admin/database',
+      icon: faDatabase,
+    },
+    {
+      id: 'page-/admin/quizzes',
+      title: 'Tietovisat (Ylläpito)',
+      subtitle: '/admin/quizzes',
+      to: '/admin/quizzes',
+      icon: faClipboardList,
+    },
+    {
+      id: 'page-/admin/messages',
+      title: 'Yhteydenotot',
+      subtitle: '/admin/messages',
+      to: '/admin/messages',
+      icon: faEnvelope,
+    },
+    {
+      id: 'page-/profile',
+      title: 'Profiili',
+      subtitle: '/profile',
+      to: '/profile',
+      icon: faUser,
+    },
+    {
+      id: 'page-/quizzes',
+      title: 'Tietovisat',
+      subtitle: '/quizzes',
+      to: '/quizzes',
+      icon: faClipboardList,
+    },
+    {
+      id: 'page-/colregs',
+      title: 'COLREGs',
+      subtitle: '/colregs',
+      to: '/colregs',
+      icon: faCompass,
+    },
+    {
+      id: 'page-/IALA',
+      title: 'IALA',
+      subtitle: '/IALA',
+      to: '/IALA',
+      icon: faLightbulb,
+    },
+  ]
+
+  const searchResults = useMemo<PageSearchResult[]>(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return searchablePages
+
+    return searchablePages.filter(
+      (page) =>
+        page.title.toLowerCase().includes(q) ||
+        page.subtitle.toLowerCase().includes(q)
+    )
+  }, [searchQuery])
+
+  const handleSelectSearchResult = (item: PageSearchResult) => {
+    setSearchQuery('')
+    setSearchOpen(false)
+    void navigate({ to: item.to })
+  }
+
+  const handleSearchKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setSearchOpen(false)
+      return
+    }
+    if (e.key === 'Enter' && searchResults.length > 0) {
+      e.preventDefault()
+      handleSelectSearchResult(searchResults[0])
+    }
+  }
 
   if (typeof window === 'undefined') {
     return null
@@ -89,13 +236,15 @@ export default function AdminLayout() {
     currentUser?.username ||
     'Käyttäjä'
 
-  const navLinks = [
-    { label: 'Hallintapaneeli', icon: faChartColumn, to: '/admin' },
-    { label: 'Tilastot', icon: faSquarePollVertical, to: '/admin/statistics' },
-    { label: 'Tietokanta', icon: faDatabase, to: '/admin/database' },
-    { label: 'Tietovisat', icon: faClipboardList, to: '/admin/quizzes' },
-    { label: 'Yhteydenotot', icon: faEnvelope, to: '/admin/messages' },
-  ]
+  const avatarIconName = currentUser?.avatar_icon
+  const avatarUpdatedAt = currentUser?.avatar_updated_at
+  const uploadedAvatarUrl =
+    currentUser?.id && avatarUpdatedAt
+      ? `${baseUrl}/users/${currentUser.id}/avatar?v=${encodeURIComponent(String(avatarUpdatedAt))}`
+      : null
+
+  const fallbackIcon =
+    (avatarIconName && headerAvatarIcons[avatarIconName]) || faUser
 
   return (
     <div className="flex min-h-screen w-full items-start bg-[#182130] font-['Inter',sans-serif] text-[#e2e8f0]">
@@ -208,26 +357,93 @@ export default function AdminLayout() {
                 <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
               </button>
             )}
-            <div className="relative w-72">
+            <div ref={searchContainerRef} className="relative w-72 sm:w-80">
               <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-xs text-[#718096]">
                 <FontAwesomeIcon icon={faMagnifyingGlass} />
               </span>
               <input
                 type="text"
-                placeholder="Hae..."
-                className="w-full rounded-lg border border-[#2A374B] bg-[#131B27] py-2 pr-4 pl-9 text-xs text-white outline-none transition focus:border-[#1d90f4]"
+                value={searchQuery}
+                onClick={() => setSearchOpen(true)}
+                onFocus={() => setSearchOpen(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setSearchOpen(true)
+                }}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Hae sivuilta..."
+                className="w-full rounded-lg border border-[#2A374B] bg-[#131B27] py-2 pr-8 pl-9 text-xs text-white placeholder-[#718096] outline-none transition focus:border-[#1d90f4]"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setSearchOpen(true)
+                  }}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer rounded p-0.5 text-[#718096] transition hover:text-white"
+                  aria-label="Tyhjennä haku"
+                >
+                  <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                </button>
+              )}
+
+              {searchOpen && (
+                <div className="absolute top-full left-0 z-40 mt-2 w-full overflow-hidden rounded-xl border border-[#2A374B] bg-[#1E2839] shadow-2xl">
+                  {searchResults.length === 0 ? (
+                    <div className="px-4 py-3 text-xs text-[#718096]">
+                      Ei sivuja haulle &ldquo;{searchQuery.trim()}&rdquo;.
+                    </div>
+                  ) : (
+                    <ul className="m-0 max-h-80 list-none divide-y divide-[#2A374B]/60 overflow-y-auto p-0 [scrollbar-color:#2A374B_#131B27] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#2A374B] hover:[&::-webkit-scrollbar-thumb]:bg-[#3B4D68] [&::-webkit-scrollbar-track]:bg-[#131B27]">
+                      {searchResults.map((item) => (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectSearchResult(item)}
+                            className="flex w-full cursor-pointer items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-white/5"
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#1d90f4]/30 bg-[#1d90f4]/15 text-xs text-[#38bdf8]">
+                              <FontAwesomeIcon icon={item.icon} />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-xs font-medium text-white">
+                                {item.title}
+                              </div>
+                              <div className="truncate text-[11px] text-[#718096]">
+                                {item.subtitle}
+                              </div>
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#1d90f4] bg-[#131B27] text-xs text-[#38bdf8]">
-                <FontAwesomeIcon icon={faUser} />
+            <Link
+              to="/profile"
+              className="flex items-center gap-3 rounded-lg py-1 pr-1 transition hover:bg-white/5"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-[#1d90f4] bg-[#131B27] text-xs text-[#38bdf8]">
+                {!avatarIconName && uploadedAvatarUrl && !avatarImgFailed ? (
+                  <img
+                    src={uploadedAvatarUrl}
+                    alt=""
+                    onError={() => setAvatarImgFailed(true)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <FontAwesomeIcon icon={fallbackIcon} />
+                )}
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-white">{displayName}</span>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
         <Outlet />

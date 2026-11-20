@@ -17,15 +17,16 @@ DROP TYPE IF EXISTS user_role CASCADE;
 CREATE TYPE user_role AS ENUM ('admin', 'teacher', 'user');
 
 CREATE TABLE users (
-    id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    username      VARCHAR(255) NOT NULL,
-    first_name    VARCHAR(100),
-    last_name     VARCHAR(100),
-    email         VARCHAR(320),
-    password_hash VARCHAR(255) NOT NULL,
-    role          user_role    NOT NULL DEFAULT 'user',
-    avatar_icon   VARCHAR(50),
-    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+    id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    username         VARCHAR(255) NOT NULL,
+    first_name       VARCHAR(100),
+    last_name        VARCHAR(100),
+    email            VARCHAR(320),
+    password_hash    VARCHAR(255) NOT NULL,
+    role             user_role    NOT NULL DEFAULT 'user',
+    avatar_icon      VARCHAR(50),
+    avatar_updated_at TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX users_username_lower_key ON users (lower(username));

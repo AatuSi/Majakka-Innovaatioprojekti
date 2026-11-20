@@ -75,6 +75,7 @@ class UserResponse(UserSummary):
     last_name: Optional[str] = None
     email: Optional[str] = None
     avatar_icon: Optional[AvatarIcon] = None
+    avatar_updated_at: Optional[datetime] = None
 
 
 class LoginRequest(BaseModel):
@@ -85,7 +86,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user:UserResponse
+    user: UserResponse
 
 
 # --- HEALTH SCHEMAS ---

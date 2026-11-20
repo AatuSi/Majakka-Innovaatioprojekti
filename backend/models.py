@@ -46,10 +46,8 @@ class User(Base):
         nullable=False,
         default=UserRole.USER,
     )
-    first_name = Column(String(100), nullable=True)
-    last_name = Column(String(100), nullable=True)
-    email = Column(String(320), nullable=True)
     avatar_icon = Column(String(50), nullable=True)
+    avatar_updated_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     attempts = relationship("QuizAttempt", back_populates="user", cascade="all, delete-orphan")
 

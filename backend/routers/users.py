@@ -1,8 +1,11 @@
 # User endpoints
 
+from datetime import datetime, timezone
+from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,6 +18,14 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 protected = [Depends(get_current_user)]
 
+AVATAR_DIR = Path("uploads/avatars")
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_CONTENT_TYPES: dict[str, str] = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+}
+
 
 def duplicate_account_error(error: IntegrityError) -> HTTPException:
     if error.orig.diag.constraint_name == "users_email_lower_key":
@@ -23,9 +34,24 @@ def duplicate_account_error(error: IntegrityError) -> HTTPException:
     return HTTPException(status_code=409, detail="Username already exists")
 
 
+def _get_avatar_file_path(user_id: UUID) -> Path | None:
+    if not AVATAR_DIR.exists():
+        return None
+    for ext in AVATAR_CONTENT_TYPES.values():
+        candidate = AVATAR_DIR / f"{user_id}{ext}"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 @router.get("", response_model=list[schemas.UserSummary], dependencies=protected)
 def list_users(db: Session = Depends(get_db)):
     return db.query(models.User).order_by(models.User.username).all()
+
+
+@router.get("/me", response_model=schemas.UserResponse, dependencies=protected)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
 
 
 @router.get("/{user_id}", response_model=schemas.UserResponse, dependencies=protected)
@@ -42,11 +68,6 @@ def get_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
-
-
-@router.get("/me", response_model=schemas.UserResponse, dependencies=protected)
-def get_me(current_user: models.User = Depends(get_current_user)):
-    return current_user
 
 
 @router.post("", status_code=201, response_model=schemas.UserResponse)
@@ -97,16 +118,7 @@ def update_user(
     if user.username is not None:
         db_user.username = user.username
 
-    if "first_name" in user.model_fields_set:
-        db_user.first_name = user.first_name
-
-    if "last_name" in user.model_fields_set:
-        db_user.last_name = user.last_name
-
-    if "email" in user.model_fields_set:
-        db_user.email = user.email
-
-    if user.role is not None:
+    if "role" in user.model_fields_set and user.role is not None:
         db_user.role = user.role
 
     for field in ("first_name", "last_name", "email", "avatar_icon"):
@@ -121,6 +133,79 @@ def update_user(
 
     db.refresh(db_user)
     return db_user
+
+
+@router.get("/{user_id}/avatar")
+def get_avatar(user_id: UUID):
+    avatar_path = _get_avatar_file_path(user_id)
+    if avatar_path is None:
+        raise HTTPException(status_code=404, detail="Avatar not found")
+    return FileResponse(avatar_path)
+
+
+@router.put("/{user_id}/avatar", response_model=schemas.UserResponse, dependencies=protected)
+async def upload_avatar(
+    user_id: UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    authorize_owner(current_user, user_id)
+
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    ext = AVATAR_CONTENT_TYPES.get(file.content_type or "")
+    if ext is None:
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported image type. Use PNG, JPEG, or WebP.",
+        )
+
+    content = await file.read()
+    if len(content) > AVATAR_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Image too large (max 2 MB)")
+
+    AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+    for existing_ext in AVATAR_CONTENT_TYPES.values():
+        existing_file = AVATAR_DIR / f"{user_id}{existing_ext}"
+        if existing_file.is_file():
+            existing_file.unlink()
+
+    target_path = AVATAR_DIR / f"{user_id}{ext}"
+    target_path.write_bytes(content)
+
+    if hasattr(db_user, "avatar_updated_at"):
+        db_user.avatar_updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(db_user)
+
+    return db_user
+
+
+@router.delete("/{user_id}/avatar", status_code=204, dependencies=protected)
+def delete_avatar(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    authorize_owner(current_user, user_id)
+
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    for existing_ext in AVATAR_CONTENT_TYPES.values():
+        existing_file = AVATAR_DIR / f"{user_id}{existing_ext}"
+        if existing_file.is_file():
+            existing_file.unlink()
+
+    if hasattr(db_user, "avatar_updated_at"):
+        db_user.avatar_updated_at = None
+        db.commit()
+
+    return Response(status_code=204)
 
 
 # A wrong current password is a 400, not a 401: the session itself is valid, and
@@ -165,4 +250,3 @@ def delete_user(
     db.commit()
 
     return Response(status_code=204)
-
