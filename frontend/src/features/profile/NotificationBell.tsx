@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell } from '@fortawesome/free-solid-svg-icons'
-import { useNotificationStore } from './notificationStore'
+import { useAuthUser } from '../../components/authUserStore'
+import { formatNotificationTime, refreshNotifications, useNotificationStore } from './notificationStore'
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const { notifications, setNotifications } = useNotificationStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const authUser = useAuthUser()
+  const pathname = useLocation({ select: (location) => location.pathname })
+
+  // Reload on every page change, so a quiz finished or started meanwhile shows up.
+  const userId = authUser?.id
+  useEffect(() => {
+    if (userId) void refreshNotifications(userId)
+  }, [userId, pathname])
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
@@ -30,8 +39,15 @@ export default function NotificationBell() {
         setOpen(false)
       }
     }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   return (
@@ -99,7 +115,9 @@ export default function NotificationBell() {
                     <span className="mt-0.5 block text-xs font-light leading-relaxed text-[#9fb0c7]">
                       {item.description}
                     </span>
-                    <time className="mt-1 block text-[11px] text-[#718096]">{item.time}</time>
+                    <time dateTime={item.time} className="mt-1 block text-[11px] text-[#718096]">
+                      {formatNotificationTime(item.time)}
+                    </time>
                   </span>
                 </button>
               ))

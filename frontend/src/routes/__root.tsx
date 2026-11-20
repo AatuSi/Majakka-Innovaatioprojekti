@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import Footer from "../components/Footer";
+import GlobalToast from "../components/GlobalToast";
 import Header from "../components/Header";
 
 import appCss from "../styles.css?url";
@@ -63,6 +64,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <main className="flex flex-1 flex-col">{children}</main>
         )}
         {!isLoginRoute && <Footer />}
+        <GlobalToast />
         <TanStackDevtools
           config={{
             position: "bottom-right",

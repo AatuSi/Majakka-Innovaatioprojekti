@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faArrowTrendUp,
@@ -14,14 +13,15 @@ import {
 import {
   PASS_RATIO,
   isUnfinished,
-  quizPath,
   scoreRatio,
   summarizeAttempts,
   useAttemptHistory,
 } from './attemptHistory'
+import QuizLink from './QuizLink'
+import TopicResults from './TopicResults'
 import { card, eyebrow, input, insetPanel, secondaryButton, sectionIntro, sectionTitle } from './profileStyles'
 
-const quizTitle = (name?: string | null) => name ?? 'Nimetön testi'
+const quizTitle = (name?: string | null) => name ?? 'Nimetön tietovisa'
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('fi-FI', { dateStyle: 'short', timeStyle: 'short' })
@@ -64,7 +64,7 @@ export default function ProfileStatsPage() {
     {
       icon: faBookOpen,
       tag: 'Suoritukset',
-      title: 'Loistotehtäviä suoritettu',
+      title: 'Tietovisoja suoritettu',
       value: statValue(`${summary.completed}`),
       hint: 'Kaikki suoritukset, uusintakerrat mukaan lukien',
     },
@@ -87,14 +87,14 @@ export default function ProfileStatsPage() {
       tag: 'Aika',
       title: 'Harjoitteluaika',
       value: statValue(`${Math.round(summary.totalSeconds / 60)} min`),
-      hint: 'Loistotestien kokonaisaika',
+      hint: 'Tietovisoihin käytetty aika yhteensä',
     },
     {
       icon: faArrowTrendUp,
       tag: 'Kehitys',
       title: 'Kehitys',
       value: statValue(improvementValue),
-      hint: 'Ensimmäisestä suorituksesta viimeisimpään, uusituissa testeissä',
+      hint: 'Ensimmäisestä suorituksesta viimeisimpään, uusituissa tietovisoissa',
     },
   ]
 
@@ -103,15 +103,7 @@ export default function ProfileStatsPage() {
       <div>
         <span className={eyebrow}>Edistyminen</span>
         <h2 className={`mt-1 ${sectionTitle}`}>Tilastot</h2>
-        <p className={sectionIntro}>Seuraa loistotestien tuloksia, oppimisen etenemistä sekä aihealueita.</p>
-        {/* Deliberate duplicate of the /results page (Tulokset), kept so the
-            team can compare both and pick one. Remove once decided. */}
-        <p className="mt-2 text-xs text-[#718096]">
-          Vertailuun: samat tiedot sivulla{' '}
-          <Link to="/results" className="text-[#38bdf8] underline">
-            Tulokset
-          </Link>
-        </p>
+        <p className={sectionIntro}>Seuraa tietovisojen tuloksia, oppimisen etenemistä sekä aihealueita.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -135,6 +127,8 @@ export default function ProfileStatsPage() {
         ))}
       </div>
 
+      <TopicResults />
+
       <section className={`${card} p-6 sm:p-8`}>
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -149,8 +143,8 @@ export default function ProfileStatsPage() {
             </span>
             <input
               type="text"
-              placeholder="Etsi testin nimellä..."
-              aria-label="Etsi testin nimellä"
+              placeholder="Etsi tietovisan nimellä..."
+              aria-label="Etsi tietovisan nimellä"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`${input} pl-11`}
@@ -162,7 +156,7 @@ export default function ProfileStatsPage() {
           <table className="w-full text-left text-sm text-[#c3cddb]">
             <thead className="border-b border-[#2A3548] text-[11px] uppercase tracking-widest text-[#718096]">
               <tr>
-                <th className="px-5 py-3 font-normal">Testit</th>
+                <th className="px-5 py-3 font-normal">Tietovisa</th>
                 <th className="px-5 py-3 font-normal">Ajankohta</th>
                 <th className="px-5 py-3 font-normal">Tulos</th>
                 <th className="px-5 py-3 font-normal">Kesto</th>
@@ -212,14 +206,14 @@ export default function ProfileStatsPage() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right">
-                        <Link
-                          to={quizPath(quiz.quiz_name)}
-                          search={unfinished ? { resume: quiz.id } : {}}
+                        <QuizLink
+                          quizName={quiz.quiz_name}
+                          resumeAttemptId={unfinished ? quiz.id : undefined}
                           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D90F4] underline-offset-4 transition hover:underline cursor-pointer"
                         >
                           <FontAwesomeIcon icon={unfinished ? faPlay : faRotateRight} className="text-[10px]" />
                           <span>{unfinished ? 'Jatka' : 'Kertaa'}</span>
-                        </Link>
+                        </QuizLink>
                       </td>
                     </tr>
                   )

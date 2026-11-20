@@ -6,28 +6,25 @@ import {
   faStar as faStarSolid,
   faCheckDouble,
   faEnvelopeOpen,
+  faPlay,
 } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
-import { getDisplayName, useAuthUser } from '../../components/authUserStore'
-import { useNotificationStore } from './notificationStore'
-import ProfileAvatar from './ProfileAvatar'
-import { card, eyebrow, sectionIntro, sectionTitle } from './profileStyles'
+import { formatNotificationTime, useNotificationStore, useQuizReminders } from './notificationStore'
+import QuizLink from './QuizLink'
+import { card, eyebrow, primaryButton, sectionIntro, sectionTitle } from './profileStyles'
 
 export default function ProfileNotificationPage() {
   const { notifications, setNotifications } = useNotificationStore()
-  const authUser = useAuthUser()
+  const remindersOn = useQuizReminders()
   const [selectedTab, setSelectedTab] = useState<'all' | 'favorite'>('all')
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null,
   )
 
-  const searchParams = useSearch({ strict: false }) as { id?: string }
+  const { id: notificationId } = useSearch({ from: '/profile/notification' })
   const navigate = useNavigate()
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const notificationId = searchParams?.id || urlParams.get('id')
-
     if (notificationId) {
       setSelectedMessageId(notificationId)
 
@@ -40,7 +37,7 @@ export default function ProfileNotificationPage() {
     } else {
       setSelectedMessageId(null)
     }
-  }, [searchParams, notifications, setNotifications])
+  }, [notificationId, notifications, setNotifications])
 
   const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked
@@ -114,7 +111,7 @@ export default function ProfileNotificationPage() {
       <div>
         <span className={eyebrow}>Viestit</span>
         <h2 className={`mt-1 ${sectionTitle}`}>Ilmoitukset</h2>
-        <p className={sectionIntro}>Pysy ajan tasalla tärkeistä viesteistä ja tapahtumista.</p>
+        <p className={sectionIntro}>Muistutukset tietovisoista, jotka ovat jääneet kesken.</p>
       </div>
 
       <div className={`${card} grid min-h-[600px] grid-cols-1 overflow-hidden lg:grid-cols-[400px_1fr]`}>
@@ -175,7 +172,11 @@ export default function ProfileNotificationPage() {
           <div className="flex max-h-[520px] flex-col divide-y divide-[#2A3548]/50 overflow-y-auto">
             {filteredMessages.length === 0 ? (
               <div className="p-8 text-center text-sm font-light text-[#9fb0c7]">
-                {selectedTab === 'favorite' ? 'Ei suosikkeja.' : 'Ei ilmoituksia.'}
+                {selectedTab === 'favorite'
+                  ? 'Ei suosikkeja.'
+                  : remindersOn
+                    ? 'Ei ilmoituksia. Kesken jääneet tietovisat näkyvät täällä.'
+                    : 'Muistutukset on kytketty pois päältä asetuksista.'}
               </div>
             ) : (
               filteredMessages.map((msg) => {
@@ -210,7 +211,9 @@ export default function ProfileNotificationPage() {
                           {msg.title}
                         </span>
                       </div>
-                      <span className="shrink-0 text-[11px] text-[#718096]">{msg.time}</span>
+                      <time dateTime={msg.time} className="shrink-0 text-[11px] text-[#718096]">
+                        {formatNotificationTime(msg.time)}
+                      </time>
                     </div>
                     <div className="flex items-center justify-between gap-3 pl-12">
                       <p className="truncate text-xs font-light text-[#9fb0c7]">{msg.description}</p>
@@ -238,7 +241,12 @@ export default function ProfileNotificationPage() {
             <article className="flex flex-col gap-6">
               <div className="flex items-start justify-between gap-4 border-b border-[#2A3548] pb-5">
                 <div>
-                  <time className="text-xs uppercase tracking-widest text-[#718096]">{selectedMessage.time}</time>
+                  <time
+                    dateTime={selectedMessage.time}
+                    className="text-xs uppercase tracking-widest text-[#718096]"
+                  >
+                    {formatNotificationTime(selectedMessage.time)}
+                  </time>
                   <h3 className="mt-1 text-2xl font-light text-[#1D90F4]">{selectedMessage.title}</h3>
                 </div>
                 <button
@@ -254,15 +262,15 @@ export default function ProfileNotificationPage() {
                   <FontAwesomeIcon icon={selectedMessage.favorite ? faStarSolid : faStarRegular} />
                 </button>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#2A3548] bg-[#0F1724] text-sm text-[#38bdf8]">
-                  <ProfileAvatar />
-                </div>
-                <div className="text-sm font-medium text-white">
-                  {getDisplayName(authUser)}
-                </div>
-              </div>
               <p className="font-light leading-7 text-[#c3cddb]">{selectedMessage.description}</p>
+              <QuizLink
+                quizName={selectedMessage.quizName}
+                resumeAttemptId={selectedMessage.id}
+                className={`${primaryButton} self-start`}
+              >
+                <FontAwesomeIcon icon={faPlay} className="text-xs" />
+                Jatka tietovisaa
+              </QuizLink>
             </article>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-4 py-16 text-center">
